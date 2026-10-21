@@ -54,8 +54,8 @@ ZebraApp ile hazırlanan etiketler bir ZD421'de (300 dpi) Bluetooth LE üzerinde
 Python 3.8 ya da üstü gerekir.
 
 ```sh
-git clone https://github.com/KULLANICI-ADIN/zebraapp.git
-cd zebraapp
+git clone https://github.com/TroubledKezoo1/ZebraDesignApp.git
+cd ZebraDesignApp
 pip install ".[ble]"        # Bluetooth, seri port ve Windows için ".[all]"
 zebraapp
 ```

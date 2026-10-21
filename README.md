@@ -54,8 +54,8 @@ Labels made with ZebraApp have been printed on a ZD421 (300 dpi) over Bluetooth 
 Python 3.8 or newer is required.
 
 ```sh
-git clone https://github.com/YOUR-USERNAME/zebraapp.git
-cd zebraapp
+git clone https://github.com/TroubledKezoo1/ZebraDesignApp.git
+cd ZebraDesignApp
 pip install ".[ble]"        # or ".[all]" for Bluetooth, serial and Windows printing
 zebraapp
 ```
