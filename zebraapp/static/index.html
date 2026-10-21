@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZebraApp</title>
+<link rel="icon" href="/static/icon.svg">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-select" viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.5L10 19z" fill="currentColor"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M5 5h14v3h-2V7h-4v11h2v2H9v-2h2V7H7v1H5z" fill="currentColor"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><path d="M3 3h8v8H3zm2 2v4h4V5zm8-2h8v8h-8zm2 2v4h4V5zM3 13h8v8H3zm2 2v4h4v-4zm8-2h3v3h-3zm5 0h3v3h-3zm-5 5h3v3h-3zm5 0h3v3h-3zm-2.5-2.5h3v3h-3z" fill="currentColor"/></symbol>
+  <symbol id="i-barcode" viewBox="0 0 24 24"><path d="M3 4h2v16H3zm3 0h1v16H6zm2 0h3v16H8zm4 0h1v16h-1zm3 0h2v16h-2zm3 0h1v16h-1zm2 0h1v16h-1z" fill="currentColor"/></symbol>
+  <symbol id="i-line" viewBox="0 0 24 24"><path d="M3 11h18v2H3z" fill="currentColor"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M4 5h16v14H4zm2 2v10h12V7z" fill="currentColor"/></symbol>
+  <symbol id="i-ellipse" viewBox="0 0 24 24"><path d="M12 5c5 0 9 3.1 9 7s-4 7-9 7-9-3.1-9-7 4-7 9-7zm0 2c-3.9 0-7 2.2-7 5s3.1 5 7 5 7-2.2 7-5-3.1-5-7-5z" fill="currentColor"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><path d="M4 5h16v14H4zm2 2v8l3.5-3.5 3 3 2.5-2.5L18 15V7zm8.5 1.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" fill="currentColor"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 5L3 10l6 5v-3.5c4 0 7 1 9 5-1-5-4-8-9-8.5z" fill="currentColor"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 5l6 5-6 5v-3.5c-4 0-7 1-9 5 1-5 4-8 9-8.5z" fill="currentColor"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M12 6c5 0 9 6 9 6s-4 6-9 6-9-6-9-6 4-6 9-6zm0 3a3 3 0 100 6 3 3 0 000-6z" fill="currentColor"/></symbol>
+  <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M3 4l17 16-1.4 1.4-3-2.8A9.6 9.6 0 0112 18c-5 0-9-6-9-6a17 17 0 013.6-4.2L1.6 5.4zm9 2c5 0 9 6 9 6a17.5 17.5 0 01-2.7 3.4L8.7 6.6A9 9 0 0112 6z" fill="currentColor"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0110 0v2h1v11H6V10zm2 0h6V8a3 3 0 00-6 0z" fill="currentColor"/></symbol>
+  <symbol id="i-unlock" viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 019.6-2l-1.8.9A3 3 0 009 8v2h9v11H6V10z" fill="currentColor"/></symbol>
+  <symbol id="i-al" viewBox="0 0 24 24"><path d="M3 3h2v18H3zm4 4h10v4H7zm0 6h14v4H7z" fill="currentColor"/></symbol>
+  <symbol id="i-ac" viewBox="0 0 24 24"><path d="M11 3h2v18h-2zM6 7h12v4H6zm-2 6h16v4H4z" fill="currentColor"/></symbol>
+  <symbol id="i-ar" viewBox="0 0 24 24"><path d="M19 3h2v18h-2zM7 7h10v4H7zm-4 6h14v4H3z" fill="currentColor"/></symbol>
+  <symbol id="i-at" viewBox="0 0 24 24"><path d="M3 3h18v2H3zm4 4h4v10H7zm6 0h4v14h-4z" fill="currentColor"/></symbol>
+  <symbol id="i-am" viewBox="0 0 24 24"><path d="M3 11h18v2H3zM7 6h4v12H7zm6-2h4v16h-4z" fill="currentColor"/></symbol>
+  <symbol id="i-ab" viewBox="0 0 24 24"><path d="M3 19h18v2H3zM7 7h4v10H7zm6-4h4v14h-4z" fill="currentColor"/></symbol>
+  <symbol id="i-dh" viewBox="0 0 24 24"><path d="M3 3h2v18H3zm16 0h2v18h-2zM8 7h3v10H8zm5 0h3v10h-3z" fill="currentColor"/></symbol>
+  <symbol id="i-dv" viewBox="0 0 24 24"><path d="M3 3h18v2H3zm0 16h18v2H3zM7 8h10v3H7zm0 5h10v3H7z" fill="currentColor"/></symbol>
+  <symbol id="i-front" viewBox="0 0 24 24"><path d="M3 3h12v12H3z" fill="currentColor" opacity=".35"/><path d="M9 9h12v12H9z" fill="currentColor"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M9 9h12v12H9z" fill="currentColor" opacity=".35"/><path d="M3 3h12v12H3z" fill="currentColor"/></symbol>
+  <symbol id="i-dup" viewBox="0 0 24 24"><path d="M8 8h12v12H8zm2 2v8h8v-8zM4 4h12v2H6v10H4z" fill="currentColor"/></symbol>
+  <symbol id="i-del" viewBox="0 0 24 24"><path d="M9 3h6v2h5v2H4V5h5zm-3 6h12l-1 12H7z" fill="currentColor"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 3h10v5H7zM4 9h16v8h-3v4H7v-4H4zm5 6v4h6v-4z" fill="currentColor"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="brand">ZebraApp <span id="verLbl" class="ver"></span></div>
+  <div class="grp">
+    <div class="menu">
+      <button class="tb" id="fileBtn" aria-haspopup="true">Dosya ▾</button>
+      <div class="menuList" id="fileMenu" hidden>
+        <button id="fNew">Yeni etiket <span class="kbd">Ctrl+N</span></button>
+        <button id="fSave">Kaydet <span class="kbd">Ctrl+S</span></button>
+        <button id="fSaveAs">Farklı kaydet…</button>
+        <button id="fDelete">Bu etiketi sil</button>
+        <hr>
+        <button id="fImport">İçe aktar (JSON)…</button>
+        <button id="fExportJson">JSON olarak indir</button>
+        <button id="fExportZpl">ZPL dosyası indir</button>
+        <hr>
+        <button id="fSamples">Örnek etiketleri ekle</button>
+      </div>
+    </div>
+    <select id="fOpen" title="Kayıtlı etiketi aç"></select>
+    <button class="tb" id="fSaveQuick" title="Kaydet (Ctrl+S)">Kaydet</button>
+    <input type="file" id="fileImport" accept=".json,application/json" hidden>
+  </div>
+  <div class="grp">
+    <button class="tb icon" id="undo" title="Geri al (Ctrl+Z)"><svg><use href="#i-undo"/></svg></button>
+    <button class="tb icon" id="redo" title="Yinele (Ctrl+Y)"><svg><use href="#i-redo"/></svg></button>
+  </div>
+  <div class="grp">
+    <button class="tb icon" id="zOut" title="Uzaklaştır (-)">−</button>
+    <span id="zoomVal" class="zv">100%</span>
+    <button class="tb icon" id="zIn" title="Yakınlaştır (+)">+</button>
+    <button class="tb" id="zFit" title="Sığdır (0)">Sığdır</button>
+    <label class="tgl" title="Izgarayı göster"><input type="checkbox" id="gridOn" checked> <span>Izgara</span></label>
+    <label class="tgl" title="Izgaraya ve diğer öğelere yapış"><input type="checkbox" id="snapOn" checked> <span>Yakala</span></label>
+  </div>
+  <div class="spacer"></div>
+  <div class="grp">
+    <select id="prSel" title="Yazıcı"></select>
+    <span id="pill" class="pill">Bağlı değil</span>
+    <button class="tb" id="conn" hidden>Bağlan</button>
+    <button class="tb" id="disc" hidden>Kes</button>
+    <button class="tb" id="prBtn" title="Yazıcıları yönet">Yazıcılar…</button>
+    <button class="tb primary" id="printTop" title="Yazdır (Ctrl+P)"><svg><use href="#i-print"/></svg> Yazdır</button>
+  </div>
+  <div class="grp">
+    <select id="langSel" title="Dil / Language" aria-label="Dil / Language"><option value="tr">TR</option><option value="en">EN</option></select>
+  </div>
+</header>
+
+<main class="ws">
+  <aside class="left">
+    <div class="tools" id="tools">
+      <button class="tool on" data-tool="select" title="Seç (V)"><svg><use href="#i-select"/></svg><span>Seç</span></button>
+      <button class="tool" data-tool="text" title="Metin (T)"><svg><use href="#i-text"/></svg><span>Metin</span></button>
+      <button class="tool" data-tool="qr" title="QR kod (Q)"><svg><use href="#i-qr"/></svg><span>QR</span></button>
+      <button class="tool" data-tool="barcode" title="Barkod (B)"><svg><use href="#i-barcode"/></svg><span>Barkod</span></button>
+      <button class="tool" data-tool="line" title="Çizgi (L)"><svg><use href="#i-line"/></svg><span>Çizgi</span></button>
+      <button class="tool" data-tool="box" title="Kutu (R)"><svg><use href="#i-box"/></svg><span>Kutu</span></button>
+      <button class="tool" data-tool="ellipse" title="Elips (E)"><svg><use href="#i-ellipse"/></svg><span>Elips</span></button>
+      <button class="tool" data-tool="image" title="Görsel / logo (I)"><svg><use href="#i-image"/></svg><span>Görsel</span></button>
+      <input type="file" id="fileImage" accept="image/*" hidden>
+    </div>
+    <div class="layers">
+      <h3>Katmanlar</h3>
+      <ul id="layers"></ul>
+    </div>
+  </aside>
+
+  <section class="center">
+    <div class="arrange" id="arrange">
+      <button class="tb icon" data-al="left" title="Sola hizala"><svg><use href="#i-al"/></svg></button>
+      <button class="tb icon" data-al="hcenter" title="Yatay ortala"><svg><use href="#i-ac"/></svg></button>
+      <button class="tb icon" data-al="right" title="Sağa hizala"><svg><use href="#i-ar"/></svg></button>
+      <button class="tb icon" data-al="top" title="Üste hizala"><svg><use href="#i-at"/></svg></button>
+      <button class="tb icon" data-al="vcenter" title="Dikey ortala"><svg><use href="#i-am"/></svg></button>
+      <button class="tb icon" data-al="bottom" title="Alta hizala"><svg><use href="#i-ab"/></svg></button>
+      <span class="sep"></span>
+      <button class="tb icon" data-al="dh" title="Yatay eşit dağıt (3+ öğe)"><svg><use href="#i-dh"/></svg></button>
+      <button class="tb icon" data-al="dv" title="Dikey eşit dağıt (3+ öğe)"><svg><use href="#i-dv"/></svg></button>
+      <span class="sep"></span>
+      <button class="tb icon" id="toFront" title="Öne getir (Ctrl+])"><svg><use href="#i-front"/></svg></button>
+      <button class="tb icon" id="toBack" title="Arkaya gönder (Ctrl+[)"><svg><use href="#i-back"/></svg></button>
+      <button class="tb icon" id="dupBtn" title="Çoğalt (Ctrl+D)"><svg><use href="#i-dup"/></svg></button>
+      <button class="tb icon" id="delBtn" title="Sil (Delete)"><svg><use href="#i-del"/></svg></button>
+      <span class="sep"></span>
+      <span class="hint" id="alignHint">Tek öğe etikete göre, birden fazla öğe birbirine göre hizalanır.</span>
+    </div>
+    <div class="canvasWrap" id="cwrap">
+      <canvas id="cv"></canvas>
+    </div>
+    <footer class="status">
+      <span id="stPos">X — Y —</span>
+      <span id="stSel">Seçim yok</span>
+      <span id="stLabel"></span>
+      <span class="grow"></span>
+      <span id="stMsg"></span>
+    </footer>
+  </section>
+
+  <aside class="right">
+    <nav class="tabs">
+      <button data-tab="props" class="on">Özellikler</button>
+      <button data-tab="label">Etiket</button>
+      <button data-tab="print">Yazdır</button>
+    </nav>
+    <div class="tabp" id="tab-props"><div id="inspector"></div></div>
+    <div class="tabp" id="tab-label" hidden>
+      <div class="sec">
+        <label>Etiket adı<input id="lName"></label>
+        <label>Hazır boyut
+          <select id="lPreset">
+            <option value="">Seç…</option>
+            <option value="80x40">80 × 40 mm</option>
+            <option value="100x50">100 × 50 mm</option>
+            <option value="100x150">100 × 150 mm (kargo)</option>
+            <option value="100x100">100 × 100 mm</option>
+            <option value="58x40">58 × 40 mm</option>
+            <option value="50x30">50 × 30 mm</option>
+            <option value="40x30">40 × 30 mm</option>
+            <option value="50x25">50 × 25 mm</option>
+          </select>
+        </label>
+        <div class="r3">
+          <label>Genişlik mm<input id="lW" type="number" step="1" min="10" max="108"></label>
+          <label>Yükseklik mm<input id="lH" type="number" step="1" min="5" max="990"></label>
+          <label>Çözünürlük<select id="lDpi"><option value="203">203 dpi</option><option value="300">300 dpi</option><option value="600">600 dpi</option></select></label>
+        </div>
+      </div>
+      <div class="sec">
+        <h4>Yazıcı ayarları</h4>
+        <label>Ortam türü
+          <select id="sMedia"><option value="gap">Boşluklu etiket (aralıklı)</option><option value="continuous">Sürekli rulo</option><option value="mark">Siyah işaretli</option></select>
+        </label>
+        <div class="r2">
+          <label>Koyuluk (0–30)<input id="sDark" type="number" min="0" max="30" placeholder="Yazıcı ayarı"></label>
+          <label>Hız<select id="sSpeed"><option value="">Yazıcı ayarı</option><option value="2">2 inç/sn</option><option value="3">3 inç/sn</option><option value="4">4 inç/sn</option><option value="5">5 inç/sn</option><option value="6">6 inç/sn</option></select></label>
+        </div>
+        <div class="r2">
+          <label>Yatay kaydırma mm<input id="sShiftX" type="number" step="0.5"></label>
+          <label>Dikey kaydırma mm<input id="sShiftY" type="number" step="0.5"></label>
+        </div>
+        <label class="chk"><input type="checkbox" id="sRot"> Baskıyı 180° çevir</label>
+        <p class="note">Kaydırma, baskı etiketin kenarına kayıyorsa bütün tasarımı birlikte taşır.</p>
+      </div>
+      <div class="sec">
+        <h4>Çalışma alanı</h4>
+        <div class="r2">
+          <label>Izgara aralığı mm<input id="gSize" type="number" step="0.5" min="0.5" value="1"></label>
+          <label>Ok tuşu adımı mm<input id="nudge" type="number" step="0.1" min="0.1" value="0.5"></label>
+        </div>
+      </div>
+    </div>
+    <div class="tabp" id="tab-print" hidden>
+      <div class="sec" id="pPrinter"></div>
+      <div class="sec">
+        <div class="r2">
+          <label>Her etiketten adet<input id="pCopies" type="number" min="1" max="9999" value="1"></label>
+          <label>Farklı etiket sayısı<input id="pCount" type="number" min="1" max="9999" value="1"></label>
+        </div>
+        <p class="note" id="pSummary"></p>
+        <button class="big primary" id="pPrint"><svg><use href="#i-print"/></svg> Yazdır</button>
+      </div>
+      <div class="sec">
+        <h4>Sayaç {SAYAC}</h4>
+        <div class="r3">
+          <label>Başlangıç<input id="pStart" type="number" value="1"></label>
+          <label>Artış<input id="pStep" type="number" value="1"></label>
+          <label>Basamak<input id="pDigits" type="number" min="0" max="12" value="0"></label>
+        </div>
+        <p class="note">Metin, QR veya barkod içine <code>{SAYAC}</code>, <code>{TARIH}</code>, <code>{SAAT}</code> yazabilirsin. Farklı etiket sayısı kadar artarak basılır.</p>
+      </div>
+      <div class="sec">
+        <h4>Veri listesi (CSV)</h4>
+        <textarea id="pCsv" rows="5" placeholder="ad;adres;telefon&#10;Örnek Makina;Kadıköy;0212 000 00 00"></textarea>
+        <div class="row">
+          <button class="tb" id="pCsvFile">Dosyadan yükle</button>
+          <button class="tb" id="pCsvClear">Temizle</button>
+          <input type="file" id="fileCsv" accept=".csv,.txt,text/csv" hidden>
+        </div>
+        <div id="pCols" class="chips"></div>
+        <p class="note">İlk satır sütun adlarıdır. Alanlara <code>{sütun_adı}</code> yazınca her satır için bir etiket basılır.</p>
+        <label>Önizlemede gösterilen kayıt<input id="pRec" type="number" min="1" value="1"></label>
+      </div>
+      <div class="sec">
+        <h4>Yazıcı</h4>
+        <div class="row wrap">
+          <button class="tb" id="pLabelary">Gerçek önizleme (Labelary)</button>
+          <button class="tb" id="pZpl">ZPL kodunu göster</button>
+          <button class="tb" id="pCal">Kalibre et</button>
+          <button class="tb" id="pFeed">Boş etiket ilerlet</button>
+          <button class="tb" id="pCfg">Ayar etiketi bas</button>
+        </div>
+        <p class="note">Gerçek önizleme, ZPL kodunu internet üzerinden labelary.com'a gönderip yazıcının çıktısını taklit eder.</p>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div class="modal" id="modal" hidden>
+  <div class="mbox">
+    <header><h3 id="mTitle"></h3><button class="tb" id="mClose">Kapat</button></header>
+    <div id="mBody"></div>
+  </div>
+</div>
+
+<script src="/static/js/i18n.js"></script>
+<script src="/static/js/models.js"></script>
+<script src="/static/vendor/qrcode.js"></script>
+<script src="/static/vendor/qrcode_UTF8.js"></script>
+<script src="/static/js/barcodes.js"></script>
+<script src="/static/js/zpl.js"></script>
+<script src="/static/js/render.js"></script>
+<script src="/static/js/editor.js"></script>
+</body>
+</html>

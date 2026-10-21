@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zebraapp"
+version = "0.3.0"
+description = "Label designer for Zebra / ZPL printers: design in the browser, print over Bluetooth LE, network, USB or serial."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.8"
+authors = [{ name = "Yunus Emre Saraç" }]
+keywords = ["zebra", "zpl", "label", "label-printer", "thermal-printer", "barcode", "qr-code", "bluetooth-le"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Environment :: Web Environment",
+  "Topic :: Printing",
+]
+dependencies = []
+
+[project.optional-dependencies]
+ble = ["bleak>=0.20"]
+serial = ["pyserial>=3.5"]
+windows = ["pywin32>=300; sys_platform == 'win32'"]
+all = ["bleak>=0.20", "pyserial>=3.5", "pywin32>=300; sys_platform == 'win32'"]
+
+[project.scripts]
+zebraapp = "zebraapp.server:main"
+
+[tool.setuptools]
+packages = ["zebraapp"]
+
+[tool.setuptools.package-data]
+zebraapp = ["static/*", "static/js/*", "static/vendor/*", "static/fonts/*"]

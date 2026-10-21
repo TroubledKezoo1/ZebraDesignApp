@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+# kisisel veriler / personal data
+labels.json
+config.json
+*.migrated
+*.zpl
