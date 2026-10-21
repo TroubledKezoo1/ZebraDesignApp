@@ -45,6 +45,7 @@
       <button class="tb" id="fileBtn" aria-haspopup="true">Dosya ▾</button>
       <div class="menuList" id="fileMenu" hidden>
         <button id="fNew">Yeni etiket <span class="kbd">Ctrl+N</span></button>
+        <button id="fOpenBtn">Aç… <span class="kbd">Ctrl+O</span></button>
         <button id="fSave">Kaydet <span class="kbd">Ctrl+S</span></button>
         <button id="fSaveAs">Farklı kaydet…</button>
         <button id="fDelete">Bu etiketi sil</button>
@@ -56,7 +57,7 @@
         <button id="fSamples">Örnek etiketleri ekle</button>
       </div>
     </div>
-    <select id="fOpen" title="Kayıtlı etiketi aç"></select>
+    <input id="docTitle" class="docTitle" spellcheck="false" maxlength="80" title="Etiket adı" aria-label="Etiket adı">
     <button class="tb" id="fSaveQuick" title="Kaydet (Ctrl+S)">Kaydet</button>
     <input type="file" id="fileImport" accept=".json,application/json" hidden>
   </div>

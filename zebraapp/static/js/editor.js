@@ -35,7 +35,7 @@
   /* ================= belge ================= */
   function defaultSettings() { return { media: "gap", darkness: "", speed: "", shiftX: 0, shiftY: 0, rotate180: false }; }
   function defaultJob() { return { copies: 1, count: 1, start: 1, step: 1, digits: 0, csv: "" }; }
-  function blankDoc() { var p = activePrinter(); return { id: uid(), name: __("Yeni etiket"), w: 80, h: 40, dpi: p && p.dpi ? +p.dpi : 300, settings: defaultSettings(), job: defaultJob(), elements: [] }; }
+  function blankDoc() { var p = activePrinter(); return { id: uid(), name: __("Adsız etiket"), w: 80, h: 40, dpi: p && p.dpi ? +p.dpi : 300, settings: defaultSettings(), job: defaultJob(), elements: [] }; }
 
   var DEF = {
     text: { type: "text", text: __("Metin"), size: 4, widthPct: 90, lineGap: 1.25, bold: false, align: "left", boxW: 0, wrap: false, rot: 0, reverse: false },
@@ -880,7 +880,10 @@
   function bindDoc(id, fn, ev) {
     $(id).addEventListener(ev || "input", function () { checkpoint(); fn(this); updateLabelStatus(); changed({ inspectorValues: true }); });
   }
-  bindDoc("lName", function (e) { doc.name = e.value; updateTitle(); });
+  bindDoc("lName", function (e) { doc.name = e.value; $("docTitle").value = e.value; updateTitle(); });
+  $("docTitle").addEventListener("input", function () { checkpoint(); doc.name = this.value; $("lName").value = this.value; updateTitle(); changed({ inspectorValues: true }); });
+  $("docTitle").addEventListener("keydown", function (e) { if (e.key === "Enter") this.blur(); });
+  $("docTitle").addEventListener("blur", function () { if (!this.value.trim()) { this.value = doc.name = __("Adsız etiket"); $("lName").value = doc.name; updateTitle(); } });
   bindDoc("lW", function (e) { var v = parseFloat(e.value); if (v > 0) doc.w = v; });
   bindDoc("lH", function (e) { var v = parseFloat(e.value); if (v > 0) doc.h = v; });
   bindDoc("lDpi", function (e) { doc.dpi = +e.value; }, "change");
@@ -992,6 +995,7 @@
     var k = e.key, ctrl = e.ctrlKey || e.metaKey;
     if (ctrl && (k === "s" || k === "S")) { e.preventDefault(); saveDoc(); return; }
     if (ctrl && (k === "p" || k === "P")) { e.preventDefault(); printJob(); return; }
+    if (ctrl && (k === "o" || k === "O")) { e.preventDefault(); if ($("modal").hidden) openDialog(); return; }
     if (!$("modal").hidden) { if (k === "Escape") closeModal(); return; }
     if (typing(e)) { if (k === "Escape") e.target.blur(); return; }
     if (ctrl && (k === "z" || k === "Z")) { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
@@ -1023,18 +1027,40 @@
 
   /* ================= dosya islemleri ================= */
   function persist() { return api("/api/labels", docs); }
-  function renderOpen() {
-    var s2 = $("fOpen"); s2.innerHTML = "";
-    s2.appendChild(h("option", { value: "", text: __("Kayıtlı etiketler (") + docs.length + ")" }));
-    docs.forEach(function (dd) { s2.appendChild(h("option", { value: dd.id, text: dd.name })); });
-    s2.value = docs.some(function (x) { return x.id === doc.id; }) ? doc.id : "";
+  function renderOpen() { $("docTitle").value = doc ? doc.name : ""; }
+  function openDialog() {
+    var list = h("div", { class: "openList" });
+    function fill() {
+      list.innerHTML = "";
+      if (!docs.length) { list.appendChild(h("div", { class: "openEmpty", text: __("Kayıtlı etiket yok.") })); return; }
+      docs.slice().reverse().forEach(function (dd) {
+        var row = h("div", { class: "openRow" + (dd.id === doc.id ? " cur" : "") }, [
+          h("div", { class: "on" }, [h("b", { text: dd.name || __("Adsız etiket") }),
+            h("small", { text: dd.w + " × " + dd.h + " mm · " + (dd.elements || []).length + " " + __("öğe") })]),
+          h("button", { class: "tb", text: __("Sil"), onclick: function (ev) {
+            ev.stopPropagation();
+            if (!confirm(__("'{a}' silinsin mi?").replace("{a}", dd.name))) return;
+            docs = docs.filter(function (x) { return x.id !== dd.id; }); persist();
+            if (dd.id === doc.id) { loadDoc(blankDoc()); }
+            fill();
+          } })
+        ]);
+        row.addEventListener("click", function () {
+          if (dd.id !== doc.id && !confirmDiscard()) return;
+          closeModal(); if (dd.id !== doc.id) loadDoc(dd);
+        });
+        list.appendChild(row);
+      });
+    }
+    fill(); openModal(__("Etiket aç"), [list]);
   }
+  $("fOpenBtn").addEventListener("click", openDialog);
   function confirmDiscard() { return !dirty || confirm(__("Kaydedilmemiş değişiklikler var. Devam edersen kaybolacak.")); }
   function loadDoc(dd) {
     doc = migrate(clone(dd)); sel = []; undoStack = []; redoStack = []; dirty = false; previewIdx = 0;
     preloadImages(); refreshAll(); renderOpen(); requestAnimationFrame(fit);
   }
-  function newDoc() { if (!confirmDiscard()) return; var n = blankDoc(); loadDoc(n); dirty = true; updateTitle(); }
+  function newDoc() { if (!confirmDiscard()) return; loadDoc(blankDoc()); }
   function saveDoc() {
     var at = -1;
     docs.forEach(function (x, i) { if (x.id === doc.id) at = i; });
@@ -1046,7 +1072,7 @@
   $("fSave").addEventListener("click", saveDoc);
   $("fSaveQuick").addEventListener("click", saveDoc);
   $("fSamples").addEventListener("click", function () {
-    var add = samples(); docs = docs.concat(add); persist(); renderOpen(); loadDoc(add[0]);
+    var add = samples(); docs = docs.concat(add); persist(); openDialog();
     status(add.length + __(" örnek etiket eklendi."));
   });
   $("fileBtn").addEventListener("click", function (e) { e.stopPropagation(); $("fileMenu").hidden = !$("fileMenu").hidden; });
@@ -1060,18 +1086,22 @@
     if (!confirm(__("'{a}' silinsin mi?").replace("{a}", doc.name))) return;
     docs = docs.filter(function (x) { return x.id !== doc.id; });
     persist(); dirty = false;
-    if (docs.length) loadDoc(docs[0]); else loadDoc(blankDoc());
+    loadDoc(blankDoc());
     status(__("Silindi."));
   });
-  $("fOpen").addEventListener("change", function () {
-    var id = this.value; if (!id) return;
-    if (!confirmDiscard()) { renderOpen(); return; }
-    var dd = docs.filter(function (x) { return x.id === id; })[0]; if (dd) loadDoc(dd);
-  });
   function download(name, text, type) {
-    var a = document.createElement("a"), url = URL.createObjectURL(new Blob([text], { type: type || "text/plain" }));
-    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    type = type || "text/plain";
+    function fallback() {
+      var a = document.createElement("a"), url = URL.createObjectURL(new Blob([text], { type: type }));
+      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+      status(__("İndirilenler klasörüne kaydedildi: ") + name);
+    }
+    if (!window.showSaveFilePicker) { fallback(); return; }
+    var acc = {}; acc[type] = [(name.match(/\.[^.]+$/) || [".txt"])[0]];
+    window.showSaveFilePicker({ suggestedName: name, types: [{ description: name, accept: acc }] })
+      .then(function (fh) { return fh.createWritable().then(function (w) { return w.write(text).then(function () { return w.close(); }); }).then(function () { status(__("Dışa aktarıldı: ") + fh.name); }); })
+      .catch(function (err) { if (err && err.name === "AbortError") return; fallback(); });
   }
   function safeName() { return (doc.name || "etiket").replace(/[^\wçğıöşüÇĞİÖŞÜ\- ]+/g, "").trim().replace(/\s+/g, "_") || "etiket"; }
   $("fExportJson").addEventListener("click", function () { download(safeName() + ".json", JSON.stringify(doc, null, 2), "application/json"); });
@@ -1394,7 +1424,7 @@
     docs = (list || []).map(migrate);
     var seeded = false;
     if (!docs.length) { docs = samples(); seeded = true; }
-    doc = migrate(clone(docs[0]));
+    doc = blankDoc();
     if (seeded) persist().catch(function () {});
     $("zoomVal").textContent = "100%";
     renderPrinterSel();
