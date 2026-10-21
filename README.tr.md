@@ -26,7 +26,7 @@ ZebraDesigner yalnızca Windows'ta çalışıyor, açık kaynak etiket programla
 - Model ve çözünürlüğüyle birden çok yazıcı; etiket yazıcıya uymazsa uyarı
 - [Labelary](https://labelary.com) ile yazıcı önizlemesi (internet gerekir), elle düzenlenip gönderilebilen ZPL görünümü
 - Kalibrasyon, boş etiket ilerletme, ayar etiketi basma, yazıcı durumunu okuma (kâğıt bitti, kapak açık, duraklatıldı…)
-- Etiket kaydetme ve açma, JSON ya da `.zpl` olarak dışa aktarma, JSON içe aktarma
+- Etiketler düz dosyadır (`.zebra`, içi JSON): Kaydet, Farklı kaydet ve Aç sistemin dosya penceresini kullanır, son kullanılanlar listelenir; ZPL `.zpl` dosyası olarak dışa aktarılır
 - Türkçe ve İngilizce arayüz
 
 ## Desteklenen bağlantılar
@@ -92,7 +92,7 @@ Bluetooth LE yazıcı aynı anda yalnızca bir cihaza bağlanır. Bağlanmıyors
 
 ## Veriler nerede
 
-Kayıtlı etiketler ve yazıcı ayarları şu klasördeki JSON dosyalarında durur:
+Etiketler seçtiğin yere (`.zebra` dosyası) kaydedilir. Yazıcı ayarları şu klasördeki JSON dosyasında durur:
 - Linux: `~/.config/zebraapp/`
 - macOS: `~/Library/Application Support/ZebraApp/`
 - Windows: `%APPDATA%\ZebraApp\`

@@ -26,7 +26,7 @@ ZebraDesigner only runs on Windows, and most open-source label tools do not spea
 - Several printers with models and resolutions; warnings when the label does not match the printer
 - Printer preview through [Labelary](https://labelary.com) (needs internet), and a ZPL view where you can edit and send code by hand
 - Calibrate, feed one label, print the configuration label, read printer status (paper out, head open, paused…)
-- Save and open labels, export as JSON or `.zpl`, import JSON
+- Labels are plain files (`.zebra`, JSON inside): Save, Save as and Open use your system's file dialog, with a recent-files list; export the ZPL as a `.zpl` file
 - English and Turkish interface
 
 ## Supported connections
@@ -92,7 +92,7 @@ A Bluetooth LE printer accepts one connection at a time. If it will not connect,
 
 ## Where data is stored
 
-Saved labels and printer settings are JSON files in:
+Labels are saved wherever you choose (`.zebra` files). Printer settings are a JSON file in:
 - Linux: `~/.config/zebraapp/`
 - macOS: `~/Library/Application Support/ZebraApp/`
 - Windows: `%APPDATA%\ZebraApp\`
