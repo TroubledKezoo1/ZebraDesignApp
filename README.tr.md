@@ -44,6 +44,11 @@ ZD (ZD421, ZD621, ZD411, ZD420, ZD410, ZD220/230, ZD888), GK/GX, ZT (ZT230, ZT41
 
 ZebraApp ile hazırlanan etiketler bir ZD421'de (300 dpi) Bluetooth LE üzerinden basıldı. Diğer modeller ve bağlantı türleri Zebra'nın belgelerine göre yazıldı ama henüz gerçek donanımda denenmedi; deneyen olursa geri bildirimini bekliyorum.
 
+## Belgeler
+
+- [Kullanım kılavuzu](docs/KULLANIM.md): yazıcı eklemekten toplu baskıya
+- [English user guide](docs/USER_GUIDE.md)
+
 ## Kurulum
 
 Python 3.8 ya da üstü gerekir.

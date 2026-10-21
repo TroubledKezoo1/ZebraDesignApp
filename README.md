@@ -44,6 +44,11 @@ Printer profiles are included for the ZD (ZD421, ZD621, ZD411, ZD420, ZD410, ZD2
 
 Labels made with ZebraApp have been printed on a ZD421 (300 dpi) over Bluetooth LE. The other models and connection types follow Zebra's documentation but have not been tested on real hardware yet, so reports are welcome.
 
+## Documentation
+
+- [User guide](docs/USER_GUIDE.md): from adding a printer to batch printing
+- [Türkçe kullanım kılavuzu](docs/KULLANIM.md)
+
 ## Install
 
 Python 3.8 or newer is required.
