@@ -16,7 +16,8 @@ ZebraDesigner yalnızca Windows'ta çalışıyor, açık kaynak etiket programla
 
 **Tasarım**
 - Word tarzı arayüz: şerit sekmeleri (Giriş, Ekle, Düzen, Veri, Görünüm), şablonlu ve son kullanılanlı Dosya ekranı, hızlı erişim çubuğu, yakınlaştırma kaydırıcısı
-- Doğrudan etiketin üstüne yazma: metne çift tıkla (ya da F2) ve yerinde düzenle; yazı boyutu, kalın, hizalama ve satır aralığı Giriş sekmesinde
+- Doğrudan etiketin üstüne yazıp kelime işlemci gibi biçimlendirme: kelimeleri seçip kalın, italik, altı çizili, üstü çizili, büyük ya da başka yazı tipiyle yap; punto olarak boyut, karakter aralığı, BÜYÜK/küçük/Her Kelime harf, iki yana yaslama, kutuda üst/orta/alt
+- Biçim Boyacısı, Bul ve değiştir (Ctrl+H), Simge ekle
 - Metin, QR kod, barkod (Code 128, Code 39, EAN-13), çizgi, kutu (köşesi yuvarlak ya da dolu), elips ve görsel/logo (eşik ve noktalama ayarıyla yazıcı bitmap'ine çevrilir)
 - Fareyle seçme, taşıma ve 8 tutamaçla boyutlandırma, çoklu seçim ve alan seçimi
 - Izgaraya ve diğer öğelere yapışma, kılavuz çizgileri, mm cetvelleri, yakınlaştırma
@@ -103,7 +104,8 @@ Bluetooth LE yazıcı aynı anda yalnızca bir cihaza bağlanır. Bağlanmıyors
 | `Ctrl+S` / `Ctrl+Shift+S` ya da `F12` | Kaydet / farklı kaydet |
 | `Ctrl+O` / `Ctrl+P` | Aç / yazdırma ekranı |
 | Çift tık, `F2`, `Enter` | Seçili metni etiketin üstünde düzenle (`Esc` ile bitir) |
-| `Ctrl+B`, `Ctrl+Shift+>` / `<` | Kalın, büyüt / küçült |
+| `Ctrl+B` `Ctrl+I` `Ctrl+U`, `Ctrl+Shift+>` / `<` | Kalın, italik, altı çizili (yazarken seçili kelimelere), büyüt / küçült |
+| `Ctrl+H` | Bul ve değiştir |
 | `Ctrl` + tekerlek, `+` `-` `0` | Yakınlaştır, sığdır |
 | `Boşluk` + sürükle | Kaydır |
 | `Alt` + sürükle | Yapışmadan taşı |

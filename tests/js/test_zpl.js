@@ -135,4 +135,24 @@ test("fit to box shrinks long text", () => {
   const L2 = Z.layout(Object.assign({}, el, { fit: false }), d, {}); assert.ok(!L2.shrunk);
 });
 
+test("rich text: word formatting, justify, case and vertical align", () => {
+  const d = { w: 80, h: 40, dpi: 300, elements: [] };
+  const plain = { type: "text", x: 0, y: 0, size: 4, widthPct: 90, lineGap: 1.25, text: "abc", caseMode: "upper" };
+  assert.ok(Z.isNative(plain)); assert.ok(Z.elementZPL(plain, d, {}).join("").includes("^FDABC^FS"));
+  assert.strictEqual(Z.caseT("istanbul ılık", "upper"), "İSTANBUL ILIK");
+  assert.strictEqual(Z.caseT("ÇOK GÜZEL iş", "title"), "Çok Güzel İş");
+  const rich = Object.assign({}, plain, { caseMode: "", text: "Kalın ve normal", rich: [{ t: "Kalın", b: true, sz: 6 }, { t: " ve normal" }] });
+  assert.ok(Z.textRaster(rich) && !Z.isNative(rich));
+  const L = Z.layout(Object.assign({}, rich, { rot: 0 }), d, {}, true);
+  assert.ok(L.rich); assert.strictEqual(L.rl.length, 1);
+  const items = L.rl[0].items; assert.strictEqual(items[0].t, "Kalın"); assert.ok(items[0].st.h > items[2].st.h); assert.ok(items[0].st.fake);
+  const j = Object.assign({}, plain, { caseMode: "", align: "justify", wrap: true, boxW: 30, text: "bir iki üç dört beş altı yedi sekiz dokuz on" });
+  const LJ = Z.layout(j, d, {}, true), first = LJ.rl[0], last = first.items[first.items.length - 1];
+  assert.ok(LJ.rl.length > 1); assert.ok(Math.abs(last.x + last.w - LJ.block) < 1, "justified line reaches the box edge");
+  const v = Object.assign({}, plain, { boxH: 20, vAlign: "bottom" });
+  const LV = Z.layout(v, d, {}); assert.ok(LV.vy > 0); assert.ok(Z.elementZPL(v, d, {}).join("").includes("^FO0," + LV.vy));
+  const u = Object.assign({}, plain, { underline: true });
+  assert.ok(!Z.isNative(u)); assert.ok(Z.layout(u, d, {}).raster);
+});
+
 console.log("\n" + n + " tests passed");

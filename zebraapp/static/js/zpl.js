@@ -36,7 +36,18 @@
   var NATIVE = { text: [0, 90, 180, 270], barcode: [0, 90, 180, 270], image: [0, 90, 180, 270], qr: [0],
     line: [0, 90, 180, 270], box: [0, 90, 180, 270], ellipse: [0, 90, 180, 270] };
   function normRot(r) { r = Math.round(+r || 0) % 360; return r < 0 ? r + 360 : r; }
-  function isNative(el) { return (NATIVE[el.type] || [0]).indexOf(normRot(el.rot)) >= 0 && !(el.type === "text" && el.font); }
+  /* Yazicinin kendi yazi tipiyle basilamayan metin ayarlari: bunlar varsa metin bitmap olarak gider */
+  function textRaster(el) {
+    return !!(el.font || (el.rich && el.rich.length) || el.italic || el.underline || el.strike || (+el.spacing) || el.align === "justify");
+  }
+  function isNative(el) { return (NATIVE[el.type] || [0]).indexOf(normRot(el.rot)) >= 0 && !(el.type === "text" && textRaster(el)); }
+  /* Buyuk/kucuk harf (Turkce kurallariyla) */
+  function caseT(str, mode) {
+    if (mode === "upper") return str.toLocaleUpperCase("tr");
+    if (mode === "lower") return str.toLocaleLowerCase("tr");
+    if (mode === "title") return str.toLocaleLowerCase("tr").replace(/(^|[\s\-\/(."'])(\S)/g, function (m, a, b) { return a + b.toLocaleUpperCase("tr"); });
+    return str;
+  }
 
   function wrapLines(lines, h, w, maxW, css, weight) {
     var out = [];
@@ -102,9 +113,10 @@
   function layout(el, doc, rec, local) {
     if (!local && !isNative(el)) return rasterLayout(el, doc, rec);
     var dpi = doc.dpi, x = dots(el.x, dpi), y = dots(el.y, dpi), rot = local ? 0 : normRot(el.rot), L = { x: x, y: y, rot: rot };
+    if (el.type === "text" && textRaster(el)) return richLayout(el, doc, rec, L);
     if (el.type === "text") {
       var css = fontCSS(el.font), weight = el.font ? (el.bold ? 700 : 400) : 700;
-      var block = dots(el.boxW, dpi), limH = dots(el.boxH, dpi), raw = subst(el.text, rec).split("\n").map(clean);
+      var block = dots(el.boxW, dpi), limH = dots(el.boxH, dpi), raw = caseT(subst(el.text, rec), el.caseMode).split("\n").map(clean);
       var lay = function (h) {
         h = Math.max(6, Math.round(h));
         var w = Math.max(6, Math.round(h * (el.widthPct || 90) / 100)), gap = Math.round(h * (el.lineGap || 1.25));
@@ -121,6 +133,7 @@
       var H = Math.max(r.H, limH > 0 ? limH : 0);
       L.kind = "text"; L.lines = r.lines; L.widths = r.widths; L.h = r.h; L.w = r.w; L.gap = r.gap; L.block = block; L.W = W; L.H = H;
       L.css = css; L.weight = weight; L.printerFont = !el.font; L.shrunk = r.h < Math.max(6, dots(el.size, dpi));
+      L.vy = vOffset(el, limH, r.H);
       L.box = rotBox(x, y, W, H, rot);
       return L;
     }
@@ -169,6 +182,83 @@
       return L;
     }
     L.box = { x: x, y: y, w: 1, h: 1 };
+    return L;
+  }
+
+  function vOffset(el, limH, textH) {
+    if (!(limH > textH) || !el.vAlign || el.vAlign === "top") return 0;
+    return Math.round((limH - textH) * (el.vAlign === "bottom" ? 1 : 0.5));
+  }
+
+  /* Zengin metin: kelime kelime kalin/italik/alti cizili/ustu cizili, boyut ve yazi tipi; karakter araligi,
+     iki yana yaslama. Her zaman donmemis (yerel) cizilir, bitmap olarak basilir. */
+  function richLayout(el, doc, rec, L) {
+    var dpi = doc.dpi, sx = Math.max(0.3, Math.min(2, (el.widthPct || 90) / 100));
+    var block = dots(el.boxW, dpi), limH = dots(el.boxH, dpi), gapK = el.lineGap || 1.25;
+    var spD = (+el.spacing || 0) * dpi / 25.4;                      /* karakter araligi, nokta */
+    var base = { b: !!el.bold, i: !!el.italic, u: !!el.underline, s: !!el.strike, sz: +el.size || 4, f: el.font || "" };
+    var src = el.rich && el.rich.length ? el.rich : [{ t: el.text }];
+    var runs = src.map(function (r) {
+      return { t: caseT(clean(subst(r.t, rec)), el.caseMode), b: r.b != null ? !!r.b : base.b, i: r.i != null ? !!r.i : base.i,
+        u: r.u != null ? !!r.u : base.u, s: r.s != null ? !!r.s : base.s, sz: +r.sz || base.sz, f: r.f != null ? r.f : base.f };
+    });
+    function style(r, k) {
+      var h = Math.max(4, r.sz * dpi / 25.4 * k), css = r.f ? fontCSS(r.f) : FONT, weight = r.f ? (r.b ? 700 : 400) : 700;
+      return { h: h, css: css, weight: weight, i: r.i, u: r.u, s: r.s, fake: !r.f && r.b, font: (r.i ? "italic " : "") + weight + " " + h + "px " + css };
+    }
+    var spU = spD / sx;                                              /* olceklenmeden onceki aralik */
+    function width(t, st) { mctx.font = st.font; return (mctx.measureText(t).width + spU * t.length) * sx; }
+    function build(k) {
+      var toks = [];
+      runs.forEach(function (r) {
+        var st = style(r, k);
+        r.t.split(/(\n|[ \t]+)/).forEach(function (piece) {
+          if (piece) toks.push({ t: piece, st: st, nl: piece === "\n", sp: /^[ \t]+$/.test(piece) });
+        });
+      });
+      var lines = [], cur = [], curW = 0, lastSt = style(runs[runs.length - 1] || base, k);
+      function flush(par) { lines.push({ items: cur, w: curW, par: par }); cur = []; curW = 0; }
+      toks.forEach(function (tk) {
+        lastSt = tk.st;
+        if (tk.nl) { flush(true); return; }
+        var w = width(tk.t, tk.st);
+        if (el.wrap && block > 0 && !tk.sp && curW > 0 && curW + w > block + 0.5) {
+          while (cur.length && cur[cur.length - 1].sp) curW -= cur.pop().w;
+          flush(false);
+        }
+        if (tk.sp && !cur.length && lines.length && !lines[lines.length - 1].par) return;   /* kaydirilan satirin basindaki bosluk */
+        cur.push({ t: tk.t, st: tk.st, w: w, sp: tk.sp }); curW += w;
+      });
+      flush(true);
+      var top = 0, maxW = 0, H = 0;
+      lines.forEach(function (ln, i) {
+        ln.h = ln.items.reduce(function (m, it) { return Math.max(m, it.st.h); }, 0) || lastSt.h;
+        if (i) top += lines[i - 1].h * gapK;
+        ln.top = top; H = top + ln.h; maxW = Math.max(maxW, ln.w);
+      });
+      return { lines: lines, maxW: maxW, H: H, k: k };
+    }
+    var r = build(1), guard = 0;
+    if (el.fit && (block > 0 || limH > 0)) {
+      while (guard++ < 80 && r.k > 0.05 && ((block > 0 && r.maxW > block + 0.5) || (limH > 0 && r.H > limH))) r = build(r.k * 0.95);
+    }
+    var W = block > 0 ? block : Math.max(1, r.maxW), H = Math.max(r.H, limH > 0 ? limH : 0);
+    r.lines.forEach(function (ln) {
+      var extra = 0, nsp = 0;
+      if (el.align === "justify" && block > 0 && !ln.par) ln.items.forEach(function (it) { if (it.sp) nsp++; });
+      if (nsp) extra = (W - ln.w) / nsp;
+      ln.x = !block ? 0 : el.align === "center" ? (W - ln.w) / 2 : el.align === "right" ? W - ln.w : 0;
+      var x = 0;
+      ln.items.forEach(function (it) { it.x = x; if (it.sp && nsp) it.w += extra; x += it.w; });
+    });
+    var first = r.lines[0], h0 = first ? first.h : style(base, r.k).h;
+    L.kind = "text"; L.rich = true; L.rl = r.lines; L.sx = sx; L.spU = spU; L.W = W; L.H = H; L.block = block;
+    L.h = Math.round(h0); L.w = Math.round(h0 * sx); L.gap = Math.round(h0 * gapK);
+    L.lines = r.lines.map(function (ln) { return ln.items.map(function (it) { return it.t; }).join(""); });
+    L.widths = r.lines.map(function (ln) { return ln.w; });
+    L.css = base.f ? fontCSS(base.f) : FONT; L.weight = base.f ? (base.b ? 700 : 400) : 700; L.printerFont = !base.f;
+    L.shrunk = r.k < 0.999; L.vy = vOffset(el, limH, r.H);
+    L.box = { x: L.x, y: L.y, w: W, h: H };
     return L;
   }
 
@@ -318,7 +408,7 @@
       L.lines.forEach(function (t, i) {
         if (!t) return;
         var lw = L.block > 0 ? L.block : L.widths[i];
-        var p = mapRect(L.x, L.y, L.W, L.H, L.rot, 0, i * L.gap, lw, L.h);
+        var p = mapRect(L.x, L.y, L.W, L.H, L.rot, 0, (L.vy || 0) + i * L.gap, lw, L.h);
         var fb = L.block > 0 ? "^FB" + L.block + ",1,0," + ({ center: "C", right: "R" }[el.align] || "L") + ",0" : "";
         var fr = el.reverse ? "^FR" : "";
         var f = "^A0" + ori + "," + L.h + "," + L.w + fb + fr + "^FD" + t + "^FS";
@@ -426,7 +516,7 @@
 
   G.Z = {
     dots: dots, layout: layout, elementZPL: elementZPL, docZPL: docZPL, labelZPL: labelZPL, records: records,
-    subst: subst, measure: measure, mapRect: mapRect, normRot: normRot, isNative: isNative, corners: corners, fontCSS: fontCSS, NATIVE: NATIVE, loadImage: loadImage, imageReady: imageReady,
+    subst: subst, measure: measure, mapRect: mapRect, normRot: normRot, textRaster: textRaster, caseT: caseT, isNative: isNative, corners: corners, fontCSS: fontCSS, NATIVE: NATIVE, loadImage: loadImage, imageReady: imageReady,
     bitmap: bitmap, gfa: gfa, compressRow: compressRow, parseCSV: parseCSV, FONT: FONT, ORI: ORI
   };
 })(window);

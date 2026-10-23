@@ -38,7 +38,8 @@
   function blankDoc() { var p = activePrinter(); return { id: uid(), name: __("Adsız etiket"), w: 80, h: 40, dpi: p && p.dpi ? +p.dpi : 300, settings: defaultSettings(), job: defaultJob(), elements: [] }; }
 
   var DEF = {
-    text: { type: "text", text: __("Metin"), size: 4, widthPct: 90, lineGap: 1.25, bold: false, align: "left", boxW: 0, boxH: 0, wrap: false, fit: false, font: "", rot: 0, reverse: false },
+    text: { type: "text", text: __("Metin"), rich: null, size: 4, widthPct: 90, lineGap: 1.25, bold: false, italic: false, underline: false, strike: false, spacing: 0,
+      caseMode: "", align: "left", vAlign: "top", boxW: 0, boxH: 0, wrap: false, fit: false, font: "", rot: 0, reverse: false },
     qr: { type: "qr", data: "https://ornek.com", mag: 5, ec: "M", rot: 0 },
     barcode: { type: "barcode", kind: "code128", data: "123456789012", h: 10, module: 3, ratio: 3, human: true, humanAbove: false, rot: 0 },
     line: { type: "line", dir: "h", len: 30, t: 0.3, rot: 0 },
@@ -426,6 +427,7 @@
       return;
     }
     var i = hitEl(p);
+    if (painter) { if (i >= 0) paintOn(doc.elements[i]); else { setPainter(null); status(""); } schedule(); return; }
     if (i >= 0) {
       var id = doc.elements[i].id;
       if (e.shiftKey || e.ctrlKey || e.metaKey) {
@@ -904,16 +906,31 @@
     var add = function (n) { sec.appendChild(n); };
 
     if (el.type === "text") {
-      add(fText(el, "text", __("İçerik (her satır ayrı)"), true, true));
+      var ct = fText(el, "text", __("İçerik (her satır ayrı)"), true, true);
+      add(ct);
+      if (el.rich) {
+        ct.querySelector("textarea").readOnly = true;
+        add(h("div", { class: "row wrap" }, [
+          h("span", { class: "note", text: __("Kelime kelime biçimli metin: içeriği etiketin üstünde düzenle (çift tıkla).") }),
+          h("button", { type: "button", class: "tb", text: __("Kelime biçimlerini kaldır"), onclick: function () { checkpoint(true); el.rich = null; changed({ inspector: true }); } })
+        ]));
+      }
       add(varChips());
       add(fSelect(el, "font", __("Yazı tipi"), fontOptions(el.font), function () { renderInspector(); updateRibbon(); }));
       if (el.font) add(h("p", { class: "note", text: __("Bu yazı tipi yazıcıya resim olarak gider: ekrandakiyle birebir aynı basılır, ama veri biraz büyür.") }));
       add(r("r2", [fNum(el, "size", __("Yazı yüksekliği"), "0.1", 0.5, 80, "mm"), fNum(el, "widthPct", __("Harf genişliği"), "5", 30, 200, "%")]));
-      add(r("r2", [fNum(el, "lineGap", __("Satır aralığı"), "0.05", 0.8, 4, "×"), fSeg(el, "align", __("Hizalama"), [["left", __("Sol")], ["center", __("Orta")], ["right", __("Sağ")]])]));
+      add(r("r2", [fNum(el, "lineGap", __("Satır aralığı"), "0.05", 0.8, 4, "×"), fNum(el, "spacing", __("Karakter aralığı"), "0.1", -2, 20, "mm")]));
+      add(fSeg(el, "align", __("Hizalama"), [["left", __("Sol")], ["center", __("Orta")], ["right", __("Sağ")], ["justify", __("İki yana")]]));
+      add(r("r2", [fSeg(el, "vAlign", __("Kutuda dikey"), [["top", __("Üst")], ["middle", __("Orta")], ["bottom", __("Alt")]]),
+        fSelect(el, "caseMode", __("Büyük/küçük harf"), [["", __("Yazdığın gibi")], ["upper", __("BÜYÜK")], ["lower", __("küçük")], ["title", __("Her Kelime")]])]));
       add(r("r2", [fNum(el, "boxW", __("Metin kutusu genişliği"), "0.5", 0, 500, "mm"), fNum(el, "boxH", __("Metin kutusu yüksekliği"), "0.5", 0, 500, "mm")]));
       add(fCheck(el, "wrap", __("Kutuya sığmayan satırı alta kaydır")));
       add(fCheck(el, "fit", __("Kutuya sığmazsa yazıyı küçült"), function () { if (el.fit && !(el.boxW > 0) && !(el.boxH > 0)) { el.boxW = r2(Math.max(5, doc.w - 2 * el.x)); renderInspector(); } }));
-      add(r("r2", [fCheck(el, "bold", __("Kalın")), fCheck(el, "reverse", __("Ters baskı (siyah üstüne beyaz)"))]));
+      var stripK = function (k) { return function () { if (el.rich) { var rr = clone(el.rich); rr.forEach(function (x) { delete x[k]; }); setRuns(el, rr); } schedule(); updateRibbon(); }; };
+      add(r("r2", [fCheck(el, "bold", __("Kalın"), stripK("b")), fCheck(el, "italic", __("İtalik"), stripK("i"))]));
+      add(r("r2", [fCheck(el, "underline", __("Altı çizili"), stripK("u")), fCheck(el, "strike", __("Üstü çizili"), stripK("s"))]));
+      add(fCheck(el, "reverse", __("Ters baskı (siyah üstüne beyaz)")));
+      if (Z.textRaster(el) && !el.font) add(h("p", { class: "note", text: __("İtalik, altı/üstü çizili, karakter aralığı, iki yana yaslama ve kelime kelime biçim yazıcının kendi yazı tipinde yok; bu metin resim olarak basılır.") }));
       add(h("p", { class: "note", text: __("Ortalama, sağa yaslama ve sığdırma için kutu genişliği gerekir. Sığdır açıkken uzun yazı her etikette ayrı ayrı küçültülür.") }));
       qsa("[data-seg=align] button", sec).forEach(function (b) {
         b.addEventListener("click", function () {
@@ -1134,10 +1151,13 @@
     if (ctrl && (k === "n" || k === "N")) { e.preventDefault(); newDoc(); return; }
     if (ctrl && (k === "o" || k === "O")) { e.preventDefault(); if ($("modal").hidden) askOpen(); return; }
     if (k === "F12") { e.preventDefault(); saveDoc(true); return; }
+    if (ctrl && (k === "h" || k === "H" || k === "f" || k === "F") && $("modal").hidden && $("bs").hidden) { e.preventDefault(); openFind(); return; }
     if (!$("modal").hidden) { if (k === "Escape") closeModal(); return; }
     if (!$("bs").hidden) { if (k === "Escape" && !typing(e)) closeBackstage(); return; }
     if (typing(e)) { if (k === "Escape") e.target.blur(); return; }
-    if (ctrl && (k === "b" || k === "B")) { e.preventDefault(); toggleText("bold"); return; }
+    if (ctrl && (k === "b" || k === "B")) { e.preventDefault(); fmtToggle("b"); return; }
+    if (ctrl && (k === "i" || k === "I")) { e.preventDefault(); fmtToggle("i"); return; }
+    if (ctrl && (k === "u" || k === "U")) { e.preventDefault(); fmtToggle("u"); return; }
     if (ctrl && e.shiftKey && (k === ">" || k === "<")) { e.preventDefault(); stepSize(k === ">" ? 1 : -1); return; }
     if ((k === "F2" || k === "Enter") && sel.length === 1) {
       var eEl = byId(sel[0]);
@@ -1676,25 +1696,179 @@
     pick(focus || (list[0] ? list[0].id : "new"));
   }
 
-  /* ================= yerinde yazi duzenleme ================= */
-  var ted = $("ted"), editing = null, editDirty = false;
+  /* ================= zengin metin modeli =================
+     el.text: duz metin (her zaman guncel). el.rich: null ya da [{ t, b?, i?, u?, s?, sz?, f? }] parcalari;
+     parcadaki alan yoksa ogenin kendi ayari (bold, italic, underline, strike, size, font) gecerlidir. */
+  var RUNK = ["b", "i", "u", "s", "sz", "f"], PT = 0.352778;
+  var BASEK = { b: "bold", i: "italic", u: "underline", s: "strike", sz: "size", f: "font" };
+  function baseOf(el, k) { var v = el[BASEK[k]]; return k === "sz" ? (+v || 4) : k === "f" ? (v || "") : !!v; }
+  function eff(el, r, k) { return r && r[k] != null ? r[k] : baseOf(el, k); }
+  function same(k, a, b) { return k === "sz" ? Math.abs((+a || 0) - (+b || 0)) < 0.005 : a === b; }
+  function runsOf(el) { return el.rich && el.rich.length ? clone(el.rich) : [{ t: String(el.text == null ? "" : el.text) }]; }
+  function setRuns(el, runs) {
+    var out = [];
+    runs.forEach(function (r) {
+      if (!r.t) return;
+      var n = { t: r.t };
+      RUNK.forEach(function (k) { if (r[k] != null && !same(k, r[k], baseOf(el, k))) n[k] = r[k]; });
+      var last = out[out.length - 1];
+      if (last && RUNK.every(function (k) { return same(k, last[k] == null ? null : last[k], n[k] == null ? null : n[k]); })) last.t += n.t;
+      else out.push(n);
+    });
+    el.text = out.map(function (r) { return r.t; }).join("");
+    el.rich = out.some(function (r) { return RUNK.some(function (k) { return r[k] != null; }); }) ? out : null;
+  }
+  /* parcalari [a, b) araliginda bol; araliktakiler _in ile isaretlenir */
+  function splitRuns(runs, a, b) {
+    var pos = 0, out = [];
+    runs.forEach(function (r) {
+      var s0 = pos, s1 = pos + r.t.length, cuts = [s0, Math.max(s0, Math.min(a, s1)), Math.max(s0, Math.min(b, s1)), s1];
+      pos = s1;
+      for (var i = 0; i < 3; i++) if (cuts[i + 1] > cuts[i]) { var c = clone(r); c.t = r.t.slice(cuts[i] - s0, cuts[i + 1] - s0); c._in = i === 1; out.push(c); }
+    });
+    return out;
+  }
+  function formatRange(el, a, b, fn) {
+    var parts = splitRuns(runsOf(el), a, b);
+    parts.forEach(function (p) { if (p._in) fn(p); delete p._in; });
+    setRuns(el, parts);
+  }
+  function rangeVal(el, a, b, k) {
+    var parts = splitRuns(runsOf(el), a, b).filter(function (p) { return p._in; });
+    if (!parts.length) return { v: baseOf(el, k), mixed: false };
+    var v0 = eff(el, parts[0], k);
+    return { v: v0, mixed: parts.some(function (p) { return !same(k, eff(el, p, k), v0); }) };
+  }
+  /* ogenin tamamina bir ayar: parcalardaki ayni ayarlar silinir */
+  function setBase(el, k, v) {
+    el[BASEK[k]] = v;
+    if (el.rich) { var rr = clone(el.rich); rr.forEach(function (r) { delete r[k]; }); setRuns(el, rr); }
+  }
+
+  /* ================= yerinde yazi duzenleme (etiketin ustunde) ================= */
+  var ted = $("ted"), editing = null, editDirty = false, edSel = null;
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function runCSS(el, r) {
+    var b = eff(el, r, "b"), i = eff(el, r, "i"), u = eff(el, r, "u"), st = eff(el, r, "s"), f = eff(el, r, "f"), sz = eff(el, r, "sz");
+    var dec = [u ? "underline" : "", st ? "line-through" : ""].join(" ").trim() || "none";
+    var css = "font-family:" + (f ? Z.fontCSS(f) : Z.FONT).replace(/"/g, "'") + ";font-weight:" + (f ? (b ? 700 : 400) : 700) +
+      ";font-style:" + (i ? "italic" : "normal") + ";text-decoration:" + dec + ";font-size:" + (sz / (+el.size || 4)) + "em";
+    if (!f && b) css += ";-webkit-text-stroke:0.045em currentColor";
+    return css;
+  }
+  function runsHTML(el) {
+    var out = "";
+    runsOf(el).forEach(function (r) {
+      var ov = {}; RUNK.forEach(function (k) { if (r[k] != null) ov[k] = r[k]; });
+      out += '<span data-r="' + esc(JSON.stringify(ov)) + '" style="' + runCSS(el, r) + '">' + r.t.split("\n").map(esc).join("<br>") + "</span>";
+    });
+    return out + '<br data-f="1">';
+  }
+  /* metindeki sirali "atomlar": metin dugumleri ve satir sonlari (bloklarin sonundaki gorunmez <br> haric) */
+  function isTailBR(br) {
+    for (var n = br; n && n !== ted; n = n.parentNode) {
+      for (var sib = n.nextSibling; sib; sib = sib.nextSibling) {
+        if (sib.nodeType === 3 && sib.nodeValue.length) return false;
+        if (sib.nodeType === 1 && (sib.nodeName === "BR" || sib.textContent.length)) return false;
+      }
+      if (n.parentNode && /^(DIV|P)$/.test(n.parentNode.nodeName) && n.parentNode !== ted) return true;
+    }
+    return true;
+  }
+  function atoms() {
+    var list = [];
+    (function walk(node) {
+      Array.prototype.forEach.call(node.childNodes, function (c) {
+        if (c.nodeType === 3) { if (c.nodeValue.length) list.push({ node: c, len: c.nodeValue.length, kind: "t" }); }
+        else if (c.nodeName === "BR") { if (!isTailBR(c)) list.push({ node: c, len: 1, kind: "br" }); }
+        else if (c.nodeType === 1) {
+          if (/^(DIV|P)$/.test(c.nodeName) && list.length && list[list.length - 1].kind !== "br") list.push({ node: c, len: 1, kind: "blk" });
+          walk(c);
+        }
+      });
+    })(ted);
+    return list;
+  }
+  function ovOf(node) {
+    for (var n = node; n && n !== ted; n = n.parentNode) if (n.nodeType === 1 && n.dataset && n.dataset.r) { try { return JSON.parse(n.dataset.r); } catch (e) { return {}; } }
+    return {};
+  }
+  function domRuns() {
+    var runs = [];
+    atoms().forEach(function (a) {
+      var t = a.kind === "t" ? a.node.nodeValue.replace(/ /g, " ").replace(/​/g, "") : "\n";
+      var ov = ovOf(a.kind === "t" ? a.node.parentNode : a.node.parentNode), last = runs[runs.length - 1];
+      var n = Object.assign({ t: t }, ov);
+      if (last && RUNK.every(function (k) { return last[k] === n[k]; })) last.t += t; else runs.push(n);
+    });
+    return runs;
+  }
+  function pointOffset(container, offset) {
+    var r = document.createRange(); r.setStart(container, offset);
+    var acc = 0, list = atoms();
+    for (var i = 0; i < list.length; i++) {
+      var a = list[i];
+      if (a.kind === "t" && a.node === container) return acc + offset;
+      var p = a.kind === "t" ? [a.node, 0] : [a.node.parentNode, Array.prototype.indexOf.call(a.node.parentNode.childNodes, a.node)];
+      if (a.kind === "blk") p = [a.node, 0];
+      if (r.comparePoint(p[0], p[1]) > 0) return acc;
+      acc += a.len;
+    }
+    return acc;
+  }
+  function getOffsets() {
+    var sl = window.getSelection(); if (!sl.rangeCount) return null;
+    var rg = sl.getRangeAt(0); if (!ted.contains(rg.startContainer)) return null;
+    var a = pointOffset(rg.startContainer, rg.startOffset), b = pointOffset(rg.endContainer, rg.endOffset);
+    return { a: Math.min(a, b), b: Math.max(a, b) };
+  }
+  function pointAt(pos) {
+    var acc = 0, list = atoms(), lastT = null;
+    for (var i = 0; i < list.length; i++) {
+      var a = list[i];
+      if (a.kind === "t") { lastT = a; if (pos <= acc + a.len) return [a.node, pos - acc]; }
+      else if (pos <= acc) {
+        if (a.kind === "br") return [a.node.parentNode, Array.prototype.indexOf.call(a.node.parentNode.childNodes, a.node)];
+        return [a.node, 0];
+      }
+      acc += a.len;
+      if (a.kind === "br" && pos === acc) return [a.node.parentNode, Array.prototype.indexOf.call(a.node.parentNode.childNodes, a.node) + 1];
+    }
+    return lastT ? [lastT.node, lastT.len] : [ted, 0];
+  }
+  function setOffsets(a, b) {
+    try {
+      var p = pointAt(a), q = pointAt(b), rg = document.createRange();
+      rg.setStart(p[0], p[1]); rg.setEnd(q[0], q[1]);
+      var sl = window.getSelection(); sl.removeAllRanges(); sl.addRange(rg);
+      edSel = { a: a, b: b };
+    } catch (e) { /* secim geri yuklenemedi */ }
+  }
+  document.addEventListener("selectionchange", function () { if (editing && document.activeElement === ted) edSel = getOffsets() || edSel; });
+
   function startEdit(el, selectAll) {
     if (!el || el.type !== "text" || el.locked) return;
     if (editing && editing !== el) finishEdit();
     if (!$("bs").hidden) closeBackstage();
     editing = el; editDirty = false;
     sel = [el.id]; selectionChanged();
-    ted.value = el.text || "";
+    ted.innerHTML = runsHTML(el);
     ted.hidden = false;
     positionEditor();
     ted.focus();
-    if (selectAll) ted.select(); else ted.selectionStart = ted.selectionEnd = ted.value.length;
-    status(__("Yazıyı düzenliyorsun. Bitirmek için Esc'ye bas ya da dışarı tıkla."));
+    var n = (el.text || "").length;
+    if (selectAll) setOffsets(0, n); else setOffsets(n, n);
+    status(__("Yazıyı düzenliyorsun: seçtiğin kelimelere Giriş sekmesinden biçim verebilirsin. Bitirmek için Esc ya da dışarı tıkla."));
     schedule();
   }
   function finishEdit() {
     if (!editing) return;
-    var el = editing; editing = null; ted.hidden = true;
+    var el = editing; editing = null; ted.hidden = true; edSel = null;
+    if (byId(el.id)) {
+      var rr = runsOf(el);                                        /* sondaki bos satirlari at */
+      while (rr.length && /\n$/.test(rr[rr.length - 1].t)) { rr[rr.length - 1].t = rr[rr.length - 1].t.replace(/\n+$/, ""); if (!rr[rr.length - 1].t) rr.pop(); }
+      setRuns(el, rr);
+    }
     if (byId(el.id) && !String(el.text || "").trim()) {
       if (!editDirty) checkpoint(true);
       doc.elements = doc.elements.filter(function (x) { return x.id !== el.id; });
@@ -1703,35 +1877,40 @@
     status("");
     schedule();
   }
+  function rerenderEditor(r) {
+    if (!editing) return;
+    ted.innerHTML = runsHTML(editing);
+    positionEditor(); ted.focus();
+    if (r) setOffsets(r.a, r.b);
+  }
   function positionEditor() {
     if (!editing || ted.hidden) return;
     var el = editing, S = s();
     if (!byId(el.id)) { editing = null; ted.hidden = true; return; }
-    var FL = Z.layout(el, doc, {}), L = FL.raster ? FL.local.L : FL, sx = L.w / L.h;
-    var fontPx = L.h * S, gapPx = Math.max(L.gap, L.h) * S;
-    var wDots = L.block > 0 ? L.block : L.W + L.h * 0.7;
-    var hDots = (L.lines.length - 1) * Math.max(L.gap, L.h) + L.h;
-    var lead = Math.max(0, (gapPx - fontPx * 1.17) / 2);          /* CSS satir kutusundaki ust bosluk */
-    var wCss = Math.max(fontPx, wDots * S / sx), hCss = Math.max(gapPx, hDots * S + lead * 2);
-    ted.style.fontFamily = L.css || Z.FONT;
-    ted.style.fontWeight = String(L.weight || 700);
-    ted.style.fontSize = fontPx + "px";
-    ted.style.lineHeight = gapPx + "px";
-    ted.style.width = wCss + "px";
-    ted.style.height = hCss + "px";
+    var FL = Z.layout(el, doc, {}), L = FL.raster ? FL.local.L : FL, sx = (el.widthPct || 90) / 100;
+    var basePx = Math.max(4, d(+el.size || 4)) * S, gapK = el.lineGap || 1.25;
+    var lead = Math.max(0, (basePx * gapK - basePx * 1.17) / 2);
+    var b = eff(el, null, "b"), f = eff(el, null, "f");
+    ted.style.fontFamily = f ? Z.fontCSS(f) : Z.FONT;
+    ted.style.fontWeight = String(f ? (b ? 700 : 400) : 700);
+    ted.style.fontStyle = el.italic ? "italic" : "normal";
+    ted.style.textDecoration = [el.underline ? "underline" : "", el.strike ? "line-through" : ""].join(" ").trim() || "none";
+    ted.style.fontSize = basePx + "px";
+    ted.style.lineHeight = String(gapK);
+    ted.style.letterSpacing = ((+el.spacing || 0) * doc.dpi / 25.4 / sx * S) + "px";
+    ted.style.width = L.block > 0 ? (L.block * S / sx) + "px" : "auto";
+    ted.style.minHeight = basePx + "px";
     ted.style.textAlign = L.block > 0 ? (el.align || "left") : "left";
+    ted.style.textTransform = { upper: "uppercase", lower: "lowercase", title: "capitalize" }[el.caseMode] || "none";
     ted.classList.toggle("wrap", !!(el.wrap && L.block > 0));
     ted.classList.toggle("rev", !!el.reverse);
-    var top0 = -fontPx * 0.06 - lead;
-    if (FL.raster) {
-      /* donmus metin: kutunun merkezine yerlestir ve ayni aciyla dondur */
+    var top0 = -basePx * 0.06 - lead + (L.vy || 0) * S;
+    ted.style.transformOrigin = "0 0";
+    if (FL.raster && FL.angle) {
       var cx = origin.x + (d(el.x) + FL.box.w / 2) * S, cy = origin.y + (d(el.y) + FL.box.h / 2) * S;
-      var lw = L.box.w * S, lh = L.box.h * S;
-      ted.style.transformOrigin = "0 0";
       ted.style.left = cx + "px"; ted.style.top = cy + "px";
-      ted.style.transform = "rotate(" + FL.angle + "deg) translate(" + (-lw / 2) + "px," + (-lh / 2 + top0) + "px) scaleX(" + sx + ")";
+      ted.style.transform = "rotate(" + FL.angle + "deg) translate(" + (-L.box.w * S / 2) + "px," + (-L.box.h * S / 2 + top0) + "px) scaleX(" + sx + ")";
     } else {
-      ted.style.transformOrigin = "0 0";
       ted.style.left = Math.round(origin.x + d(el.x) * S) + "px";
       ted.style.top = Math.round(origin.y + d(el.y) * S + top0) + "px";
       ted.style.transform = "scaleX(" + sx + ")";
@@ -1740,15 +1919,35 @@
   ted.addEventListener("input", function () {
     if (!editing) return;
     if (!editDirty) { checkpoint(true); editDirty = true; } else { dirty = true; updateTitle(); }
-    editing.text = ted.value;
+    setRuns(editing, domRuns());
     changed({ layers: true, inspectorValues: true });
     positionEditor();
   });
-  ted.addEventListener("blur", function () { finishEdit(); });
+  ted.addEventListener("blur", function () {
+    setTimeout(function () {
+      if (!editing) return;
+      var a = document.activeElement;
+      if (a === ted || (a && a.closest && a.closest(".ribbon, .popm, #modal"))) return;   /* seritte bir ayar degistiriliyor */
+      finishEdit();
+    }, 0);
+  });
+  /* duzenleyicinin, seridin ve acilir menulerin disina tiklaninca duzenleme biter */
+  document.addEventListener("mousedown", function (e) {
+    if (editing && !e.target.closest("#ted, .ribbon, .rtabs, .popm, #modal")) finishEdit();
+  }, true);
+  ted.addEventListener("paste", function (e) {
+    e.preventDefault();
+    var t = (e.clipboardData && e.clipboardData.getData("text/plain")) || "";
+    t.replace(/\r/g, "").split("\n").forEach(function (line, i) { if (i) document.execCommand("insertLineBreak"); if (line) document.execCommand("insertText", false, line); });
+  });
   ted.addEventListener("keydown", function (e) {
-    var ctrl = e.ctrlKey || e.metaKey;
-    if (ctrl && (e.key === "b" || e.key === "B")) { e.preventDefault(); toggleText("bold"); }
-    else if (ctrl && e.shiftKey && (e.key === ">" || e.key === "<")) { e.preventDefault(); stepSize(e.key === ">" ? 1 : -1); }
+    var ctrl = e.ctrlKey || e.metaKey, k = e.key;
+    if (k === "Enter" && !ctrl) { e.preventDefault(); document.execCommand("insertLineBreak"); return; }
+    if (k === "Escape") { e.preventDefault(); finishEdit(); ted.blur(); return; }
+    if (ctrl && (k === "b" || k === "B")) { e.preventDefault(); fmtToggle("b"); }
+    else if (ctrl && (k === "i" || k === "I")) { e.preventDefault(); fmtToggle("i"); }
+    else if (ctrl && (k === "u" || k === "U")) { e.preventDefault(); fmtToggle("u"); }
+    else if (ctrl && e.shiftKey && (k === ">" || k === "<")) { e.preventDefault(); stepSize(k === ">" ? 1 : -1); }
   });
 
   /* ================= serit (ribbon) ================= */
@@ -1771,10 +1970,30 @@
   });
   if (ls("ribbon") === "0") document.body.classList.add("rcollapsed");
   document.addEventListener("mousedown", function (e) {
-    if (document.body.classList.contains("rpeek") && !e.target.closest(".ribbon, .rtabs")) document.body.classList.remove("rpeek");
+    if (document.body.classList.contains("rpeek") && !e.target.closest(".ribbon, .rtabs, .popm")) document.body.classList.remove("rpeek");
   });
-  /* seritteki dugmeler, duzenlenen yazidan odagi almasin */
+  /* seritteki dugmeler, duzenlenen yazidan odagi ve secimi almasin */
   $("ribbon").addEventListener("mousedown", function (e) { if (editing && e.target.closest("button")) e.preventDefault(); });
+
+  /* kucuk acilir menu (serit kaydirilabildigi icin govdeye eklenir) */
+  var popEl = null;
+  function closePop() { if (popEl) { popEl.remove(); popEl = null; } }
+  function popMenu(anchor, items, grid) {
+    closePop();
+    var m = h("div", { class: "popm" + (grid ? " grid" : "") });
+    items.forEach(function (it) {
+      if (it.head) { m.appendChild(h("div", { class: "ph", text: it.head })); return; }
+      m.appendChild(h("button", { type: "button", text: it.label, title: it.title || "", onclick: function () { closePop(); it.run(); } }));
+    });
+    m.addEventListener("mousedown", function (e) { e.preventDefault(); });
+    document.body.appendChild(m);
+    var r = anchor.getBoundingClientRect();
+    m.style.left = Math.max(8, Math.min(window.innerWidth - m.offsetWidth - 8, r.left)) + "px";
+    m.style.top = (r.bottom + 4) + "px";
+    popEl = m;
+  }
+  document.addEventListener("mousedown", function (e) { if (popEl && !e.target.closest(".popm")) closePop(); });
+  window.addEventListener("keydown", function (e) { if (popEl && e.key === "Escape") closePop(); }, true);
 
   function textSel() { return selEls().filter(function (e) { return e.type === "text"; }); }
   function autoBox(el) { if (!(el.boxW > 0)) el.boxW = r2(Math.max(5, doc.w - 2 * el.x)); }
@@ -1784,36 +2003,116 @@
     if (editing) editDirty = true;
     els.forEach(fn);
     changed({ layers: true, inspector: true });
-    positionEditor();
+    if (editing) rerenderEditor(edSel);
+  }
+  /* duzenlenen yazida secim varsa sadece secime uygula; yoksa ogelerin tamamina */
+  function editRange() {
+    if (!editing) return null;
+    var r = (document.activeElement === ted ? getOffsets() : null) || edSel;   /* canli secim; odak seritteyse son bilinen secim */
+    return r && r.b > r.a ? r : null;
+  }
+  function fmtRange(fn) {
+    var r = editRange(); if (!r) return false;
+    checkpoint(true); editDirty = true;
+    formatRange(editing, r.a, r.b, fn);
+    changed({ layers: true, inspector: true });
+    rerenderEditor(r);
+    return true;
+  }
+  function fmtToggle(k) {
+    var r = editRange();
+    if (r) { var st = rangeVal(editing, r.a, r.b, k), v = !(st.v && !st.mixed); fmtRange(function (p) { p[k] = v; }); return; }
+    var els = textSel(); if (!els.length) return;
+    var nv = !baseOf(els[0], k);
+    applyText(function (el) { setBase(el, k, nv); });
+  }
+  function fmtSet(k, v) {
+    if (fmtRange(function (p) { p[k] = v; })) return;
+    applyText(function (el) { setBase(el, k, v); });
   }
   function toggleText(key) {
+    var map = { bold: "b", italic: "i", underline: "u", strike: "s" };
+    if (map[key]) { fmtToggle(map[key]); return; }
     var els = textSel(); if (!els.length) return;
     var v = !els[0][key];
     applyText(function (el) { el[key] = v; if ((key === "wrap" || key === "fit") && v && !(key === "fit" && el.boxH > 0)) autoBox(el); });
   }
-  var SIZES = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 10, 12, 15, 20, 25, 30, 40, 50, 60, 80];
+  var PTS = [5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 40, 48, 54, 60, 72, 80, 96, 120, 144, 180, 230];
+  function nextPt(mmV, dir) {
+    var pt = mmV / PT, i;
+    if (dir > 0) { for (i = 0; i < PTS.length; i++) if (PTS[i] > pt + 0.05) return PTS[i] * PT; return mmV; }
+    for (i = PTS.length - 1; i >= 0; i--) if (PTS[i] < pt - 0.05) return PTS[i] * PT;
+    return mmV;
+  }
   function stepSize(dir) {
+    if (fmtRange(function (p) { p.sz = r2(nextPt(eff(editing, p, "sz"), dir)); })) return;
     applyText(function (el) {
-      var cur = +el.size || 4, next = cur;
-      if (dir > 0) { for (var i = 0; i < SIZES.length; i++) if (SIZES[i] > cur + 0.01) { next = SIZES[i]; break; } }
-      else { for (var j = SIZES.length - 1; j >= 0; j--) if (SIZES[j] < cur - 0.01) { next = SIZES[j]; break; } }
-      el.size = next;
+      var cur = +el.size || 4, nx = r2(nextPt(cur, dir)), k = nx / cur;
+      el.size = nx;
+      if (el.rich) { var rr = clone(el.rich); rr.forEach(function (r) { if (r.sz) r.sz = r2(r.sz * k); }); setRuns(el, rr); }
     });
   }
-  $("fSize").addEventListener("input", function () { var v = parseFloat(this.value); if (v > 0) applyText(function (el) { el.size = clamp(v, 0.5, 80); }, true); });
+  function ptOf(mmV) { return Math.round(mmV / PT * 2) / 2; }
+  $("fSize").addEventListener("change", function () {
+    var v = parseFloat(this.value); if (!(v > 0)) return;
+    fmtSet("sz", r2(clamp(v, 2, 230) * PT));
+  });
+  $("fSize").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();   /* Enter, odak duzenleyiciye gecince secili yaziyi silmesin */
+    var inp = this; setTimeout(function () { inp.dispatchEvent(new Event("change")); }, 0);
+  });
+  $("fFont").addEventListener("change", function () { fmtSet("f", this.value); });
   $("fWidth").addEventListener("input", function () { var v = parseFloat(this.value); if (v > 0) applyText(function (el) { el.widthPct = clamp(v, 30, 200); }, true); });
+  $("fSpace").addEventListener("input", function () { var v = parseFloat(this.value); if (isFinite(v)) applyText(function (el) { el.spacing = clamp(v, -2, 20); }, true); });
   $("fBoxW").addEventListener("input", function () { var v = parseFloat(this.value); if (v >= 0) applyText(function (el) { el.boxW = clamp(v, 0, 500); }, true); });
   $("fBoxH").addEventListener("input", function () { var v = parseFloat(this.value); if (v >= 0) applyText(function (el) { el.boxH = clamp(v, 0, 500); }, true); });
-  $("fFont").addEventListener("change", function () { var v = this.value; applyText(function (el) { el.font = v; }); });
   $("fFit").addEventListener("click", function () { toggleText("fit"); });
   $("fGap").addEventListener("change", function () { var v = +this.value; applyText(function (el) { el.lineGap = v; }); });
   $("fGrow").addEventListener("click", function () { stepSize(1); });
   $("fShrink").addEventListener("click", function () { stepSize(-1); });
-  $("fBold").addEventListener("click", function () { toggleText("bold"); });
+  $("fBold").addEventListener("click", function () { fmtToggle("b"); });
+  $("fItalic").addEventListener("click", function () { fmtToggle("i"); });
+  $("fUnder").addEventListener("click", function () { fmtToggle("u"); });
+  $("fStrike").addEventListener("click", function () { fmtToggle("s"); });
   $("fRev").addEventListener("click", function () { toggleText("reverse"); });
   $("fWrap").addEventListener("click", function () { toggleText("wrap"); });
   qsa("[data-falign]").forEach(function (b) {
     b.addEventListener("click", function () { var a = b.dataset.falign; applyText(function (el) { el.align = a; if (a !== "left") autoBox(el); }); });
+  });
+  qsa("[data-fvalign]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var a = b.dataset.fvalign;
+      applyText(function (el) {
+        el.vAlign = a;
+        if (a !== "top" && !(el.boxH > 0)) { var L = Z.layout(Object.assign({}, el, { rot: 0 }), doc, currentRec()); el.boxH = r2(Math.max(5, mm(L.H) * 1.6)); }
+      });
+    });
+  });
+  /* buyuk/kucuk harf: secimde metnin kendisi degisir ({ALAN} adlarina dokunulmaz); secim yoksa gorunum ayari */
+  function caseText(t, mode) {
+    return t.split(/(\{[^{}]*\})/).map(function (part) { return /^\{[^{}]*\}$/.test(part) ? part : Z.caseT(part, mode); }).join("");
+  }
+  $("fCase").addEventListener("click", function () {
+    var btn = this;
+    function run(mode) {
+      if (fmtRange(function (p) { p.t = caseText(p.t, mode); })) return;
+      applyText(function (el) { el.caseMode = mode === "none" ? "" : mode; });
+    }
+    popMenu(btn, [
+      { label: __("Normal (yazdığın gibi)"), run: function () { run("none"); } },
+      { label: __("BÜYÜK HARF"), run: function () { run("upper"); } },
+      { label: __("küçük harf"), run: function () { run("lower"); } },
+      { label: __("Her Kelimenin İlk Harfi Büyük"), run: function () { run("title"); } }
+    ]);
+  });
+  $("fClear").addEventListener("click", function () {
+    if (fmtRange(function (p) { RUNK.forEach(function (k) { delete p[k]; }); })) return;
+    applyText(function (el) {
+      el.rich = null; el.bold = false; el.italic = false; el.underline = false; el.strike = false; el.font = "";
+      el.spacing = 0; el.caseMode = ""; el.widthPct = 90; el.reverse = false;
+    });
+    status(__("Biçimlendirme temizlendi."));
   });
 
   function setIf(id, v) { var e = $(id); if (document.activeElement !== e) e.value = v == null ? "" : v; }
@@ -1822,26 +2121,38 @@
     var ts = textSel(), on = ts.length > 0, t = ts[0], n = sel.length;
     qsa("#gFont button, #gFont input, #gFont select, #gPara button, #gPara input, #gPara select").forEach(function (x) { x.disabled = !on; });
     qsa("#gFont .rin, #gPara .rin").forEach(function (x) { x.classList.toggle("dis", !on); });
+    /* duzenlenen yazida secim varsa dugmeler secimin durumunu gosterir */
+    var r = editing && t === editing ? editRange() : null;
+    function val(k) { if (!on) return null; if (r) { var st = rangeVal(t, r.a, r.b, k); return st.mixed ? null : st.v; } var rv = rangeVal(t, 0, (t.text || "").length, k); return rv.mixed ? null : rv.v; }
     if (on) {
-      setIf("fSize", t.size); setIf("fWidth", t.widthPct); setIf("fBoxW", t.boxW); setIf("fBoxH", t.boxH);
-      if (document.activeElement !== $("fFont")) fillFontSel();
+      var szv = val("sz");
+      setIf("fSize", szv == null ? "" : ptOf(szv)); setIf("fWidth", t.widthPct); setIf("fSpace", +t.spacing || 0);
+      setIf("fBoxW", t.boxW); setIf("fBoxH", t.boxH);
+      if (document.activeElement !== $("fFont")) { fillFontSel(); var fv = val("f"); $("fFont").value = fv == null ? "" : fv; }
       var best = "1.25", diff = 99;
       qsa("#fGap option").forEach(function (o) { var dd = Math.abs(+o.value - (+t.lineGap || 1.25)); if (dd < diff) { diff = dd; best = o.value; } });
       $("fGap").value = best;
-    } else { setIf("fSize", ""); setIf("fWidth", ""); setIf("fBoxW", ""); setIf("fBoxH", ""); $("fFont").value = ""; }
+    } else { setIf("fSize", ""); setIf("fWidth", ""); setIf("fSpace", ""); setIf("fBoxW", ""); setIf("fBoxH", ""); $("fFont").value = ""; }
+    $("fBold").classList.toggle("on", val("b") === true);
+    $("fItalic").classList.toggle("on", val("i") === true);
+    $("fUnder").classList.toggle("on", val("u") === true);
+    $("fStrike").classList.toggle("on", val("s") === true);
     $("fFit").classList.toggle("on", !!(on && t.fit));
-    $("fBold").classList.toggle("on", !!(on && t.bold));
     $("fRev").classList.toggle("on", !!(on && t.reverse));
     $("fWrap").classList.toggle("on", !!(on && t.wrap));
     qsa("[data-falign]").forEach(function (b) { b.classList.toggle("on", !!(on && (t.align || "left") === b.dataset.falign)); });
+    qsa("[data-fvalign]").forEach(function (b) { b.classList.toggle("on", !!(on && (t.vAlign || "top") === b.dataset.fvalign)); });
     $("rPaste").disabled = !clipboard;
     qsa("#rCut, #rCopy, #dupBtn, #delBtn, #toFront, #toBack, #rLock, #rHide, [data-al]").forEach(function (b) { b.disabled = n === 0; });
+    $("rFmt").disabled = n !== 1 && !painter;
+    $("rFmt").classList.toggle("on", !!painter);
     $("rRotate").disabled = !selEls().some(function (e) { return !e.locked; });
     $("rEditText").disabled = !(n === 1 && on);
     var els = selEls(), allLocked = els.length && els.every(function (e) { return e.locked; }), allHid = els.length && els.every(function (e) { return e.hidden; });
     $("rLock").querySelector("span").textContent = allLocked ? __("Kilidi aç") : __("Kilitle");
     $("rHide").querySelector("span").textContent = allHid ? __("Göster") : __("Gizle");
   }
+  document.addEventListener("selectionchange", function () { if (editing) updateRibbon(); });
   $("rPaste").addEventListener("click", function () { paste(); updateRibbon(); });
   $("rCopy").addEventListener("click", function () { copySel(); updateRibbon(); });
   $("rCut").addEventListener("click", function () { copySel(); deleteSel(); updateRibbon(); });
@@ -1860,11 +2171,110 @@
     checkpoint(true); els.forEach(function (e) { e.hidden = v; }); changed({ layers: true, inspector: true });
   });
 
-  /* {SAYAC} gibi alanlari ekle */
+  /* ---------- Bicim Boyacisi ---------- */
+  var painter = null;
+  var PAINT = { text: ["font", "size", "bold", "italic", "underline", "strike", "widthPct", "spacing", "lineGap", "align", "vAlign", "caseMode", "reverse", "wrap", "fit"],
+    box: ["t", "filled", "round", "reverse"], ellipse: ["t", "filled", "reverse"], line: ["t"],
+    barcode: ["kind", "h", "module", "ratio", "human", "humanAbove"], qr: ["mag", "ec"], image: ["threshold", "dither", "invert"] };
+  function setPainter(p) { painter = p; cv.classList.toggle("painter", !!p); updateRibbon(); }
+  function pickPainter(sticky) {
+    var el = selEls()[0]; if (!el) return;
+    var props = {}; (PAINT[el.type] || []).forEach(function (k) { props[k] = clone(el[k] === undefined ? null : el[k]); });
+    setPainter({ type: el.type, props: props, sticky: !!sticky });
+    status(__("Biçim Boyacısı: biçimi uygulamak için aynı türden bir öğeye tıkla. Bitirmek için Esc."));
+  }
+  $("rFmt").addEventListener("click", function () { if (painter && !painter.sticky) { setPainter(null); status(""); } else pickPainter(false); });
+  $("rFmt").addEventListener("dblclick", function () { pickPainter(true); });
+  function paintOn(el) {
+    if (!painter || el.type !== painter.type) { status(__("Biçim Boyacısı yalnızca aynı türden öğelere uygulanır."), true); return; }
+    checkpoint(true);
+    Object.keys(painter.props).forEach(function (k) { if (painter.props[k] !== null) el[k] = clone(painter.props[k]); });
+    if (el.type === "text" && el.rich) { var rr = clone(el.rich); rr.forEach(function (r) { RUNK.forEach(function (k) { delete r[k]; }); }); setRuns(el, rr); }
+    if (!painter.sticky) { setPainter(null); status(__("Biçim uygulandı.")); }
+    changed({ layers: true, inspector: true });
+  }
+  window.addEventListener("keydown", function (e) { if (painter && e.key === "Escape") { setPainter(null); status(""); } }, true);
+
+  /* ---------- Bul ve degistir ---------- */
+  function openFind() {
+    if (editing) finishEdit();
+    var fi = h("input", { type: "text" }), ri = h("input", { type: "text" }), mc = h("input", { type: "checkbox" }), out = h("p", { class: "note", role: "status" });
+    var cur = textSel()[0]; if (cur && window.getSelection && String(window.getSelection())) fi.value = String(window.getSelection());
+    function rx() {
+      var q = fi.value; if (!q) return null;
+      return new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), mc.checked ? "g" : "gi");
+    }
+    function count() {
+      var re = rx(); if (!re) { out.textContent = ""; return 0; }
+      var n = 0;
+      doc.elements.forEach(function (el) { var t = el.type === "text" ? el.text : (el.type === "qr" || el.type === "barcode") ? el.data : ""; n += (String(t || "").match(re) || []).length; });
+      out.textContent = n ? __("{n} yerde bulundu.").replace("{n}", n) : __("Bulunamadı.");
+      return n;
+    }
+    function replaceAll() {
+      var re = rx(); if (!re || !count()) return;
+      checkpoint(true);
+      var n = 0, rep = ri.value;
+      doc.elements.forEach(function (el) {
+        if (el.type === "text") {
+          var rr = runsOf(el);
+          rr.forEach(function (r) { r.t = r.t.replace(re, function () { n++; return rep; }); });
+          setRuns(el, rr);
+        } else if (el.type === "qr" || el.type === "barcode") {
+          el.data = String(el.data || "").replace(re, function () { n++; return rep; });
+        }
+      });
+      changed({ layers: true, inspector: true });
+      out.textContent = __("{n} yerde değiştirildi.").replace("{n}", n);
+    }
+    function selectHits() {
+      var re = rx(); if (!re) return;
+      sel = doc.elements.filter(function (el) { var t = el.type === "text" ? el.text : el.data; return re.test(String(t || "")); }).map(function (el) { return el.id; });
+      selectionChanged(); schedule(); count();
+    }
+    fi.addEventListener("input", count); mc.addEventListener("change", count);
+    fi.addEventListener("keydown", function (e) { if (e.key === "Enter") selectHits(); });
+    openModal(__("Bul ve değiştir"), [h("div", { class: "findbox" }, [
+      h("label", {}, [document.createTextNode(__("Aranan")), fi]),
+      h("label", {}, [document.createTextNode(__("Yeni metin")), ri]),
+      h("label", { class: "chk" }, [mc, document.createTextNode(__("Büyük/küçük harfe dikkat et"))]),
+      h("div", { class: "row wrap" }, [
+        h("button", { type: "button", class: "tb", text: __("Bul ve seç"), onclick: selectHits }),
+        h("button", { type: "button", class: "tb primary", text: __("Tümünü değiştir"), onclick: replaceAll })
+      ]),
+      out,
+      h("p", { class: "note", text: __("Metinlerde, QR kodlarda ve barkodlarda arar. Kelime kelime biçim korunur, ama birden çok biçime bölünmüş bir ifade bulunamayabilir.") })
+    ])]);
+    setTimeout(function () { fi.focus(); fi.select(); }, 0);
+  }
+  $("rFind").addEventListener("click", openFind);
+
+  /* ---------- Simge ekle ---------- */
+  var SYMBOLS = [
+    [__("Sık kullanılanlar"), "° ± × ÷ € ₺ $ £ © ® ™ § • … – — ½ ¼ ¾ ² ³ µ Ω ‰"],
+    [__("Oklar ve işaretler"), "← → ↑ ↓ ↔ ⇒ ✓ ✗ ☐ ☑ ★ ☆ ♥ ⚠ ♻ ☎ ✉ ⌀ ∞ ≈ ≠ ≤ ≥ √"],
+    [__("Tırnak ve harfler"), "« » ‹ › “ ” ‘ ’ „ ¡ ¿ Ç ç Ğ ğ İ ı Ö ö Ş ş Ü ü ß é è"]
+  ];
+  $("rSym").addEventListener("click", function () {
+    var items = [];
+    SYMBOLS.forEach(function (g) {
+      items.push({ head: g[0] });
+      g[1].split(" ").forEach(function (ch) { items.push({ label: ch, run: function () { insertToken(ch); symbolWarn(ch); } }); });
+    });
+    popMenu(this, items, true);
+  });
+  function symbolWarn(ch) {
+    var t = textSel()[0];
+    if (t && !eff(t, null, "f") && ch.charCodeAt(0) > 0x24f) status(__("Bu simge yazıcının kendi yazı tipinde olmayabilir. Basılmazsa metne bir bilgisayar yazı tipi seç."));
+  }
+
+  /* {SAYAC} gibi alanlari ve simgeleri ekle */
   function insertToken(tok) {
     if (editing) {
-      var st = ted.selectionStart, en = ted.selectionEnd;
-      ted.setRangeText(tok, st, en, "end"); ted.dispatchEvent(new Event("input")); ted.focus(); return;
+      ted.focus();
+      if (edSel) setOffsets(edSel.a, edSel.b);
+      document.execCommand("insertText", false, tok);
+      return;
     }
     if (lastContentField && document.activeElement === lastContentField.inp) { insertVar(tok); return; }
     var els = selEls();
@@ -2006,6 +2416,7 @@
     fetch("/api/ping").catch(function () {});
     openBackstage("home");
     loadFonts();
+    if (window.I18N && window.I18N.lang === "en") $("fUnder").innerHTML = "<u>U</u>";
     if (!settings.printers.length) setTimeout(function () { status(__("Başlamak için sağ üstten bir yazıcı ekle.")); }, 300);
   }
   var fontsReady = document.fonts && document.fonts.load ? Promise.all([

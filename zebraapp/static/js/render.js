@@ -25,7 +25,42 @@
     ctx.closePath();
   }
 
+  function drawRich(ctx, el, L) {
+    ctx.save();
+    ctx.translate(L.box.x, L.box.y + (L.vy || 0));
+    ctx.textBaseline = "top";
+    L.rl.forEach(function (ln) {
+      ln.items.forEach(function (it) {
+        var st = it.st;
+        if (it.sp && !st.u && !st.s) return;
+        ctx.save();
+        ctx.translate(ln.x + it.x, ln.top + (ln.h - st.h) * 0.8 - st.h * 0.06);
+        ctx.scale(L.sx, 1);
+        ctx.font = st.font;
+        if (!it.sp) {
+          if (L.spU) {
+            var cx = 0;
+            for (var k = 0; k < it.t.length; k++) {
+              var ch = it.t[k]; ctx.fillText(ch, cx, 0);
+              if (st.fake) { ctx.lineWidth = Math.max(1, st.h / 22); ctx.strokeStyle = ctx.fillStyle; ctx.strokeText(ch, cx, 0); }
+              cx += ctx.measureText(ch).width + L.spU;
+            }
+          } else {
+            ctx.fillText(it.t, 0, 0);
+            if (st.fake) { ctx.lineWidth = Math.max(1, st.h / 22); ctx.strokeStyle = ctx.fillStyle; ctx.strokeText(it.t, 0, 0); }
+          }
+        }
+        var lw = it.w / L.sx, th = Math.max(1, st.h * 0.065);
+        if (st.u) ctx.fillRect(0, st.h * 0.93, lw, th);
+        if (st.s) ctx.fillRect(0, st.h * 0.52, lw, th);
+        ctx.restore();
+      });
+    });
+    ctx.restore();
+  }
+
   function drawText(ctx, el, L) {
+    if (L.rich) return drawRich(ctx, el, L);
     ctx.save();
     localTransform(ctx, L);
     ctx.textBaseline = "top";
@@ -38,7 +73,7 @@
         else if (el.align === "right") lx = L.block - lw;
       }
       ctx.save();
-      ctx.translate(lx, i * L.gap - L.h * 0.06);
+      ctx.translate(lx, (L.vy || 0) + i * L.gap - L.h * 0.06);
       ctx.scale(sx, 1);
       ctx.fillText(t, 0, 0);
       if (bold) ctx.fillText(t, bold / sx, 0);

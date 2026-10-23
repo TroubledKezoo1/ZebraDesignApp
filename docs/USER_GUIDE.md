@@ -64,22 +64,35 @@ Choose **Text**, **QR code**, **Barcode**, **Line**, **Box**, **Ellipse** or **I
 
 ## 6. Type and format text (Home tab)
 
-**Double-click** a text (or select it and press **F2** or **Enter**) to type directly on the label. Press **Esc** or click outside to finish. A text box left empty is removed.
+**Double-click** a text (or select it and press **F2** or **Enter**) to type directly on the label. **Enter** starts a new line. Press **Esc** or click outside to finish. A text box left empty is removed.
 
 ![Typing on the label](edit-en.png)
 
-The **Font** and **Paragraph** groups work on the selected text, also while you type:
+It works like a word processor: **select words while typing and format only them**, or select the whole text box (without typing in it) to format all of it. The ribbon buttons show the state of the selection.
 
-- Text height in mm, **A+** / **A−** (Ctrl+Shift+> / <), **B** bold (Ctrl+B), reverse print (white on black), character width.
-- Left, center, right alignment; wrap long lines; line spacing; text box width (0 = automatic).
+**Font group**
 
-**Font**: *Printer font* is the printer's own built-in font and the fastest to print. Any other font (the built-in Roboto Condensed or any font installed on your computer) is drawn by ZebraApp and sent as an image, so it prints exactly as you see it.
+| Control | What it does |
+|---|---|
+| Font list | *Printer font* (the printer's own, fastest), the built-in Roboto Condensed, or any font on your computer |
+| Size (pt), **A+** / **A−** | Font size in points; Ctrl+Shift+> / < |
+| **Aa** | UPPERCASE, lowercase, Capitalize Each Word, or back to as typed. On a selection it changes the letters themselves; on the whole box it is a display setting, so data from a CSV list is converted too. `{FIELD}` names are left alone |
+| Clear formatting | Removes all formatting from the selection or the box |
+| **B** **I** **U** **abc** | Bold (Ctrl+B), italic (Ctrl+I), underline (Ctrl+U), strikethrough |
+| Reverse | White text on black |
+| ↔ % / A↔A mm | Character width and character spacing |
 
-**Shrink to fit** (the button next to wrap, or *Shrink text that does not fit the box* in Properties): give the text a box width (and, if you like, a height). Text that is too long is made smaller until it fits. With a CSV list this happens label by label, so a long name gets smaller and a short one keeps its size.
+**Paragraph group**: align left, center, right or **justify**; wrap long lines; **shrink to fit**; line spacing; **top / middle / bottom** inside the box; box width and height.
 
-Formatting applies to the whole text box, not to single words, because the printer draws each box in one font.
+**Clipboard group**: Paste, Cut, Copy and **Format Painter**. Select an item, click Format Painter, then click another item of the same kind to copy its look. Double-click Format Painter to apply it to several items; Esc stops.
 
-**Clipboard** has Paste, Cut, Copy and Duplicate. **Editing** has Select, Select all, Delete and Edit text.
+**Editing group**: Select, **Find and replace** (Ctrl+H) across texts, QR codes and barcodes, Select all, Edit text, Duplicate, Delete.
+
+**Insert → Symbol** adds characters like ° ± € ₺ © ✓ ★ at the cursor.
+
+**What the printer can do by itself.** The printer's own font only knows bold, size, width, reverse and left/center/right. As soon as a text uses italic, underline, strikethrough, character spacing, justify, a computer font or word-by-word formatting, ZebraApp draws it and sends it as an image. It prints exactly as on screen; the data is a little larger. Some symbols are missing from the printer font too; if one does not print, pick a computer font for that text.
+
+**Font** and **Shrink to fit**: give the text a box width (and, if you like, a height). Text that is too long is made smaller until it fits. With a CSV list this happens label by label, so a long name gets smaller and a short one keeps its size.
 
 ## 7. Arrange (Layout tab)
 

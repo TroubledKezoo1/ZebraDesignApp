@@ -64,22 +64,35 @@ Yeni rulo taktıktan sonra yazdırma ekranından bir kez **Kalibre et**'e bas; y
 
 ## 6. Yaz ve biçimlendir (Giriş sekmesi)
 
-Metne **çift tıkla** (ya da seçip **F2** veya **Enter**'a bas) ve doğrudan etiketin üstüne yaz. Bitirmek için **Esc**'ye bas ya da dışarı tıkla. Boş bırakılan metin kutusu silinir.
+Metne **çift tıkla** (ya da seçip **F2** veya **Enter**'a bas) ve doğrudan etiketin üstüne yaz. **Enter** yeni satıra geçer. Bitirmek için **Esc**'ye bas ya da dışarı tıkla. Boş bırakılan metin kutusu silinir.
 
 ![Etiketin üstüne yazma](edit-tr.png)
 
-**Yazı** ve **Paragraf** grupları seçili metne uygulanır, yazarken de çalışır:
+Kelime işlemci gibi çalışır: **yazarken kelimeleri seç, biçimi sadece onlara ver**; ya da metin kutusunu (içine girmeden) seçip hepsini biçimlendir. Şeritteki düğmeler seçimin durumunu gösterir.
 
-- Milimetre olarak yazı yüksekliği, **A+** / **A−** (Ctrl+Shift+> / <), **K** kalın (Ctrl+B), ters baskı (siyah üstüne beyaz), harf genişliği.
-- Sola, ortaya, sağa yaslama; uzun satırı alta kaydırma; satır aralığı; metin kutusu genişliği (0 = otomatik).
+**Yazı grubu**
 
-**Yazı tipi:** *Yazıcı yazı tipi* yazıcının kendi yazı tipidir ve en hızlı basılandır. Başka bir yazı tipi (gömülü Roboto Condensed ya da bilgisayarında kurulu herhangi biri) ZebraApp tarafından çizilip resim olarak gönderilir, ekranda gördüğün gibi basılır.
+| Kontrol | Ne yapar |
+|---|---|
+| Yazı tipi listesi | *Yazıcı yazı tipi* (yazıcının kendisi, en hızlı), gömülü Roboto Condensed ya da bilgisayarındaki herhangi bir yazı tipi |
+| Boyut (punto), **A+** / **A−** | Punto olarak yazı boyutu; Ctrl+Shift+> / < |
+| **Aa** | BÜYÜK HARF, küçük harf, Her Kelimenin İlk Harfi Büyük ya da yazdığın gibi. Seçimde harflerin kendisini değiştirir; kutunun tamamında bir görünüm ayarıdır, CSV listesinden gelen yazı da çevrilir. `{ALAN}` adlarına dokunulmaz |
+| Biçimi temizle | Seçimdeki ya da kutudaki bütün biçimi kaldırır |
+| **K** **T** **A** **abc** | Kalın (Ctrl+B), italik (Ctrl+I), altı çizili (Ctrl+U), üstü çizili |
+| Ters baskı | Siyah üstüne beyaz yazı |
+| ↔ % / A↔A mm | Harf genişliği ve karakter aralığı |
 
-**Kutuya sığdır** (kaydırma düğmesinin yanındaki düğme, ya da Özellikler'de *Kutuya sığmazsa yazıyı küçült*): metne bir kutu genişliği (istersen yükseklik de) ver. Uzun yazı sığana kadar küçültülür. CSV listesiyle bu her etikette ayrı yapılır: uzun isim küçülür, kısa isim boyunu korur.
+**Paragraf grubu:** sola, ortaya, sağa ya da **iki yana** yaslama; uzun satırı alta kaydırma; **kutuya sığdır**; satır aralığı; kutu içinde **üst / orta / alt**; kutu genişliği ve yüksekliği.
 
-Biçim tek tek kelimelere değil, metin kutusunun tamamına uygulanır, çünkü yazıcı her kutuyu tek yazı tipiyle basar.
+**Pano grubu:** Yapıştır, Kes, Kopyala ve **Biçim Boyacısı**. Bir öğe seç, Biçim Boyacısı'na tıkla, sonra aynı türden başka bir öğeye tıkla; görünüşü ona kopyalanır. Birden çok öğeye uygulamak için Biçim Boyacısı'na çift tıkla; Esc bitirir.
 
-**Pano** grubunda Yapıştır, Kes, Kopyala ve Çoğalt var. **Düzenleme** grubunda Seç, Tümünü seç, Sil ve Metni düzenle var.
+**Düzenleme grubu:** Seç, metinlerde, QR kodlarda ve barkodlarda **Bul ve değiştir** (Ctrl+H), Tümünü seç, Metni düzenle, Çoğalt, Sil.
+
+**Ekle → Simge** imlecin olduğu yere ° ± € ₺ © ✓ ★ gibi karakterler ekler.
+
+**Yazıcı kendi başına neyi yapabilir?** Yazıcının kendi yazı tipi yalnızca kalın, boyut, genişlik, ters baskı ve sol/orta/sağ yaslamayı bilir. Bir metinde italik, altı çizili, üstü çizili, karakter aralığı, iki yana yaslama, bilgisayar yazı tipi ya da kelime kelime biçim kullanılınca ZebraApp onu kendisi çizer ve resim olarak gönderir. Ekrandaki gibi basılır, veri biraz büyür. Bazı simgeler de yazıcı yazı tipinde yoktur; basılmayan olursa o metne bir bilgisayar yazı tipi seç.
+
+**Kutuya sığdır:** metne bir kutu genişliği (istersen yükseklik de) ver. Uzun yazı sığana kadar küçültülür. CSV listesiyle bu her etikette ayrı yapılır: uzun isim küçülür, kısa isim boyunu korur.
 
 ## 7. Yerleştir (Düzen sekmesi)
 

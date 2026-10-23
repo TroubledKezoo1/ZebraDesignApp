@@ -16,7 +16,8 @@ ZebraDesigner only runs on Windows, and most open-source label tools do not spea
 
 **Design**
 - Word-style interface: ribbon tabs (Home, Insert, Layout, Data, View), a File screen with templates and recent files, quick access toolbar and a zoom slider
-- Type directly on the label: double-click text (or press F2) to edit it in place; font size, bold, alignment and spacing from the Home tab
+- Type directly on the label and format it like a word processor: select words and make them bold, italic, underlined, struck through, bigger or another font; sizes in points, character spacing, UPPER/lower/Title case, justify, top/middle/bottom in the box
+- Format Painter, Find and replace (Ctrl+H), Insert symbol
 - Text, QR code, barcodes (Code 128, Code 39, EAN-13), lines, boxes (rounded or filled), ellipses and images/logos (converted to a printer bitmap with threshold and dithering)
 - Select, move and resize with the mouse (8 handles), multi-select and rubber-band selection
 - Snapping to the grid and to other items with guide lines, mm rulers and zoom
@@ -103,7 +104,8 @@ A Bluetooth LE printer accepts one connection at a time. If it will not connect,
 | `Ctrl+S` / `Ctrl+Shift+S` or `F12` | Save / save as |
 | `Ctrl+O` / `Ctrl+P` | Open / print screen |
 | Double-click, `F2`, `Enter` | Edit the selected text on the label (`Esc` to finish) |
-| `Ctrl+B`, `Ctrl+Shift+>` / `<` | Bold, larger / smaller text |
+| `Ctrl+B` `Ctrl+I` `Ctrl+U`, `Ctrl+Shift+>` / `<` | Bold, italic, underline (on the selected words while typing), larger / smaller text |
+| `Ctrl+H` | Find and replace |
 | `Ctrl` + wheel, `+` `-` `0` | Zoom, fit |
 | `Space` + drag | Pan |
 | `Alt` + drag | Move without snapping |
