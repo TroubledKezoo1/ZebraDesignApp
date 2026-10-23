@@ -1,16 +1,22 @@
 # ZebraApp
 
-**A label designer for Zebra and other ZPL printers.** Design labels in a desktop-style editor, then print over Bluetooth LE, the network, USB or a serial port. It runs on Linux, Windows and macOS and needs nothing but Python.
+**A label designer for Zebra and other ZPL printers.** Design labels in an editor that works like a word processor (ribbon, File screen, type straight onto the label), then print over Bluetooth LE, the network, USB or a serial port. It runs on Linux, Windows and macOS and needs nothing but Python.
 
 [Türkçe](README.tr.md)
 
 ![ZebraApp editor](docs/screenshot-en.png)
+
+| Start screen | Print with preview |
+|---|---|
+| ![Start screen](docs/start-en.png) | ![Print](docs/print-en.png) |
 
 ZebraDesigner only runs on Windows, and most open-source label tools do not speak ZPL or Bluetooth LE. ZebraApp is a small local web app: a Python server talks to the printer, and the editor opens in its own window.
 
 ## Features
 
 **Design**
+- Word-style interface: ribbon tabs (Home, Insert, Layout, Data, View), a File screen with templates and recent files, quick access toolbar and a zoom slider
+- Type directly on the label: double-click text (or press F2) to edit it in place; font size, bold, alignment and spacing from the Home tab
 - Text, QR code, barcodes (Code 128, Code 39, EAN-13), lines, boxes (rounded or filled), ellipses and images/logos (converted to a printer bitmap with threshold and dithering)
 - Select, move and resize with the mouse (8 handles), multi-select and rubber-band selection
 - Snapping to the grid and to other items with guide lines, mm rulers and zoom
@@ -73,11 +79,11 @@ On Ubuntu and other systems where pip refuses to install system-wide, use a virt
 
 ## First steps
 
-1. Click **Printers…** at the top right and add your printer. Use **Scan** to find Bluetooth printers or **List** for system printers and serial ports.
-2. Use **Print test label** to check the connection.
-3. Choose a preset size on the **Label** tab, or open one of the samples from **File → Add sample labels**.
-4. If the printer reports a different resolution than the label, the **Print** tab offers to match it.
-5. After loading a new roll, press **Calibrate** once.
+1. The app opens on the **File** screen. Pick a blank label, a template or a recent file.
+2. Click **Printers…** at the top right and add your printer. Use **Scan** to find Bluetooth printers or **List** for system printers and serial ports, then **Print test label**.
+3. Add items from the **Insert** tab, set the label size on the **Layout** tab, and double-click text to type on the label.
+4. Press **Ctrl+P** for the print screen with a preview. If the printer reports a different resolution than the label, it offers to match it.
+5. After loading a new roll, press **Calibrate** once (on the print screen).
 
 A Bluetooth LE printer accepts one connection at a time. If it will not connect, turn off Bluetooth on your phone.
 
@@ -90,7 +96,10 @@ A Bluetooth LE printer accepts one connection at a time. If it will not connect,
 | `Ctrl+C` `Ctrl+X` `Ctrl+V` `Ctrl+D` | Copy, cut, paste, duplicate |
 | `Del` | Delete |
 | Arrow keys (`Shift` for 10×) | Move |
-| `Ctrl+S` / `Ctrl+P` | Save / print |
+| `Ctrl+S` / `Ctrl+Shift+S` or `F12` | Save / save as |
+| `Ctrl+O` / `Ctrl+P` | Open / print screen |
+| Double-click, `F2`, `Enter` | Edit the selected text on the label (`Esc` to finish) |
+| `Ctrl+B`, `Ctrl+Shift+>` / `<` | Bold, larger / smaller text |
 | `Ctrl` + wheel, `+` `-` `0` | Zoom, fit |
 | `Space` + drag | Pan |
 | `Alt` + drag | Move without snapping |

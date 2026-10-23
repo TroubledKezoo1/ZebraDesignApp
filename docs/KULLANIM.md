@@ -2,7 +2,7 @@
 
 [English user guide](USER_GUIDE.md) · [README'ye dön](../README.tr.md)
 
-Bu kılavuz ZebraApp'i ilk açılıştan basılmış etikete kadar anlatır.
+ZebraApp bir kelime işlemci gibi çalışır: üstte şerit menü, yeni, aç, kaydet ve yazdır için **Dosya** ekranı, doğrudan etiketin üstüne yazılan metin. Bu kılavuz ilk açılıştan basılmış etikete kadar anlatır.
 
 ![Editör](screenshot-tr.png)
 
@@ -10,128 +10,138 @@ Bu kılavuz ZebraApp'i ilk açılıştan basılmış etikete kadar anlatır.
 
 README'deki gibi kur, sonra `zebraapp` komutunu çalıştır (ya da sistemin için olan başlatıcıya çift tıkla). Editör kendi penceresinde açılır, pencereyi kapatınca birkaç saniye sonra kendiliğinden kapanır.
 
-Uygulama her seferinde **Adsız etiket** adlı boş bir etiketle açılır. Adı değiştirmek için pencerenin üstündeki kutuya yaz.
+Uygulama **Dosya** ekranında açılır:
 
-## 2. Yazıcını ekle
+- **Yeni:** boş 80 × 40 mm etiket, şablonlardan biri (alıcı etiketi, QR ve barkodlu ürün etiketi, 100 × 150 kargo etiketi) ya da hazır ve özel boyutlar için **Diğer boyutlar…**
+- **Son kullanılanlar:** son kaydettiğin ya da açtığın etiketler. Tıklayınca açılır.
 
-1. Sağ üstteki **Yazıcılar…** düğmesine bas (ya da yazıcı listesinden **+ Yazıcı ekle…** seç) ve yeni bir yazıcı ekle.
-2. **Modeli** seç (örneğin *ZD421*) ve **çözünürlüğü** seç (203 ya da 300 dpi; yazıcının kutusunda ve ayar etiketinde yazar).
-3. **Bağlantıyı** seç:
-   - **Bluetooth LE:** **Ara**'ya bas, listeden yazıcını seç. Yazıcı aynı anda tek cihaza bağlanır, bu yüzden önce telefonunun Bluetooth'unu kapat.
-   - **Ağ:** yazıcının IP adresini yaz (port 9100).
-   - **Sistem yazıcısı / USB:** **Listele**'ye bas, raw kuyruğunu seç.
-   - **USB aygıt dosyası**, **Seri port**, **Harici komut:** özel kurulumlar içindir, README'deki tabloya bak.
-4. **Test etiketi bas**'a bas. Küçük bir etiket çıkarsa hazırsın. **Durumu oku** kâğıt bitti, kapak açık, duraklatıldı gibi durumları gösterir.
+Editöre geçmek için **Esc**'ye ya da sol üstteki geri okuna bas.
 
-Birden çok yazıcı ekleyebilir, sağ üstteki listeden aralarında geçebilirsin.
+![Başlangıç ekranı](start-tr.png)
 
-## 3. Ekranı tanı
+## 2. Ekranı tanı
 
 | Bölge | Ne yapar |
 |---|---|
-| Üst çubuk | Dosya menüsü, etiket adı, Kaydet, Geri al / Yinele, yakınlaştırma, ızgara ve yakalama, yazıcı seçimi, **Yazdır** |
-| Sol üst | Araçlar: Seç, Metin, QR, Barkod, Çizgi, Kutu, Elips, Görsel |
-| Sol alt | **Katmanlar:** göster / gizle, kilitle, yeniden adlandır, sürükleyerek sırala |
-| Orta | Cetvelli (mm) etiket. Yakınlaştırınca ızgara yazıcının noktalarını gösterir |
-| Sağ | **Özellikler** (seçili öğe), **Etiket** (boyut ve yazıcı ayarları), **Yazdır** sekmeleri |
+| Başlık çubuğu | Hızlı erişim (Kaydet, Geri al, Yinele, Hızlı yazdır), etiket adı (tıklayıp değiştir), yazıcı seçimi, **Yazıcılar…** ve **Yazdır** |
+| Şerit | **Dosya**, **Giriş**, **Ekle**, **Düzen**, **Veri**, **Görünüm** sekmeleri. Sağdaki ok şeridi daraltır; bir sekmeye çift tıklamak da aynısını yapar |
+| Katmanlar (sol) | Göster / gizle, kilitle, yeniden adlandır (çift tık), sürükleyerek sırala |
+| Etiket (orta) | Milimetre cetvelli etiket. Yakınlaştırınca ızgara yazıcının noktalarını gösterir |
+| Özellikler (sağ) | Seçili öğenin bütün ayarları |
+| Durum çubuğu | Etiket boyutu, öğe sayısı, seçim, imleç konumu, mesajlar ve yakınlaştırma kaydırıcısı |
 
-## 4. Etiket boyutunu ayarla
+**Katmanlar** ve **Özellikler** panelleri **Görünüm** sekmesinden gizlenebilir.
 
-**Etiket** sekmesini aç, hazır bir boyut seç (80 × 40, 100 × 150 …) ya da genişlik ve yüksekliği milimetre olarak yaz. Çözünürlüğü yazıcıya uydur.
+## 3. Yazıcını ekle
 
-Bu etiketin yazıcı ayarları da aynı sekmede:
+1. Başlık çubuğundaki **Yazıcılar…** düğmesine bas (ya da yazıcı listesinden **+ Yazıcı ekle…** seç) ve yeni bir yazıcı ekle.
+2. **Modeli** (örneğin *ZD421*) ve **çözünürlüğü** seç (203 ya da 300 dpi; yazıcının kutusunda ve ayar etiketinde yazar).
+3. **Bağlantıyı** seç:
+   - **Bluetooth LE:** **Ara**'ya bas ve yazıcını seç. Yazıcı aynı anda tek cihaza bağlanır, önce telefonun Bluetooth'unu kapat.
+   - **Ağ:** yazıcının IP adresi, port 9100.
+   - **Sistem yazıcısı / USB:** **Listele**'ye bas ve raw kuyruğunu seç (Windows'ta kurulu Zebra sürücüsü).
+   - **USB aygıt dosyası**, **Seri port**, **Harici komut:** özel kurulumlar için, README'ye bak.
+4. **Test etiketi bas**'a bas. **Durumu oku** kâğıt bitti, kapak açık, duraklatıldı gibi durumları gösterir.
 
-- **Ortam türü:** kalıplı etiketler için *Boşluklu*, aralıksız rulolar için *Sürekli*, arkasında işaret olan ruloları için *Siyah işaretli*.
+Birden çok yazıcı ekleyip başlık çubuğundan aralarında geçebilirsin.
+
+## 4. Etiket boyutunu ayarla (Düzen sekmesi)
+
+- **Boyut:** hazır bir boyut (80 × 40, 100 × 150 …) ya da milimetre olarak genişlik **G** ve yükseklik **Y**, yanında çözünürlük.
+- **Ortam:** kalıplı etiketler için *Boşluklu*, aralıksız rulolar için *Sürekli*, arkasında işaret olan rulolar için *Siyah işaretli*.
 - **Koyuluk** (0–30) ve **Hız:** boş bırakırsan yazıcının kendi ayarı kullanılır.
-- **Yatay / Dikey kaydırma:** tasarım kenara çok yakınsa bütün tasarımı taşır.
-- **Baskıyı 180° çevir:** ters çıkan etiketler için.
+- **Kaydırma:** tasarım kenara çok yakınsa bütün tasarımı taşır. Ters çıkan etiketler için **180° çevir**.
 
-Yeni rulo taktıktan sonra **Yazdır** sekmesinden bir kez **Kalibre et**'e bas; yazıcı etiket boyunu öğrenir.
+Yeni rulo taktıktan sonra yazdırma ekranından bir kez **Kalibre et**'e bas; yazıcı etiket boyunu öğrenir.
 
-## 5. Etiketi tasarla
+## 5. Öğe ekle (Ekle sekmesi)
 
-Soldan bir araç seç, etikete tıkla (çizgi, kutu ve elipste sürükle). Ayrıntıları **Özellikler** sekmesinden ayarla.
+**Metin**, **QR kod**, **Barkod**, **Çizgi**, **Kutu**, **Elips** ya da **Görsel** seç, sonra etikete tıkla (çizgi, kutu ve elipste sürükle).
 
-- **Metin:** boyut (mm), kalın, harf genişliği, satır aralığı, sola / ortaya / sağa yaslama, sabit kutu genişliği ve otomatik satır kaydırma, 90° adımlarla döndürme, **ters baskı** (siyah üstüne beyaz; arkasına siyah kutu çizer).
-- **QR kod:** içerik ve modül boyutu. Önizleme birebir aynıdır.
-- **Barkod:** Code 128, Code 39 ya da EAN-13; yükseklik, çubuk kalınlığı, altında okunabilir yazı açık ya da kapalı.
-- **Çizgi, Kutu, Elips:** kalınlık, dolu, yuvarlak köşe.
-- **Görsel:** logo ya da resim seç. Yazıcı için siyah beyaza çevrilir. **Eşik** kesim noktasını, **noktalama** gri tonları, **ters çevir** renkleri değiştirir.
+- Yeni metin kutusu hemen yazmaya hazır gelir.
+- **Alan** grubu `{SAYAC}` (sayaç), `{TARIH}` (tarih) ya da `{SAAT}` (saat) değişkenini yazdığın yere, ya da seçili QR koda veya barkoda ekler.
+- Görsel yazıcı için siyah beyaza çevrilir; **eşik**, **noktalama** ve **ters çevir** ayarları Özellikler'de.
 
-İşe yarar kısayollar:
+## 6. Yaz ve biçimlendir (Giriş sekmesi)
 
-- Sürükleyerek taşı, sekiz tutamaçla boyutlandır. **Alt** basılıyken yapışmadan taşırsın.
-- **Shift** ile tıkla ya da boş alanda sürükle: birden çok öğe seçilir. Hizalama ve eşit dağıtma düğmeleri o zaman öğeler arasında çalışır; tek öğe etikete göre hizalanır.
-- Ok tuşları az, **Shift** ile ok tuşları 10 kat taşır.
-- **Ctrl+Z / Ctrl+Y** geri al ve yinele, **Ctrl+C / V / D** kopyala, yapıştır, çoğalt, **Del** siler.
-- **Ctrl** + tekerlek yakınlaştırır, **0** etiketi pencereye sığdırır, **Boşluk** + sürükle kaydırır.
+Metne **çift tıkla** (ya da seçip **F2** veya **Enter**'a bas) ve doğrudan etiketin üstüne yaz. Bitirmek için **Esc**'ye bas ya da dışarı tıkla. Boş bırakılan metin kutusu silinir.
 
-## 6. Kaydet ve aç
+![Etiketin üstüne yazma](edit-tr.png)
 
-Etiketler `.zebra` uzantılı sıradan dosyalardır (içi JSON). Nerede duracağına sen karar verirsin.
+**Yazı** ve **Paragraf** grupları seçili metne uygulanır, yazarken de çalışır:
 
-| İşlem | Kısayol |
-|---|---|
-| **Kaydet:** ilk seferde yer ve ad sorar, sonra aynı dosyaya yazar | Ctrl+S |
-| **Farklı kaydet…:** her seferinde sorar | Ctrl+Shift+S |
-| **Aç…:** dosya seç ya da son kullanılanlardan seç | Ctrl+O |
-| **Yeni etiket** (Dosya menüsü) | |
+- Milimetre olarak yazı yüksekliği, **A+** / **A−** (Ctrl+Shift+> / <), **K** kalın (Ctrl+B), ters baskı (siyah üstüne beyaz), harf genişliği.
+- Sola, ortaya, sağa yaslama; uzun satırı alta kaydırma; satır aralığı; metin kutusu genişliği (0 = otomatik).
 
-**Aç** penceresi örnek etiketleri ve uygulamanın eski sürümlerinde kaydedilenleri de listeler. Birini açınca kopyası açılır; Ctrl+S onu dosyaya çevirir.
+Biçim tek tek kelimelere değil, metin kutusunun tamamına uygulanır, çünkü yazıcı her kutuyu tek yazı tipiyle basar.
 
-Kaydedilmemiş değişiklik varken pencereyi kapatırsan uygulama önce sorar.
+**Pano** grubunda Yapıştır, Kes, Kopyala ve Çoğalt var. **Düzenleme** grubunda Seç, Tümünü seç, Sil ve Metni düzenle var.
 
-## 7. Yazdır
+## 7. Yerleştir (Düzen sekmesi)
 
-**Yazdır** sekmesine bak, sonra sağ üstteki **Yazdır**'a bas.
+Öğeleri seç, sonra **Yerleştir** grubunu kullan:
 
-- **Her etiketten adet:** her etiketten kaç tane aynı kopya basılacağı.
-- **Farklı etiket sayısı:** kaç farklı etiket basılacağı; sayaç ve veri listesiyle birlikte kullanılır.
+- Sola, ortaya, sağa, üste, dikey ortaya, alta hizala. Tek öğe etikete göre, birden fazla öğe birbirine göre hizalanır.
+- Eşit dağıt (3 ya da daha fazla öğe).
+- Öne getir, arkaya gönder, 90° döndür, kilitle, gizle (gizli öğe basılmaz).
 
-### Sayaç ve tarih
+Fareyle: sürükleyerek taşı, sekiz tutamaçla boyutlandır, **Shift** ile tıkla ya da boş alanda sürükleyerek birden çok öğe seç, sürüklerken **Alt** basılıysa yapışma kapanır. Ok tuşları az, **Shift** ile 10 kat taşır.
 
-Bunları herhangi bir metin, QR ya da barkod alanına yaz:
+## 8. Numaralı etiketler ve listeler (Veri sekmesi)
 
-- `{SAYAC}` sayaçtır. *Sayaç* bölümünden başlangıç, artış ve basamak sayısını ayarlarsın. 3 basamak ve başlangıç 1 ile 001, 002, 003… çıkar.
-- `{TARIH}` bugünün tarihi (gg.aa.yyyy), `{SAAT}` saattir.
+**Sayaç:** herhangi bir metin, QR ya da barkoda `{SAYAC}` yaz. **Başlangıç**, **Artış** ve **Basamak**'ı ayarla (1'den başlayıp 3 basamak: 001, 002 …). Kaç tane basılacağını yazdırma ekranındaki *Farklı etiket sayısı* belirler.
 
-### Listeden bas (CSV)
-
-1. **Yazdır** sekmesinde *Veri listesi* kutusuna bir tablo yapıştır ya da **Dosyadan yükle**'ye bas. İlk satır sütun adlarıdır; `;`, `,` ya da sekme ile ayrılır.
-2. Herhangi bir alana `{sütun_adı}` yaz. Sütun adları kutunun altında etiket olarak görünür.
-3. Her satır için bir etiket basılır. Her satırı tuvalde görmek için *Önizlemede gösterilen kayıt* alanını kullan.
-
-Örnek:
+**Liste (CSV):** CSV dosyası seçmek için **Liste yükle**'ye, yapıştırmak için **Listeyi düzenle…**'ye bas. İlk satır sütun adlarıdır; `;`, `,` ya da sekme ile ayrılır. Sütunlar **Alan ekle** altında çıkar; birine tıklayınca `{sütun}` seçili metne eklenir. Her satır için bir etiket basılır.
 
 ```
 ad;il;telefon
 Örnek Makina;İstanbul;0212 000 00 00
 ```
 
-Bir metin alanına `{ad} - {il}` yazarsan "Örnek Makina - İstanbul" basılır.
+**Önizleme** altındaki oklarla her kaydı etiketin üstünde görebilirsin.
 
-### Basmadan önce kontrol et
+## 9. Yazdır
 
-- **Gerçek önizleme (Labelary)** ZPL'i labelary.com'a gönderir ve bir Zebra'nın nasıl basacağını gösterir (internet gerekir).
-- **ZPL kodunu göster** yazıcıya gidecek kodun kendisini açar. Düzenleyip elle gönderebilir ya da `.zpl` dosyası olarak kaydedebilirsin.
+**Ctrl+P** (ya da Giriş sekmesindeki **Yazdır…**, ya da **Dosya → Yazdır**) yazdırma ekranını açar:
 
-## 8. Sorun giderme
+- Üstte **Yazdır** ve **Her etiketten adet**, altında yazıcı ve uyarıları, **Farklı etiket sayısı** ve toplam kaç etiket çıkacağının özeti.
+- Sağda, oklarla kayıtlar arasında gezilen önizleme.
+- **Yazıcı araçları:** Kalibre et, Boş etiket ilerlet, Ayar etiketi bas ve ZPL'i labelary.com'a gönderip bir Zebra'nın nasıl basacağını gösteren **Gerçek önizleme (Labelary)** (internet gerekir).
 
-**Etiketin yalnızca bir kısmı basılıyor ya da kesiliyor.** Etiket boyutunun ve çözünürlüğün (Etiket sekmesi) gerçek etiketlerle ve yazıcıyla aynı olduğunu kontrol et. Doğru ortam türünü seç, sonra **Kalibre et**'e bas.
+Başlık çubuğundaki yeşil **Yazdır** ve hızlı erişimdeki **Hızlı yazdır**, yazdırma ekranını açmadan doğrudan basar.
 
-**Çok açık ya da çok koyu basıyor.** Etiket sekmesinde *Koyuluk* ayarla (birkaç adım artırarak dene).
+![Yazdırma ekranı](print-tr.png)
 
-**Bluetooth'a bağlanmıyor.** Telefonunun Bluetooth'unu kapat, yazıcıyı kullanan başka uygulamaları kapat. Yeniden **Ara**'ya bas ve yazıcıyı seç. Linux'ta `bleak` kurulu olmalı (`pip install ".[ble]"`) ve Bluetooth servisi çalışmalı.
+## 10. Kaydet, aç, dışa aktar (Dosya ekranı)
+
+Etiketler `.zebra` uzantılı sıradan dosyalardır (içi JSON). Nerede duracaklarına sen karar verirsin.
+
+| İşlem | Kısayol |
+|---|---|
+| **Kaydet:** ilk seferde yer ve ad sorar, sonra aynı dosyaya yazar | Ctrl+S |
+| **Farklı kaydet:** her seferinde sorar | Ctrl+Shift+S, F12 |
+| **Aç:** dosya seç ya da son kullanılanlardan seç | Ctrl+O |
+| **Yeni** | Ctrl+N (Chrome bu kısayolu kendine ayırabilir; Dosya → Yeni'yi kullan) |
+
+**Dosya → Dışa aktar** ZPL'i `.zpl` dosyası olarak kaydeder ya da kodu gösterir; kopyalayabilir, düzenleyip elle gönderebilirsin.
+
+**Dosya → Seçenekler**'den dil değişir. Kaydedilmemiş değişiklik varken kapatmadan ya da başka etiket açmadan önce uygulama sorar.
+
+## 11. Sorun giderme
+
+**Etiketin yalnızca bir kısmı basılıyor ya da kesiliyor.** Düzen sekmesindeki boyutun ve çözünürlüğün gerçek etiketlerle ve yazıcıyla aynı olduğunu kontrol et. Doğru ortam türünü seç, sonra **Kalibre et**'e bas.
+
+**Çok açık ya da çok koyu basıyor.** Düzen sekmesinde *Koyuluk*'u birkaç adım artırarak ya da azaltarak dene.
+
+**Bluetooth'a bağlanmıyor.** Telefonunun Bluetooth'unu kapat, yazıcıyı kullanan başka uygulamaları kapat, yeniden ara. Linux'ta `bleak` kurulu olmalı (`pip install ".[ble]"`) ve Bluetooth servisi çalışmalı.
 
 **Baskılar arasında boş etiket çıkıyor.** Ortam türü büyük olasılıkla yanlış ya da yazıcının kalibre edilmesi gerekiyor.
 
-**Yazdır'a basınca hiçbir şey olmuyor.** Alttaki çubuktaki mesaja bak. Yazıcı eklenmedi diyorsa **Yazıcılar…** bölümünden ekle.
+**Yazdır'a basınca hiçbir şey olmuyor.** Durum çubuğundaki (ya da yazdırma ekranının üstündeki) mesaja bak. Yazıcı eklenmediyse **Yazıcılar…**'dan ekle.
 
-**Pencere minicik ya da yanlış yerde.** Chrome uygulama pencerelerinin boyutunu adrese göre hatırlar. Bir kez büyüt ya da uygulamayı başka bir portta başlat: `zebraapp --port 8766`.
+**Pencere minicik ya da yanlış yerde.** Chrome uygulama pencerelerinin boyutunu adrese göre hatırlar. Bir kez büyüt ya da başka bir portta başlat: `zebraapp --port 8766`.
 
-**Metin yazıcıda farklı görünüyor.** Önizleme yazıcıya giden yazı tipini kullanır; fark çoğunlukla yanlış çözünürlük ayarından gelir.
-
-## 9. Her şey nerede duruyor
+## 12. Her şey nerede duruyor
 
 - Etiketlerin: kaydettiğin yer.
 - Yazıcı listesi ve dil: README'de yazan klasör (Linux'ta `~/.config/zebraapp/`).

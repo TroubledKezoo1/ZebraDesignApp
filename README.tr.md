@@ -1,16 +1,22 @@
 # ZebraApp
 
-**Zebra ve diğer ZPL yazıcılar için etiket tasarım programı.** Etiketi masaüstü programı gibi çalışan bir editörde tasarlarsın, Bluetooth LE, ağ, USB ya da seri port üzerinden basarsın. Linux, Windows ve macOS'ta çalışır, Python dışında bir şey gerektirmez.
+**Zebra ve diğer ZPL yazıcılar için etiket tasarım programı.** Etiketi Word gibi çalışan bir editörde (şerit menü, Dosya ekranı, doğrudan etiketin üstüne yazma) tasarlarsın, Bluetooth LE, ağ, USB ya da seri port üzerinden basarsın. Linux, Windows ve macOS'ta çalışır, Python dışında bir şey gerektirmez.
 
 [English](README.md)
 
 ![ZebraApp editörü](docs/screenshot-tr.png)
+
+| Başlangıç ekranı | Önizlemeli yazdırma |
+|---|---|
+| ![Başlangıç ekranı](docs/start-tr.png) | ![Yazdır](docs/print-tr.png) |
 
 ZebraDesigner yalnızca Windows'ta çalışıyor, açık kaynak etiket programlarının çoğu da ZPL'i ya da Bluetooth LE'yi desteklemiyor. ZebraApp küçük bir yerel web uygulaması: Python sunucusu yazıcıyla konuşur, editör kendi penceresinde açılır.
 
 ## Özellikler
 
 **Tasarım**
+- Word tarzı arayüz: şerit sekmeleri (Giriş, Ekle, Düzen, Veri, Görünüm), şablonlu ve son kullanılanlı Dosya ekranı, hızlı erişim çubuğu, yakınlaştırma kaydırıcısı
+- Doğrudan etiketin üstüne yazma: metne çift tıkla (ya da F2) ve yerinde düzenle; yazı boyutu, kalın, hizalama ve satır aralığı Giriş sekmesinde
 - Metin, QR kod, barkod (Code 128, Code 39, EAN-13), çizgi, kutu (köşesi yuvarlak ya da dolu), elips ve görsel/logo (eşik ve noktalama ayarıyla yazıcı bitmap'ine çevrilir)
 - Fareyle seçme, taşıma ve 8 tutamaçla boyutlandırma, çoklu seçim ve alan seçimi
 - Izgaraya ve diğer öğelere yapışma, kılavuz çizgileri, mm cetvelleri, yakınlaştırma
@@ -73,11 +79,11 @@ Ubuntu gibi pip'in sisteme kurmaya izin vermediği yerlerde sanal ortam (`python
 
 ## İlk adımlar
 
-1. Sağ üstteki **Yazıcılar…** düğmesinden yazıcını ekle. Bluetooth yazıcıları **Ara**, sistem yazıcılarını ve seri portları **Listele** ile bulabilirsin.
-2. Bağlantıyı **Test etiketi bas** ile dene.
-3. **Etiket** sekmesinden hazır bir boyut seç ya da **Dosya → Örnek etiketleri ekle** ile örneklerden birini aç.
-4. Etiketin çözünürlüğü yazıcıdan farklıysa **Yazdır** sekmesi uyarlamayı önerir.
-5. Yeni rulo taktıktan sonra bir kez **Kalibre et**'e bas.
+1. Uygulama **Dosya** ekranında açılır. Boş etiket, şablon ya da son kullanılan bir dosya seç.
+2. Sağ üstteki **Yazıcılar…** düğmesinden yazıcını ekle. Bluetooth yazıcıları **Ara**, sistem yazıcılarını ve seri portları **Listele** ile bul, sonra **Test etiketi bas**.
+3. **Ekle** sekmesinden öğe ekle, etiket boyutunu **Düzen** sekmesinden ayarla, metne çift tıklayıp etiketin üstüne yaz.
+4. **Ctrl+P** önizlemeli yazdırma ekranını açar. Etiketin çözünürlüğü yazıcıdan farklıysa uyarlamayı önerir.
+5. Yeni rulo taktıktan sonra yazdırma ekranından bir kez **Kalibre et**'e bas.
 
 Bluetooth LE yazıcı aynı anda yalnızca bir cihaza bağlanır. Bağlanmıyorsa telefonun Bluetooth'unu kapat.
 
@@ -90,7 +96,10 @@ Bluetooth LE yazıcı aynı anda yalnızca bir cihaza bağlanır. Bağlanmıyors
 | `Ctrl+C` `Ctrl+X` `Ctrl+V` `Ctrl+D` | Kopyala, kes, yapıştır, çoğalt |
 | `Del` | Sil |
 | Ok tuşları (`Shift` ile 10 kat) | Taşı |
-| `Ctrl+S` / `Ctrl+P` | Kaydet / yazdır |
+| `Ctrl+S` / `Ctrl+Shift+S` ya da `F12` | Kaydet / farklı kaydet |
+| `Ctrl+O` / `Ctrl+P` | Aç / yazdırma ekranı |
+| Çift tık, `F2`, `Enter` | Seçili metni etiketin üstünde düzenle (`Esc` ile bitir) |
+| `Ctrl+B`, `Ctrl+Shift+>` / `<` | Kalın, büyüt / küçült |
 | `Ctrl` + tekerlek, `+` `-` `0` | Yakınlaştır, sığdır |
 | `Boşluk` + sürükle | Kaydır |
 | `Alt` + sürükle | Yapışmadan taşı |
