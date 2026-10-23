@@ -53,6 +53,19 @@ jobs:
                 { python -m pip install ".[serial,windows]" pyinstaller || python -m pip install . pyinstaller; }; }; }'
           echo "VER=$(python -c 'import zebraapp; print(zebraapp.__version__)')" >> "$GITHUB_ENV"
 
+      - name: Which optional parts are in this build
+        run: |
+          python - <<'PY'
+          import importlib
+          have, miss = [], []
+          for m in ("bleak", "serial", "pyzipper", "PIL", "win32print"):
+              try:
+                  importlib.import_module(m); have.append(m)
+              except Exception:
+                  miss.append(m)
+          print("::notice title=${{ matrix.target }} optional parts::included: %s; missing: %s" % (", ".join(have) or "-", ", ".join(miss) or "-"))
+          PY
+
       - name: Tests
         run: packaging/ci-run.sh python packaging/run-tests.py
 

@@ -4,7 +4,8 @@
 
 First release with ready-to-run apps: no Python needed.
 
-- **Downloads** for Windows (`.exe`), macOS (`.dmg`, Apple silicon and Intel) and Linux (`.AppImage`).
+- **Downloads** for Windows (`.exe`, x64 and ARM), macOS (`.dmg`, Apple silicon and Intel) and Linux (`.AppImage`, x86_64 and ARM64).
+- `make build` / `make dist` (and `scripts\build-windows.bat`) build the apps from source.
 - Word-style interface: ribbon, File screen with templates and recent files, typing directly on the label.
 - Rich text: format single words (bold, italic, underline, strikethrough, size in points, font), case, character spacing, justify, vertical alignment, Format Painter, Find and replace, symbols.
 - Rotate items to any angle; any font installed on the computer; shrink text to fit its box.

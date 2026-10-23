@@ -2,7 +2,8 @@
 # Builds dist/ZebraApp-<version>-x86_64.AppImage from the PyInstaller folder build.
 # Run from the repository root after:  pyinstaller packaging/zebraapp.spec
 set -e
-VER=$(python3 -c "import zebraapp; print(zebraapp.__version__)")
+PY=${PY:-python3}
+VER=$($PY -c "import zebraapp; print(zebraapp.__version__)")
 ARCH=${ARCH:-x86_64}
 APPDIR=build/ZebraApp.AppDir
 rm -rf "$APPDIR"

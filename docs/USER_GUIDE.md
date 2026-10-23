@@ -105,6 +105,8 @@ Select items, then use **Arrange**:
 
 **Rotate to any angle**: drag the round handle above the selected item. Hold **Shift** for 15° steps; it snaps to 0°, 90°, 180° and 270° on its own. You can also type the angle under *Position and layer* in Properties. The printer draws 0°, 90°, 180° and 270° itself; any other angle is sent as an image. Barcodes at odd angles may be harder to scan.
 
+![Rotating a QR code](rotate-en.png)
+
 With the mouse: drag to move, drag the eight handles to resize, **Shift**-click or drag on empty space to select several items, **Alt** while dragging to turn snapping off. Arrow keys nudge (with **Shift** 10×).
 
 ## 8. Numbered labels and lists (Data tab)
@@ -148,6 +150,10 @@ Labels are ordinary files with the extension `.zebra` (JSON inside). You decide 
 **Open** also opens `.zpl` files written by other programs. ZPL does not say which resolution it was written for, so ZebraApp asks (and suggests one). Text, text blocks, boxes, lines, ellipses, barcodes, QR codes and images become items you can edit; commands it does not know are listed in the status bar. Save the result with Ctrl+S as a `.zebra` file; the original `.zpl` is not changed.
 
 **Templates.** *File → New* lists the built-in templates and **My templates**. **Save as template** (in the File menu, or *Save the open design as a template* on the New page) keeps the current design; **Add template from file…** brings in `.zebra` files, for example from a colleague. Write fields as `{Full Name}` or `{Phone}`: when you start a label from the template, a form asks for them (counter, date, time and CSV columns are left out). *Edit blank template* opens it with the fields still in place. Each template tile has **Export** and **Delete**.
+
+![Templates](templates-en.png)
+
+![Fill-in form](fill-en.png)
 
 **ZebraDesigner 3 (`.nlbl`, experimental).** Needs `pip install ".[nlbl]"`. **Open** reads `.nlbl` files; **Ctrl+S** then writes back to the same file, **Save as** makes a `.zebra` copy. **File → Export → Save for ZebraDesigner (.nlbl)…** writes a new one. Only fixed text, Code 128, QR, image, line, box and ellipse carry over, at 300 dpi. Hidden items, word-by-word formatting, italic, underline, spacing, justify and shrink to fit are dropped (ZebraApp warns first). Rotated images are turned in the image itself; other rotations and reverse print are not supported.
 

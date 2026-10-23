@@ -10,6 +10,10 @@
 |---|---|
 | ![Start screen](docs/start-en.png) | ![Print](docs/print-en.png) |
 
+| Templates with fill-in fields | Rotate to any angle |
+|---|---|
+| ![Templates](docs/templates-en.png) | ![Rotate](docs/rotate-en.png) |
+
 ZebraDesigner only runs on Windows, and most open-source label tools do not speak ZPL or Bluetooth LE. ZebraApp is a small local web app: a Python server talks to the printer, and the editor opens in its own window.
 
 ## Features
@@ -65,9 +69,11 @@ Get the app for your system from the [latest release](https://github.com/Trouble
 | System | File |
 |---|---|
 | Windows 10/11 | `ZebraApp-…-windows-x64.exe` |
+| Windows 10/11, ARM (Copilot+ PCs, Surface) | `ZebraApp-…-windows-arm64.exe` |
 | macOS, Apple silicon | `ZebraApp-…-macos-arm64.dmg` |
 | macOS, Intel | `ZebraApp-…-macos-x64.dmg` |
-| Linux | `ZebraApp-…-x86_64.AppImage` |
+| Linux, Intel/AMD | `ZebraApp-…-x86_64.AppImage` |
+| Linux, ARM64 (Raspberry Pi 4/5 with 64-bit OS, ARM laptops) | `ZebraApp-…-aarch64.AppImage` |
 
 Nothing else needs to be installed. The apps are not signed, so the first start asks once:
 - **Windows:** "Windows protected your PC" → *More info* → *Run anyway*.
@@ -181,6 +187,16 @@ zebraapp/
 
 The ZPL produced in the editor is what goes to the printer, byte for byte.
 
+## Build the apps yourself
+
+```sh
+make test        # tests
+make build       # app for this system in dist/
+make dist        # plus the AppImage (Linux) or the dmg (macOS)
+```
+
+`make help` lists everything. On Windows run `scripts\build-windows.bat` (gives `dist\ZebraApp.exe`). Needs Python 3.9+; each system builds its own app (an .exe cannot be built on Linux).
+
 ## Development
 
 Pushing a tag like `v1.0.1` builds the Windows, macOS and Linux apps on GitHub Actions and publishes them as a release (`.github/workflows/release.yml`).
@@ -189,7 +205,6 @@ Pushing a tag like `v1.0.1` builds the Windows, macOS and Linux apps on GitHub A
 ```sh
 python -m unittest discover -s tests -v   # backend
 node tests/js/test_zpl.js                  # ZPL generator
-pyinstaller packaging/zebraapp.spec        # packaged app in dist/ (Linux: then packaging/build-appimage.sh)
 ```
 
 **Adding a language:** copy the `EN` dictionary in `zebraapp/static/js/i18n.js`. Keys are the Turkish source strings. Server messages are in `zebraapp/messages.py`.

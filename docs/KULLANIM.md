@@ -105,6 +105,8 @@ Kelime işlemci gibi çalışır: **yazarken kelimeleri seç, biçimi sadece onl
 
 **İstediğin açıyla döndür:** seçili öğenin üstündeki yuvarlak tutamacı sürükle. **Shift** basılıyken 15° adımla döner; 0°, 90°, 180° ve 270°'ye kendiliğinden yapışır. Açıyı Özellikler'de *Konum ve katman* altına da yazabilirsin. 0°, 90°, 180° ve 270°'yi yazıcı kendisi çizer; diğer açılar resim olarak gider. Eğik barkodlar daha zor okunabilir.
 
+![QR kodu döndürme](rotate-tr.png)
+
 Fareyle: sürükleyerek taşı, sekiz tutamaçla boyutlandır, **Shift** ile tıkla ya da boş alanda sürükleyerek birden çok öğe seç, sürüklerken **Alt** basılıysa yapışma kapanır. Ok tuşları az, **Shift** ile 10 kat taşır.
 
 ## 8. Numaralı etiketler ve listeler (Veri sekmesi)
@@ -146,6 +148,10 @@ Etiketler `.zebra` uzantılı sıradan dosyalardır (içi JSON). Nerede duracakl
 **Aç** başka programların yazdığı `.zpl` dosyalarını da açar. ZPL hangi çözünürlük için yazıldığını söylemez, bu yüzden ZebraApp sorar (ve bir öneri getirir). Metinler, metin blokları, kutular, çizgiler, elipsler, barkodlar, QR kodlar ve resimler düzenlenebilir öğelere dönüşür; tanımadığı komutlar durum çubuğunda listelenir. Sonucu Ctrl+S ile `.zebra` dosyası olarak kaydet; asıl `.zpl` dosyası değişmez.
 
 **Şablonlar.** *Dosya → Yeni* hazır şablonları ve **Şablonlarım**'ı gösterir. **Şablon olarak kaydet** (Dosya menüsünde ya da Yeni sayfasındaki *Açık tasarımı şablon olarak kaydet*) açık tasarımı saklar; **Dosyadan şablon ekle…** `.zebra` dosyalarını, örneğin bir arkadaşının şablonunu, ekler. Alanları `{Ad Soyad}` ya da `{Telefon}` gibi yaz: şablondan etiket açarken bir form bunları sorar (sayaç, tarih, saat ve CSV sütunları sorulmaz). *Boş şablonu düzenle* alanları yerinde bırakarak açar. Her şablon kutucuğunda **Dışa aktar** ve **Sil** vardır.
+
+![Şablonlar](templates-tr.png)
+
+![Doldurma formu](fill-tr.png)
 
 **ZebraDesigner 3 (`.nlbl`, deneysel).** `pip install ".[nlbl]"` gerekir. **Aç** `.nlbl` dosyalarını okur; ardından **Ctrl+S** aynı dosyaya yazar, **Farklı kaydet** `.zebra` kopyası çıkarır. **Dosya → Dışa aktar → ZebraDesigner için kaydet (.nlbl)…** yeni bir dosya yazar. Yalnızca sabit metin, Code 128, QR, görsel, çizgi, kutu ve elips aktarılır, 300 dpi'da. Gizli öğeler, kelime kelime biçim, italik, altı çizili, karakter aralığı, iki yana yaslama ve kutuya sığdır düşer (ZebraApp önce uyarır). Döndürülmüş görseller resmin kendisinde döndürülür; diğer döndürmeler ve ters baskı desteklenmez.
 

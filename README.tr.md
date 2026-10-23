@@ -10,6 +10,10 @@
 |---|---|
 | ![Başlangıç ekranı](docs/start-tr.png) | ![Yazdır](docs/print-tr.png) |
 
+| Doldurmalı şablonlar | İstediğin açıda döndürme |
+|---|---|
+| ![Şablonlar](docs/templates-tr.png) | ![Döndürme](docs/rotate-tr.png) |
+
 ZebraDesigner yalnızca Windows'ta çalışıyor, açık kaynak etiket programlarının çoğu da ZPL'i ya da Bluetooth LE'yi desteklemiyor. ZebraApp küçük bir yerel web uygulaması: Python sunucusu yazıcıyla konuşur, editör kendi penceresinde açılır.
 
 ## Özellikler
@@ -65,9 +69,11 @@ Sistemine uygun dosyayı [son sürüm](https://github.com/TroubledKezoo1/ZebraDe
 | Sistem | Dosya |
 |---|---|
 | Windows 10/11 | `ZebraApp-…-windows-x64.exe` |
+| Windows 10/11, ARM (Copilot+ PC'ler, Surface) | `ZebraApp-…-windows-arm64.exe` |
 | macOS, Apple silicon | `ZebraApp-…-macos-arm64.dmg` |
 | macOS, Intel | `ZebraApp-…-macos-x64.dmg` |
-| Linux | `ZebraApp-…-x86_64.AppImage` |
+| Linux, Intel/AMD | `ZebraApp-…-x86_64.AppImage` |
+| Linux, ARM64 (64 bit işletim sistemli Raspberry Pi 4/5, ARM dizüstü) | `ZebraApp-…-aarch64.AppImage` |
 
 Başka bir şey kurman gerekmez. Uygulamalar imzasız olduğu için ilk açılışta sistem bir kez sorar:
 - **Windows:** "Windows bilgisayarınızı korudu" → *Ek bilgi* → *Yine de çalıştır*.
@@ -162,6 +168,16 @@ zebraapp [--port 8765] [--data-dir KLASÖR] [--no-browser]
 
 Sunucu yalnızca `127.0.0.1` adresini dinler. `Host` ve `Origin` başlıklarını kontrol eder ve değişiklik yapan her istekte özel bir başlık ister; böylece girdiğin bir web sitesi yazıcına baskı gönderemez. İnternete veri gönderen tek özellik Labelary önizlemesidir, o da yalnızca düğmesine bastığında.
 
+## Uygulamaları kendin derle
+
+```sh
+make test        # testler
+make build       # bu sistem için uygulama dist/ içinde
+make dist        # ayrıca AppImage (Linux) ya da dmg (macOS)
+```
+
+`make help` hepsini listeler. Windows'ta `scripts\build-windows.bat` çalıştır (`dist\ZebraApp.exe` çıkar). Python 3.9+ gerekir; her sistem kendi uygulamasını derler (.exe Linux'ta derlenemez).
+
 ## Geliştirme
 
 `v1.0.1` gibi bir etiket gönderildiğinde GitHub Actions Windows, macOS ve Linux uygulamalarını derleyip sürüm olarak yayınlar (`.github/workflows/release.yml`).
@@ -169,7 +185,6 @@ Sunucu yalnızca `127.0.0.1` adresini dinler. `Host` ve `Origin` başlıkların�
 ```sh
 python -m unittest discover -s tests -v   # sunucu tarafı
 node tests/js/test_zpl.js                  # ZPL üretici
-pyinstaller packaging/zebraapp.spec        # paketli uygulama dist/ içinde (Linux'ta ardından packaging/build-appimage.sh)
 ```
 
 **Yeni dil eklemek:** `zebraapp/static/js/i18n.js` içindeki `EN` sözlüğünü kopyala; anahtarlar Türkçe kaynak metinlerdir. Sunucu mesajları `zebraapp/messages.py` içinde.

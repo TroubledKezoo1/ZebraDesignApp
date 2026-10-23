@@ -4,9 +4,11 @@
 | System | File |
 |---|---|
 | Windows 10/11 | `ZebraApp-…-windows-x64.exe` |
+| Windows 10/11, ARM (Copilot+ PCs, Surface) | `ZebraApp-…-windows-arm64.exe` |
 | macOS, Apple silicon (M1–M4) | `ZebraApp-…-macos-arm64.dmg` |
 | macOS, Intel | `ZebraApp-…-macos-x64.dmg` |
-| Linux (Ubuntu 22.04+ and others) | `ZebraApp-…-x86_64.AppImage` |
+| Linux, Intel/AMD (Ubuntu 22.04+ and others) | `ZebraApp-…-x86_64.AppImage` |
+| Linux, ARM64 (Raspberry Pi 4/5 with 64-bit OS, ARM laptops) | `ZebraApp-…-aarch64.AppImage` |
 
 The apps are not signed, so the system asks once:
 
