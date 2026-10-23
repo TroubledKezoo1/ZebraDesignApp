@@ -197,6 +197,17 @@ make dist        # plus the AppImage (Linux) or the dmg (macOS)
 
 `make help` lists everything. On Windows run `scripts\build-windows.bat` (gives `dist\ZebraApp.exe`). Needs Python 3.9+; each system builds its own app (an .exe cannot be built on Linux).
 
+## Build the app yourself
+
+Anyone can build the same download for their own system and CPU. You need Python 3.9 or newer (Linux also `curl`); everything else is installed into a local `.venv` automatically.
+
+```sh
+make package                         # Linux, macOS (or: python3 packaging/build.py package)
+python packaging\build.py package    # Windows without make
+```
+
+The finished file lands in `dist/release/`: a `.exe` on Windows, a `.dmg` on macOS, an `.AppImage` on Linux. `make help` lists the other targets (`run`, `test`, `build`, `clean`). Each system has to build its own app; the release workflow does exactly this on GitHub for every download in the table above.
+
 ## Development
 
 Pushing a tag like `v1.0.1` builds the Windows, macOS and Linux apps on GitHub Actions and publishes them as a release (`.github/workflows/release.yml`).

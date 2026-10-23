@@ -178,6 +178,17 @@ make dist        # ayrıca AppImage (Linux) ya da dmg (macOS)
 
 `make help` hepsini listeler. Windows'ta `scripts\build-windows.bat` çalıştır (`dist\ZebraApp.exe` çıkar). Python 3.9+ gerekir; her sistem kendi uygulamasını derler (.exe Linux'ta derlenemez).
 
+## Uygulamayı kendin derle
+
+Aynı indirmeyi herkes kendi sistemi ve işlemcisi için derleyebilir. Python 3.9 ya da üstü gerekir (Linux'ta ayrıca `curl`); gerisi yerel bir `.venv` içine kendiliğinden kurulur.
+
+```sh
+make package                         # Linux, macOS (ya da: python3 packaging/build.py package)
+python packaging\build.py package    # make olmayan Windows
+```
+
+Bitmiş dosya `dist/release/` içine çıkar: Windows'ta `.exe`, macOS'ta `.dmg`, Linux'ta `.AppImage`. Diğer hedefleri `make help` listeler (`run`, `test`, `build`, `clean`). Her sistem kendi uygulamasını derlemek zorundadır; sürüm iş akışı yukarıdaki tablodaki her indirme için GitHub'da tam olarak bunu yapar.
+
 ## Geliştirme
 
 `v1.0.1` gibi bir etiket gönderildiğinde GitHub Actions Windows, macOS ve Linux uygulamalarını derleyip sürüm olarak yayınlar (`.github/workflows/release.yml`).

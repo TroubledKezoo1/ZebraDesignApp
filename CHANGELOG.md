@@ -12,4 +12,6 @@ First release with ready-to-run apps: no Python needed.
 - Open `.zpl` files and edit them.
 - Template library with fill-in fields; ZebraDesigner 3 `.nlbl` open and save (experimental).
 - Printing over Bluetooth LE, network, USB / system printer and serial; CSV batch printing and counters.
+- Windows ARM and Linux ARM builds.
+- `make package` (or `python packaging/build.py package`) builds the app for your own system.
 - If port 8765 is taken by another program, the app uses the next free one. Errors of the packaged app are written to `zebraapp-error.log` in the data folder.
