@@ -1,6 +1,6 @@
 # ZebraApp
 
-**A label designer for Zebra and other ZPL printers.** Design labels in an editor that works like a word processor (ribbon, File screen, type straight onto the label), then print over Bluetooth LE, the network, USB or a serial port. It runs on Linux, Windows and macOS and needs nothing but Python.
+**A label designer for Zebra and other ZPL printers.** Design labels in an editor that works like a word processor (ribbon, File screen, type straight onto the label), then print over Bluetooth LE, the network, USB or a serial port. It runs on Windows, macOS and Linux: download the app and double-click it.
 
 [Türkçe](README.tr.md)
 
@@ -58,14 +58,32 @@ Printer profiles are included for the ZD (ZD421, ZD621, ZD411, ZD420, ZD410, ZD2
 
 Labels made with ZebraApp have been printed on a ZD421 (300 dpi) over Bluetooth LE. The other models and connection types follow Zebra's documentation but have not been tested on real hardware yet, so reports are welcome.
 
+## Download
+
+Get the app for your system from the [latest release](https://github.com/TroubledKezoo1/ZebraDesignApp/releases/latest):
+
+| System | File |
+|---|---|
+| Windows 10/11 | `ZebraApp-…-windows-x64.exe` |
+| macOS, Apple silicon | `ZebraApp-…-macos-arm64.dmg` |
+| macOS, Intel | `ZebraApp-…-macos-x64.dmg` |
+| Linux | `ZebraApp-…-x86_64.AppImage` |
+
+Nothing else needs to be installed. The apps are not signed, so the first start asks once:
+- **Windows:** "Windows protected your PC" → *More info* → *Run anyway*.
+- **macOS:** drag ZebraApp to Applications, then right-click → *Open* the first time (or System Settings → Privacy & Security → *Open Anyway*).
+- **Linux:** allow executing (`chmod +x ZebraApp-*.AppImage`) and double-click. If it does not start: `sudo apt install libfuse2` (`libfuse2t64` on Ubuntu 24.04).
+
+The editor opens as a window in Chrome or Edge, or in your default browser.
+
 ## Documentation
 
 - [User guide](docs/USER_GUIDE.md): from adding a printer to batch printing
 - [Türkçe kullanım kılavuzu](docs/KULLANIM.md)
 
-## Install
+## Install from source
 
-Python 3.8 or newer is required.
+For development, or on systems without a ready-made app. Python 3.8 or newer is required.
 
 ```sh
 git clone https://github.com/TroubledKezoo1/ZebraDesignApp.git
@@ -165,9 +183,13 @@ The ZPL produced in the editor is what goes to the printer, byte for byte.
 
 ## Development
 
+Pushing a tag like `v1.0.1` builds the Windows, macOS and Linux apps on GitHub Actions and publishes them as a release (`.github/workflows/release.yml`).
+
+
 ```sh
 python -m unittest discover -s tests -v   # backend
 node tests/js/test_zpl.js                  # ZPL generator
+pyinstaller packaging/zebraapp.spec        # packaged app in dist/ (Linux: then packaging/build-appimage.sh)
 ```
 
 **Adding a language:** copy the `EN` dictionary in `zebraapp/static/js/i18n.js`. Keys are the Turkish source strings. Server messages are in `zebraapp/messages.py`.

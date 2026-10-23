@@ -1,6 +1,6 @@
 # ZebraApp
 
-**Zebra ve diğer ZPL yazıcılar için etiket tasarım programı.** Etiketi Word gibi çalışan bir editörde (şerit menü, Dosya ekranı, doğrudan etiketin üstüne yazma) tasarlarsın, Bluetooth LE, ağ, USB ya da seri port üzerinden basarsın. Linux, Windows ve macOS'ta çalışır, Python dışında bir şey gerektirmez.
+**Zebra ve diğer ZPL yazıcılar için etiket tasarım programı.** Etiketi Word gibi çalışan bir editörde (şerit menü, Dosya ekranı, doğrudan etiketin üstüne yazma) tasarlarsın, Bluetooth LE, ağ, USB ya da seri port üzerinden basarsın. Windows, macOS ve Linux'ta çalışır: uygulamayı indirip çift tıklaman yeterli.
 
 [English](README.md)
 
@@ -58,14 +58,32 @@ ZD (ZD421, ZD621, ZD411, ZD420, ZD410, ZD220/230, ZD888), GK/GX, ZT (ZT230, ZT41
 
 ZebraApp ile hazırlanan etiketler bir ZD421'de (300 dpi) Bluetooth LE üzerinden basıldı. Diğer modeller ve bağlantı türleri Zebra'nın belgelerine göre yazıldı ama henüz gerçek donanımda denenmedi; deneyen olursa geri bildirimini bekliyorum.
 
+## İndir
+
+Sistemine uygun dosyayı [son sürüm](https://github.com/TroubledKezoo1/ZebraDesignApp/releases/latest) sayfasından indir:
+
+| Sistem | Dosya |
+|---|---|
+| Windows 10/11 | `ZebraApp-…-windows-x64.exe` |
+| macOS, Apple silicon | `ZebraApp-…-macos-arm64.dmg` |
+| macOS, Intel | `ZebraApp-…-macos-x64.dmg` |
+| Linux | `ZebraApp-…-x86_64.AppImage` |
+
+Başka bir şey kurman gerekmez. Uygulamalar imzasız olduğu için ilk açılışta sistem bir kez sorar:
+- **Windows:** "Windows bilgisayarınızı korudu" → *Ek bilgi* → *Yine de çalıştır*.
+- **macOS:** ZebraApp'i Uygulamalar'a sürükle, ilk açılışta sağ tık → *Aç* (ya da Sistem Ayarları → Gizlilik ve Güvenlik → *Yine de Aç*).
+- **Linux:** çalıştırma izni ver (`chmod +x ZebraApp-*.AppImage`) ve çift tıkla. Açılmazsa: `sudo apt install libfuse2` (Ubuntu 24.04'te `libfuse2t64`).
+
+Editör Chrome ya da Edge'de pencere olarak, yoksa varsayılan tarayıcıda açılır.
+
 ## Belgeler
 
 - [Kullanım kılavuzu](docs/KULLANIM.md): yazıcı eklemekten toplu baskıya
 - [English user guide](docs/USER_GUIDE.md)
 
-## Kurulum
+## Kaynaktan kurulum
 
-Python 3.8 ya da üstü gerekir.
+Geliştirme için ya da hazır uygulaması olmayan sistemlerde. Python 3.8 ya da üstü gerekir.
 
 ```sh
 git clone https://github.com/TroubledKezoo1/ZebraDesignApp.git
@@ -146,9 +164,12 @@ Sunucu yalnızca `127.0.0.1` adresini dinler. `Host` ve `Origin` başlıkların�
 
 ## Geliştirme
 
+`v1.0.1` gibi bir etiket gönderildiğinde GitHub Actions Windows, macOS ve Linux uygulamalarını derleyip sürüm olarak yayınlar (`.github/workflows/release.yml`).
+
 ```sh
 python -m unittest discover -s tests -v   # sunucu tarafı
 node tests/js/test_zpl.js                  # ZPL üretici
+pyinstaller packaging/zebraapp.spec        # paketli uygulama dist/ içinde (Linux'ta ardından packaging/build-appimage.sh)
 ```
 
 **Yeni dil eklemek:** `zebraapp/static/js/i18n.js` içindeki `EN` sözlüğünü kopyala; anahtarlar Türkçe kaynak metinlerdir. Sunucu mesajları `zebraapp/messages.py` içinde.

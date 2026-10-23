@@ -8,7 +8,7 @@ ZebraApp bir kelime işlemci gibi çalışır: üstte şerit menü, yeni, aç, k
 
 ## 1. Uygulamayı başlat
 
-README'deki gibi kur, sonra `zebraapp` komutunu çalıştır (ya da sistemin için olan başlatıcıya çift tıkla). Editör kendi penceresinde açılır, pencereyi kapatınca birkaç saniye sonra kendiliğinden kapanır.
+Sistemine uygun uygulamayı [sürümler sayfasından](https://github.com/TroubledKezoo1/ZebraDesignApp/releases/latest) indirip çift tıkla (ilk açılıştaki güvenlik sorusu için README'ye bak). Kaynaktan kurduysan `zebraapp` komutunu çalıştır. Editör kendi penceresinde açılır, pencereyi kapatınca birkaç saniye sonra kendiliğinden kapanır.
 
 Uygulama **Dosya** ekranında açılır:
 

@@ -8,7 +8,7 @@ ZebraApp works like a word processor: a ribbon at the top, a **File** screen for
 
 ## 1. Start the app
 
-Install as described in the README, then run `zebraapp` (or double-click the launcher for your system). The editor opens in its own window and closes itself a few seconds after you close that window.
+Download the app for your system from the [releases page](https://github.com/TroubledKezoo1/ZebraDesignApp/releases/latest) and double-click it (see the README for the one-time security question). If you installed from source, run `zebraapp`. The editor opens in its own window and closes itself a few seconds after you close that window.
 
 The app opens on the **File** screen:
 

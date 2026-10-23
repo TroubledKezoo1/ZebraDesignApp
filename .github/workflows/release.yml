@@ -1,0 +1,121 @@
+name: Release
+
+# Push a tag like v1.0.0 to build the apps and publish them on the Releases page.
+# "Run workflow" on the Actions tab builds them without publishing (downloadable artifacts).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: windows-x64
+          - os: macos-latest
+            target: macos-arm64
+          - os: macos-15-intel
+            target: macos-x64
+          - os: ubuntu-22.04
+            target: linux-x86_64
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ".[all]" pyinstaller
+          echo "VER=$(python -c 'import zebraapp; print(zebraapp.__version__)')" >> "$GITHUB_ENV"
+
+      - name: Tests
+        run: python -m unittest discover -s tests
+
+      - name: Build
+        run: pyinstaller --noconfirm packaging/zebraapp.spec
+
+      - name: Smoke test (Linux, macOS)
+        if: runner.os != 'Windows'
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then BIN=dist/ZebraApp.app/Contents/MacOS/ZebraApp; else BIN=dist/zebraapp/zebraapp; fi
+          "$BIN" --no-browser --port 8799 --data-dir "$RUNNER_TEMP/zd" &
+          PID=$!
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8799/api/ping && break; sleep 1; done
+          curl -sf http://127.0.0.1:8799/ > page.html && grep -q ZebraApp page.html
+          curl -sf -o /dev/null http://127.0.0.1:8799/api/fonts
+          kill $PID
+
+      - name: Smoke test (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath dist\ZebraApp.exe -ArgumentList "--no-browser","--port","8799","--data-dir","$env:RUNNER_TEMP\zd" -PassThru
+          $ok = $false
+          for ($i = 0; $i -lt 40; $i++) {
+            try { Invoke-RestMethod http://127.0.0.1:8799/api/ping | Out-Null; $ok = $true; break } catch { Start-Sleep 1 }
+          }
+          if (-not $ok) { throw "ZebraApp.exe did not start" }
+          (Invoke-WebRequest http://127.0.0.1:8799/).Content | Select-String ZebraApp | Out-Null
+          Invoke-RestMethod http://127.0.0.1:8799/api/fonts | ConvertTo-Json -Compress | Out-String | % { $_.Substring(0, [Math]::Min(200, $_.Length)) }
+          Stop-Process -Id $p.Id
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          mkdir -p out
+          cp dist/ZebraApp.exe "out/ZebraApp-$VER-windows-x64.exe"
+
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p out dmg
+          cp -R dist/ZebraApp.app dmg/
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname "ZebraApp $VER" -srcfolder dmg -ov -format UDZO "out/ZebraApp-$VER-${{ matrix.target }}.dmg"
+
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          ./packaging/build-appimage.sh
+          mkdir -p out
+          cp dist/*.AppImage out/
+          chmod +x out/*.AppImage
+          APPIMAGE_EXTRACT_AND_RUN=1 out/*.AppImage --version
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZebraApp-${{ matrix.target }}
+          path: out/*
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - name: Release notes
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          awk -v v="$VER" '$0 ~ "^## " v {f=1; next} /^## / && f {exit} f' CHANGELOG.md > notes.md
+          cat packaging/RELEASE-DOWNLOAD.md >> notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: out/*
+          body_path: notes.md

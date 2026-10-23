@@ -318,7 +318,17 @@ def main(argv=None):
         if not args.no_browser:
             open_window(url)
         return
-    srv = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
+    srv = None
+    for port in range(args.port, args.port + 10):
+        try:
+            srv = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+            break
+        except OSError:
+            # another program uses this port; ZebraApp itself was checked above
+            if port == args.port + 9:
+                raise
+    PORT = port
+    url = "http://localhost:%d" % PORT
     print("ZebraApp %s  %s   (data: %s)" % (__version__, url, store.base))
     if not args.no_browser:
         threading.Timer(0.5, lambda: open_window(url)).start()
