@@ -105,8 +105,7 @@ jobs:
       - name: Install the .deb through a signed apt repository and start it (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get install -y apt-utils
-          sudo sh packaging/check-apt.sh dist/release
+          packaging/ci-run.sh sh -c 'sudo apt-get update && sudo apt-get install -y apt-utils && sudo sh -x packaging/check-apt.sh dist/release'
 
       - uses: actions/upload-artifact@v4
         with:
