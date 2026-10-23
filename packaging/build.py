@@ -3,6 +3,7 @@
 
     python packaging/build.py package     # app + installer-style file in dist/release/
     python packaging/build.py build       # only the PyInstaller output in dist/
+    python packaging/build.py deb         # Linux: .deb from dist/zebraapp (package does this too)
     python packaging/build.py deps        # only create .venv and install what is needed
     python packaging/build.py test        # backend and ZPL tests
     python packaging/build.py clean
@@ -12,6 +13,7 @@ use --system-python to build with the interpreter that runs this script (CI does
 Windows: dist/release/ZebraApp-<version>-windows-<x64|arm64>.exe
 macOS:   dist/release/ZebraApp-<version>-macos-<x64|arm64>.dmg
 Linux:   dist/release/ZebraApp-<version>-<x86_64|aarch64>.AppImage  (needs curl, downloads appimagetool)
+         dist/release/zebraapp_<version>_<amd64|arm64>.deb          (needs dpkg-deb)
 """
 import argparse
 import platform
@@ -59,6 +61,53 @@ def build(py):
     run([py, "-m", "PyInstaller", "--noconfirm", ROOT / "packaging" / "zebraapp.spec"])
 
 
+DEB_ARCH = {"x86_64": "amd64", "aarch64": "arm64"}
+
+
+def deb():
+    """Debian/Ubuntu package: the PyInstaller folder under /opt/zebraapp, a launcher in /usr/bin and a menu entry."""
+    ver, arch = version(), DEB_ARCH.get(platform.machine())
+    if not arch or not shutil.which("dpkg-deb"):
+        print("Skipping the .deb (needs dpkg-deb on x86_64 or aarch64).")
+        return None
+    root = ROOT / "build" / "deb" / "root"
+    shutil.rmtree(root.parent, ignore_errors=True)
+    shutil.copytree(ROOT / "dist" / "zebraapp", root / "opt" / "zebraapp", symlinks=True)
+    (root / "usr" / "bin").mkdir(parents=True)
+    (root / "usr" / "bin" / "zebraapp").symlink_to("/opt/zebraapp/zebraapp")
+    apps = root / "usr" / "share" / "applications"
+    apps.mkdir(parents=True)
+    (apps / "zebraapp.desktop").write_text(
+        "[Desktop Entry]\nType=Application\nName=ZebraApp\nComment=Label designer for Zebra / ZPL printers\n"
+        "Exec=zebraapp\nIcon=zebraapp\nTerminal=false\nCategories=Office;Graphics;\nStartupWMClass=localhost\n", encoding="utf-8")
+    icons = root / "usr" / "share" / "icons" / "hicolor" / "512x512" / "apps"
+    icons.mkdir(parents=True)
+    shutil.copy2(ROOT / "packaging" / "zebraapp.png", icons / "zebraapp.png")
+    doc = root / "usr" / "share" / "doc" / "zebraapp"
+    doc.mkdir(parents=True)
+    shutil.copy2(ROOT / "LICENSE", doc / "copyright")
+    size = sum(f.stat().st_size for f in root.rglob("*") if f.is_file() and not f.is_symlink()) // 1024
+    ctl = root / "DEBIAN"
+    ctl.mkdir()
+    (ctl / "control").write_text(
+        "Package: zebraapp\nVersion: %s\nSection: graphics\nPriority: optional\nArchitecture: %s\n"
+        "Maintainer: Yunus Emre Sara\u00e7 <TroubledKezoo1@users.noreply.github.com>\nInstalled-Size: %d\n"
+        "Depends: libc6 (>= 2.35)\nRecommends: chromium | chromium-browser | google-chrome-stable | microsoft-edge-stable\n"
+        "Homepage: https://github.com/TroubledKezoo1/ZebraDesignApp\n"
+        "Description: Label designer for Zebra / ZPL printers\n"
+        " Design labels in a word-processor-like editor and print them over\n"
+        " Bluetooth LE, network, USB or serial port. The editor opens in its own\n"
+        " browser window.\n" % (ver, arch, size), encoding="utf-8")
+    for d in [root, *[p for p in root.rglob("*") if p.is_dir()]]:
+        d.chmod(0o755)
+    out = ROOT / "dist" / "release"
+    out.mkdir(parents=True, exist_ok=True)
+    dest = out / ("zebraapp_%s_%s.deb" % (ver, arch))
+    run(["dpkg-deb", "--root-owner-group", "--build", root, dest])
+    print("Ready:", dest)
+    return dest
+
+
 def package():
     ver, out = version(), ROOT / "dist" / "release"
     out.mkdir(parents=True, exist_ok=True)
@@ -80,6 +129,7 @@ def package():
         dest = out / src.name
         shutil.move(str(src), dest)
         dest.chmod(0o755)
+        deb()
     else:
         sys.exit("No packaging for this system.")
     print("\nReady:", dest)
@@ -88,7 +138,7 @@ def package():
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("command", choices=["package", "build", "deps", "test", "clean"])
+    ap.add_argument("command", choices=["package", "build", "deb", "deps", "test", "clean"])
     ap.add_argument("--system-python", action="store_true", help="no .venv; use this interpreter as it is")
     args = ap.parse_args()
     if args.command == "clean":
@@ -100,6 +150,8 @@ def main():
             run(["node", ROOT / "tests" / "js" / "test_zpl.js"])
         else:
             print("node not found: skipping the ZPL tests")
+    elif args.command == "deb":
+        deb()
     elif args.command == "deps":
         ensure_deps(args.system_python)
     else:

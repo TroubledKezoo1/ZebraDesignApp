@@ -102,6 +102,12 @@ jobs:
         if: runner.os == 'Linux'
         run: APPIMAGE_EXTRACT_AND_RUN=1 dist/release/*.AppImage --version
 
+      - name: Install the .deb through a signed apt repository and start it (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y apt-utils
+          sudo sh packaging/check-apt.sh dist/release
+
       - uses: actions/upload-artifact@v4
         with:
           name: ZebraApp-${{ matrix.target }}
@@ -123,6 +129,7 @@ jobs:
           VER="${GITHUB_REF_NAME#v}"
           awk -v v="$VER" '$0 ~ "^## " v {f=1; next} /^## / && f {exit} f' CHANGELOG.md > notes.md
           cat packaging/RELEASE-DOWNLOAD.md >> notes.md
+          (cd out && sha256sum * > SHA256SUMS.txt)
           ls -la out
       - uses: softprops/action-gh-release@v2
         with:

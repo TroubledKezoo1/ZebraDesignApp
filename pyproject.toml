@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zebraapp"
-version = "1.0.0"
+version = "1.0.1"
 description = "Label designer for Zebra / ZPL printers: design in the browser, print over Bluetooth LE, network, USB or serial."
 readme = "README.md"
 license = { text = "MIT" }
@@ -12,13 +12,21 @@ requires-python = ">=3.8"
 authors = [{ name = "Yunus Emre Saraç" }]
 keywords = ["zebra", "zpl", "label", "label-printer", "thermal-printer", "barcode", "qr-code", "bluetooth-le"]
 classifiers = [
+  "Development Status :: 5 - Production/Stable",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Environment :: Web Environment",
   "Topic :: Printing",
 ]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/TroubledKezoo1/ZebraDesignApp"
+Source = "https://github.com/TroubledKezoo1/ZebraDesignApp"
+Issues = "https://github.com/TroubledKezoo1/ZebraDesignApp/issues"
+Changelog = "https://github.com/TroubledKezoo1/ZebraDesignApp/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 ble = ["bleak>=0.20"]

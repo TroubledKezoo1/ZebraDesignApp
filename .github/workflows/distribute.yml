@@ -1,0 +1,121 @@
+name: Distribute
+
+# After the Release workflow has published the downloads for a tag, this puts the same
+# release into the package channels: apt repository (GitHub Pages), Homebrew tap and npm.
+# Each job quietly skips itself until its secret exists, see docs/DISTRIBUTION.md.
+on:
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, e.g. v1.0.1"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  context:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.head_branch, 'v'))
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.t.outputs.tag }}
+      version: ${{ steps.t.outputs.version }}
+    steps:
+      - id: t
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          RUN_TAG: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          TAG="${INPUT_TAG:-$RUN_TAG}"
+          case "$TAG" in v[0-9]*) ;; *) echo "bad tag: $TAG"; exit 1;; esac
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+  apt:
+    needs: context
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ needs.context.outputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+      GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+    steps:
+      - id: chk
+        run: |
+          if [ -z "$GPG_PRIVATE_KEY" ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; echo "::notice title=apt::secret APT_GPG_PRIVATE_KEY is not set, skipping"; fi
+      - uses: actions/checkout@v4
+        if: steps.chk.outputs.skip != 'true'
+      - name: Build and sign the repository
+        if: steps.chk.outputs.skip != 'true'
+        run: |
+          sudo apt-get install -y apt-utils
+          gh release download "$TAG" --pattern '*.deb' --dir debs
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          KEY=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr/ {print $10; exit}')
+          REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git clone --depth 1 --branch gh-pages "$REMOTE" site 2>/dev/null || { mkdir site && git -C site init -q -b gh-pages && git -C site remote add origin "$REMOTE"; }
+          sh packaging/make-apt-repo.sh debs site/apt "$KEY"
+          touch site/.nojekyll
+          cp docs/apt-index.html site/index.html
+          git -C site config user.name "github-actions"
+          git -C site config user.email "github-actions@users.noreply.github.com"
+          git -C site add -A
+          git -C site commit -m "apt repository: $TAG" || echo "nothing changed"
+          git -C site push origin gh-pages
+
+  homebrew:
+    needs: context
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ needs.context.outputs.tag }}
+      VERSION: ${{ needs.context.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+      TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+    steps:
+      - id: chk
+        run: |
+          if [ -z "$TAP_TOKEN" ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; echo "::notice title=homebrew::secret TAP_TOKEN is not set, skipping"; fi
+      - uses: actions/checkout@v4
+        if: steps.chk.outputs.skip != 'true'
+      - name: Update the tap
+        if: steps.chk.outputs.skip != 'true'
+        run: |
+          gh release download "$TAG" --pattern '*macos*.dmg' --dir dmg
+          python3 packaging/make-cask.py "$VERSION" dmg/*macos-arm64.dmg dmg/*macos-x64.dmg > zebraapp.rb
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/${GITHUB_REPOSITORY_OWNER}/homebrew-zebraapp.git" tap
+          mkdir -p tap/Casks
+          cp zebraapp.rb tap/Casks/zebraapp.rb
+          git -C tap config user.name "github-actions"
+          git -C tap config user.email "github-actions@users.noreply.github.com"
+          git -C tap add -A
+          git -C tap commit -m "zebraapp $VERSION" || echo "nothing changed"
+          git -C tap push
+
+  npm:
+    needs: context
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      VERSION: ${{ needs.context.outputs.version }}
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - id: chk
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; echo "::notice title=npm::secret NPM_TOKEN is not set, skipping"; fi
+      - uses: actions/checkout@v4
+        if: steps.chk.outputs.skip != 'true'
+      - uses: actions/setup-node@v4
+        if: steps.chk.outputs.skip != 'true'
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+      - name: Publish
+        if: steps.chk.outputs.skip != 'true'
+        working-directory: npm
+        run: |
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          npm publish --provenance --access public

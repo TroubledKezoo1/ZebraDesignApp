@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+- Debian/Ubuntu package (`.deb`, amd64 and arm64) and a signed apt repository.
+- PyPI package, Homebrew cask and an npm launcher (`npx zebraapp`); every download is listed in `SHA256SUMS.txt`.
+- Maintainer notes in `docs/DISTRIBUTION.md`.
+
 ## 1.0.0
 
 First release with ready-to-run apps: no Python needed.

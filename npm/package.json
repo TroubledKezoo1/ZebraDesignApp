@@ -1,0 +1,14 @@
+{
+  "name": "zebraapp",
+  "version": "1.0.1",
+  "description": "Label designer for Zebra / ZPL printers. Downloads the ZebraApp desktop app for your system on first run.",
+  "bin": { "zebraapp": "bin/zebraapp.js" },
+  "files": ["bin", "README.md"],
+  "engines": { "node": ">=16" },
+  "license": "MIT",
+  "author": "Yunus Emre Saraç",
+  "repository": { "type": "git", "url": "git+https://github.com/TroubledKezoo1/ZebraDesignApp.git", "directory": "npm" },
+  "homepage": "https://github.com/TroubledKezoo1/ZebraDesignApp",
+  "bugs": "https://github.com/TroubledKezoo1/ZebraDesignApp/issues",
+  "keywords": ["zebra", "zpl", "label", "label-printer", "barcode", "qr-code", "bluetooth"]
+}
