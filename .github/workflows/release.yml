@@ -1,10 +1,11 @@
 name: Release
 
 # Push a tag like v1.0.0 to build the apps and publish them on the Releases page.
-# "Run workflow" on the Actions tab builds them without publishing (downloadable artifacts).
+# Pushing the branch "build-test" (or "Run workflow") builds them without publishing.
 on:
   push:
     tags: ["v*"]
+    branches: ["build-test"]
   workflow_dispatch:
 
 permissions:
@@ -12,18 +13,27 @@ permissions:
 
 jobs:
   build:
+    name: build (${{ matrix.target }})
+    # ARM builds must never block the other downloads
+    continue-on-error: ${{ matrix.experimental == true }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: windows-latest
             target: windows-x64
+          - os: windows-11-arm
+            target: windows-arm64
+            experimental: true
           - os: macos-latest
             target: macos-arm64
           - os: macos-15-intel
             target: macos-x64
           - os: ubuntu-22.04
             target: linux-x86_64
+          - os: ubuntu-22.04-arm
+            target: linux-arm64
+            experimental: true
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -36,15 +46,18 @@ jobs:
 
       - name: Install
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install ".[all]" pyinstaller
+          packaging/ci-run.sh sh -c '
+            python -m pip install --upgrade pip &&
+            { python -m pip install ".[all]" pyinstaller ||
+              { [ "${{ matrix.experimental }}" = "true" ] && echo "falling back to fewer extras" &&
+                { python -m pip install ".[serial,windows]" pyinstaller || python -m pip install . pyinstaller; }; }; }'
           echo "VER=$(python -c 'import zebraapp; print(zebraapp.__version__)')" >> "$GITHUB_ENV"
 
       - name: Tests
-        run: python packaging/run-tests.py
+        run: packaging/ci-run.sh python packaging/run-tests.py
 
       - name: Build
-        run: pyinstaller --noconfirm packaging/zebraapp.spec
+        run: packaging/ci-run.sh pyinstaller --noconfirm packaging/zebraapp.spec
 
       - name: Smoke test (Linux, macOS)
         if: runner.os != 'Windows'
@@ -66,16 +79,17 @@ jobs:
           for ($i = 0; $i -lt 40; $i++) {
             try { Invoke-RestMethod http://127.0.0.1:8799/api/ping | Out-Null; $ok = $true; break } catch { Start-Sleep 1 }
           }
-          if (-not $ok) { throw "ZebraApp.exe did not start" }
-          (Invoke-WebRequest http://127.0.0.1:8799/).Content | Select-String ZebraApp | Out-Null
-          Invoke-RestMethod http://127.0.0.1:8799/api/fonts | ConvertTo-Json -Compress | Out-String | % { $_.Substring(0, [Math]::Min(200, $_.Length)) }
+          if (-not $ok) { Write-Host "::error title=smoke test::ZebraApp.exe did not start"; exit 1 }
+          $page = (Invoke-WebRequest http://127.0.0.1:8799/ -UseBasicParsing).Content
+          if ($page -notmatch "ZebraApp") { Write-Host "::error title=smoke test::page is wrong"; exit 1 }
+          Invoke-RestMethod http://127.0.0.1:8799/api/fonts | Out-Null
           Stop-Process -Id $p.Id
 
       - name: Package (Windows)
         if: runner.os == 'Windows'
         run: |
           mkdir -p out
-          cp dist/ZebraApp.exe "out/ZebraApp-$VER-windows-x64.exe"
+          cp dist/ZebraApp.exe "out/ZebraApp-$VER-${{ matrix.target }}.exe"
 
       - name: Package (macOS)
         if: runner.os == 'macOS'
@@ -88,7 +102,8 @@ jobs:
       - name: Package (Linux)
         if: runner.os == 'Linux'
         run: |
-          ./packaging/build-appimage.sh
+          export ARCH=$(uname -m)
+          packaging/ci-run.sh ./packaging/build-appimage.sh
           mkdir -p out
           cp dist/*.AppImage out/
           chmod +x out/*.AppImage
@@ -115,6 +130,7 @@ jobs:
           VER="${GITHUB_REF_NAME#v}"
           awk -v v="$VER" '$0 ~ "^## " v {f=1; next} /^## / && f {exit} f' CHANGELOG.md > notes.md
           cat packaging/RELEASE-DOWNLOAD.md >> notes.md
+          ls -la out
       - uses: softprops/action-gh-release@v2
         with:
           files: out/*
