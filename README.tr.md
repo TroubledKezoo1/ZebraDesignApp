@@ -21,7 +21,10 @@ ZebraDesigner yalnızca Windows'ta çalışıyor, açık kaynak etiket programla
 - Fareyle seçme, taşıma ve 8 tutamaçla boyutlandırma, çoklu seçim ve alan seçimi
 - Izgaraya ve diğer öğelere yapışma, kılavuz çizgileri, mm cetvelleri, yakınlaştırma
 - Gizlenebilen, kilitlenebilen, yeniden adlandırılabilen ve sürükleyerek sıralanan katmanlar
-- Hizalama ve eşit dağıtma, öne getirme / arkaya gönderme, 90° adımlarla döndürme
+- Hizalama ve eşit dağıtma, öne getirme / arkaya gönderme
+- Seçimin üstündeki tutamaçla her şeyi istediğin açıyla döndürme (Shift ile 15° adım). 0°, 90°, 180° ve 270°'yi yazıcı kendisi çizer; diğer açılar resim olarak gider
+- Bilgisayarında kurulu her yazı tipi (resim olarak gider, ekrandakiyle birebir aynı basılır) ya da yazıcının kendi yazı tipi
+- Kutuya sığdır: CSV listesinden gelen uzun yazı her etikette ayrı ayrı küçültülür, kutusundan taşmaz
 - Kalın yazı, harf genişliği, satır aralığı, ortalı ya da sağa yaslı metin kutusu, otomatik satır kaydırma, ters baskı (siyah üstüne beyaz)
 - Geri al / yinele, kopyala / yapıştır, klavye kısayolları
 
@@ -32,6 +35,7 @@ ZebraDesigner yalnızca Windows'ta çalışıyor, açık kaynak etiket programla
 - Model ve çözünürlüğüyle birden çok yazıcı; etiket yazıcıya uymazsa uyarı
 - [Labelary](https://labelary.com) ile yazıcı önizlemesi (internet gerekir), elle düzenlenip gönderilebilen ZPL görünümü
 - Kalibrasyon, boş etiket ilerletme, ayar etiketi basma, yazıcı durumunu okuma (kâğıt bitti, kapak açık, duraklatıldı…)
+- Hazır `.zpl` dosyalarını açıp düzenleme: metin, `^FB` blokları, kutu, çizgi (çapraz dahil), elips, Code 128 / Code 39 / EAN-13 / UPC-A, QR kod ve `^GFA` resimleri düzenlenebilir öğelere dönüşür; diğer komutlar atlandı diye listelenir
 - Etiketler düz dosyadır (`.zebra`, içi JSON): Kaydet, Farklı kaydet ve Aç sistemin dosya penceresini kullanır, son kullanılanlar listelenir; ZPL `.zpl` dosyası olarak dışa aktarılır
 - Türkçe ve İngilizce arayüz
 

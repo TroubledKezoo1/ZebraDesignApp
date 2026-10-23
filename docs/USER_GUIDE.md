@@ -73,6 +73,10 @@ The **Font** and **Paragraph** groups work on the selected text, also while you 
 - Text height in mm, **A+** / **A−** (Ctrl+Shift+> / <), **B** bold (Ctrl+B), reverse print (white on black), character width.
 - Left, center, right alignment; wrap long lines; line spacing; text box width (0 = automatic).
 
+**Font**: *Printer font* is the printer's own built-in font and the fastest to print. Any other font (the built-in Roboto Condensed or any font installed on your computer) is drawn by ZebraApp and sent as an image, so it prints exactly as you see it.
+
+**Shrink to fit** (the button next to wrap, or *Shrink text that does not fit the box* in Properties): give the text a box width (and, if you like, a height). Text that is too long is made smaller until it fits. With a CSV list this happens label by label, so a long name gets smaller and a short one keeps its size.
+
 Formatting applies to the whole text box, not to single words, because the printer draws each box in one font.
 
 **Clipboard** has Paste, Cut, Copy and Duplicate. **Editing** has Select, Select all, Delete and Edit text.
@@ -84,6 +88,8 @@ Select items, then use **Arrange**:
 - Align left, center, right, top, middle, bottom. One item aligns to the label; several items align to each other.
 - Distribute evenly (3 or more items).
 - Bring to front, send to back, rotate 90°, lock, hide (hidden items are not printed).
+
+**Rotate to any angle**: drag the round handle above the selected item. Hold **Shift** for 15° steps; it snaps to 0°, 90°, 180° and 270° on its own. You can also type the angle under *Position and layer* in Properties. The printer draws 0°, 90°, 180° and 270° itself; any other angle is sent as an image. Barcodes at odd angles may be harder to scan.
 
 With the mouse: drag to move, drag the eight handles to resize, **Shift**-click or drag on empty space to select several items, **Alt** while dragging to turn snapping off. Arrow keys nudge (with **Shift** 10×).
 
@@ -124,6 +130,8 @@ Labels are ordinary files with the extension `.zebra` (JSON inside). You decide 
 | **Save as**: always asks | Ctrl+Shift+S, F12 |
 | **Open**: pick a file or choose from the recent list | Ctrl+O |
 | **New** | Ctrl+N (Chrome may keep this shortcut for itself; use File → New) |
+
+**Open** also opens `.zpl` files written by other programs. ZPL does not say which resolution it was written for, so ZebraApp asks (and suggests one). Text, text blocks, boxes, lines, ellipses, barcodes, QR codes and images become items you can edit; commands it does not know are listed in the status bar. Save the result with Ctrl+S as a `.zebra` file; the original `.zpl` is not changed.
 
 **File → Export** saves the ZPL as a `.zpl` file or shows the code, which you can copy, edit and send by hand.
 

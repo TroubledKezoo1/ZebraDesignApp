@@ -25,19 +25,27 @@
     });
   }
 
-  function measure(text, h, w) {
-    mctx.font = "700 " + h + "px " + FONT;
+  /* el.font bos = yazicinin kendi yazi tipi (^A0); dolu = bilgisayardaki yazi tipi, bitmap olarak basilir */
+  function fontCSS(font) { return font ? '"' + String(font).replace(/["\\]/g, "") + '", ' + FONT : FONT; }
+  function measure(text, h, w, css, weight) {
+    mctx.font = (weight || 700) + " " + h + "px " + (css || FONT);
     return mctx.measureText(text).width * (w / h);
   }
 
-  function wrapLines(lines, h, w, maxW) {
+  /* Hangi acilari yazici kendi komutlariyla basabiliyor; digerleri bitmap */
+  var NATIVE = { text: [0, 90, 180, 270], barcode: [0, 90, 180, 270], image: [0, 90, 180, 270], qr: [0],
+    line: [0, 90, 180, 270], box: [0, 90, 180, 270], ellipse: [0, 90, 180, 270] };
+  function normRot(r) { r = Math.round(+r || 0) % 360; return r < 0 ? r + 360 : r; }
+  function isNative(el) { return (NATIVE[el.type] || [0]).indexOf(normRot(el.rot)) >= 0 && !(el.type === "text" && el.font); }
+
+  function wrapLines(lines, h, w, maxW, css, weight) {
     var out = [];
     lines.forEach(function (line) {
       if (!line) { out.push(""); return; }
       var words = line.split(/(\s+)/), cur = "";
       words.forEach(function (wd) {
         var next = cur + wd;
-        if (cur && measure(next.trimEnd(), h, w) > maxW && wd.trim()) {
+        if (cur && measure(next.trimEnd(), h, w, css, weight) > maxW && wd.trim()) {
           out.push(cur.trimEnd());
           cur = wd.replace(/^\s+/, "");
         } else cur = next;
@@ -90,20 +98,29 @@
 
   function hrHeight(module) { return Math.max(18, Math.round(module * 9)) + 6; }
 
-  /* Bir ogenin nokta cinsinden yerlesimi */
-  function layout(el, doc, rec) {
-    var dpi = doc.dpi, x = dots(el.x, dpi), y = dots(el.y, dpi), rot = +el.rot || 0, L = { x: x, y: y, rot: rot };
+  /* Bir ogenin nokta cinsinden yerlesimi. local=true: donmemis, (0,0) konumlu, bitmap kararini verme */
+  function layout(el, doc, rec, local) {
+    if (!local && !isNative(el)) return rasterLayout(el, doc, rec);
+    var dpi = doc.dpi, x = dots(el.x, dpi), y = dots(el.y, dpi), rot = local ? 0 : normRot(el.rot), L = { x: x, y: y, rot: rot };
     if (el.type === "text") {
-      var h = Math.max(6, dots(el.size, dpi));
-      var w = Math.max(6, Math.round(h * (el.widthPct || 90) / 100));
-      var gap = Math.round(h * (el.lineGap || 1.25));
-      var block = dots(el.boxW, dpi);
-      var raw = subst(el.text, rec).split("\n").map(clean);
-      var lines = (el.wrap && block > 0) ? wrapLines(raw, h, w, block) : raw;
-      var widths = lines.map(function (t) { return measure(t, h, w); });
-      var W = block > 0 ? block : Math.max(1, Math.max.apply(null, widths.concat([0])));
-      var H = (lines.length - 1) * gap + h;
-      L.kind = "text"; L.lines = lines; L.widths = widths; L.h = h; L.w = w; L.gap = gap; L.block = block; L.W = W; L.H = H;
+      var css = fontCSS(el.font), weight = el.font ? (el.bold ? 700 : 400) : 700;
+      var block = dots(el.boxW, dpi), limH = dots(el.boxH, dpi), raw = subst(el.text, rec).split("\n").map(clean);
+      var lay = function (h) {
+        h = Math.max(6, Math.round(h));
+        var w = Math.max(6, Math.round(h * (el.widthPct || 90) / 100)), gap = Math.round(h * (el.lineGap || 1.25));
+        var lines = (el.wrap && block > 0) ? wrapLines(raw, h, w, block, css, weight) : raw;
+        var widths = lines.map(function (t) { return measure(t, h, w, css, weight); });
+        return { h: h, w: w, gap: gap, lines: lines, widths: widths, maxW: Math.max.apply(null, widths.concat([0])), H: (lines.length - 1) * gap + h };
+      };
+      var r = lay(dots(el.size, dpi)), guard = 0;
+      /* kutuya sigdir: genislik ya da yukseklik tasarsa kucult */
+      if (el.fit && (block > 0 || limH > 0)) {
+        while (guard++ < 80 && r.h > 6 && ((block > 0 && r.maxW > block + 0.5) || (limH > 0 && r.H > limH))) r = lay(r.h * 0.95);
+      }
+      var W = block > 0 ? block : Math.max(1, r.maxW);
+      var H = Math.max(r.H, limH > 0 ? limH : 0);
+      L.kind = "text"; L.lines = r.lines; L.widths = r.widths; L.h = r.h; L.w = r.w; L.gap = r.gap; L.block = block; L.W = W; L.H = H;
+      L.css = css; L.weight = weight; L.printerFont = !el.font; L.shrunk = r.h < Math.max(6, dots(el.size, dpi));
       L.box = rotBox(x, y, W, H, rot);
       return L;
     }
@@ -128,8 +145,10 @@
     }
     if (el.type === "line") {
       var len = Math.max(1, dots(el.len, dpi)), t = Math.max(1, dots(el.t, dpi));
+      var vert = (el.dir === "v") !== (rot === 90 || rot === 270);
       L.kind = "line";
-      L.box = el.dir === "v" ? { x: x, y: y, w: t, h: len } : { x: x, y: y, w: len, h: t };
+      L.W = el.dir === "v" ? t : len; L.H = el.dir === "v" ? len : t;
+      L.box = vert ? { x: x, y: y, w: t, h: len } : { x: x, y: y, w: len, h: t };
       L.t = t;
       return L;
     }
@@ -139,16 +158,55 @@
       if (el.type === "ellipse" && el.filled) th = Math.ceil(Math.min(bw, bhh) / 2) + 1;
       L.kind = el.type; L.t = Math.min(th, Math.min(bw, bhh)); if (el.type === "ellipse") L.t = th;
       L.round = Math.max(0, Math.min(8, Math.round(+el.round || 0)));
-      L.box = { x: x, y: y, w: bw, h: bhh };
+      L.W = bw; L.H = bhh;
+      L.box = rotBox(x, y, bw, bhh, rot);
       return L;
     }
     if (el.type === "image") {
       L.kind = "image";
       L.box = { x: x, y: y, w: Math.max(8, dots(el.w, dpi)), h: Math.max(1, dots(el.h, dpi)) };
+      L.W = L.box.w; L.H = L.box.h;
       return L;
     }
     L.box = { x: x, y: y, w: 1, h: 1 };
     return L;
+  }
+
+  /* Serbest aci ya da bilgisayar yazi tipi: oge donmemis haliyle cizilir, sonra dondurulur, bitmap olarak basilir.
+     (x, y) donmus ogenin cevreleyen kutusunun sol ust kosesidir. */
+  function rasterLayout(el, doc, rec) {
+    var dpi = doc.dpi, x = dots(el.x, dpi), y = dots(el.y, dpi), ang = normRot(el.rot);
+    var lel = Object.assign({}, el, { x: 0, y: 0, rot: 0 });
+    var LL = layout(lel, doc, rec, true), lw = LL.box.w, lh = LL.box.h;
+    var a = ang * Math.PI / 180, c = Math.abs(Math.cos(a)), sn = Math.abs(Math.sin(a));
+    var bw = Math.max(1, Math.ceil(lw * c + lh * sn)), bh = Math.max(1, Math.ceil(lw * sn + lh * c));
+    return { kind: "raster", raster: true, angle: ang, x: x, y: y, rot: ang, local: { el: lel, L: LL }, lw: lw, lh: lh,
+      box: { x: x, y: y, w: bw, h: bh }, mat: LL.mat, W: LL.W, H: LL.H, module: LL.module, hr: LL.hr, shrunk: LL.shrunk };
+  }
+  /* Donmus ogenin dort kosesi (nokta), secim cercevesi icin */
+  function corners(L) {
+    var b = L.box;
+    if (!L.raster) return [[b.x, b.y], [b.x + b.w, b.y], [b.x + b.w, b.y + b.h], [b.x, b.y + b.h]];
+    var cx = b.x + b.w / 2, cy = b.y + b.h / 2, a = L.angle * Math.PI / 180, co = Math.cos(a), si = Math.sin(a);
+    return [[-L.lw / 2, -L.lh / 2], [L.lw / 2, -L.lh / 2], [L.lw / 2, L.lh / 2], [-L.lw / 2, L.lh / 2]].map(function (p) {
+      return [cx + p[0] * co - p[1] * si, cy + p[0] * si + p[1] * co];
+    });
+  }
+  /* Bitmap ogeyi 1 bitlik resme cevir (tarayicida, render.js ile) */
+  function rasterBitmap(el, L) {
+    if (!G.R || !G.R.drawRaster) return null;
+    var w = Math.max(1, L.box.w), h = Math.max(1, L.box.h);
+    var cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+    var c = cv.getContext && cv.getContext("2d"); if (!c || !c.getImageData) return null;
+    c.fillStyle = "#000000"; c.strokeStyle = "#000000";
+    var shifted = Object.assign({}, L, { box: { x: 0, y: 0, w: w, h: h } });
+    G.R.drawRaster(c, el, shifted);
+    var px = c.getImageData(0, 0, w, h).data, bpr = Math.ceil(w / 8), bytes = new Uint8Array(bpr * h), bits = new Uint8Array(w * h);
+    for (var i = 0; i < w * h; i++) {
+      var on = px[i * 4 + 3] >= 128 && (px[i * 4] + px[i * 4 + 1] + px[i * 4 + 2]) < 384;
+      if (on) { bits[i] = 1; bytes[Math.floor(i / w) * bpr + ((i % w) >> 3)] |= 0x80 >> ((i % w) & 7); }
+    }
+    return { w: w, h: h, bpr: bpr, bytes: bytes, bits: bits };
   }
 
   /* ---------------- gorsel -> ^GFA ---------------- */
@@ -250,6 +308,11 @@
   function elementZPL(el, doc, rec) {
     if (el.hidden) return [];
     var L = layout(el, doc, rec), o = [], ori = ORI[L.rot] || "N";
+    if (L.raster) {
+      var rb = rasterBitmap(el, L);
+      if (rb) o.push("^FO" + L.box.x + "," + L.box.y + (el.reverse ? "^FR" : "") + gfa(rb) + "^FS");
+      return o;
+    }
     if (L.kind === "text") {
       var bold = el.bold && !el.reverse ? Math.max(1, Math.round(L.h / 28)) : 0;
       L.lines.forEach(function (t, i) {
@@ -363,7 +426,7 @@
 
   G.Z = {
     dots: dots, layout: layout, elementZPL: elementZPL, docZPL: docZPL, labelZPL: labelZPL, records: records,
-    subst: subst, measure: measure, mapRect: mapRect, loadImage: loadImage, imageReady: imageReady,
+    subst: subst, measure: measure, mapRect: mapRect, normRot: normRot, isNative: isNative, corners: corners, fontCSS: fontCSS, NATIVE: NATIVE, loadImage: loadImage, imageReady: imageReady,
     bitmap: bitmap, gfa: gfa, compressRow: compressRow, parseCSV: parseCSV, FONT: FONT, ORI: ORI
   };
 })(window);

@@ -29,8 +29,8 @@
     ctx.save();
     localTransform(ctx, L);
     ctx.textBaseline = "top";
-    ctx.font = "700 " + L.h + "px " + Z.FONT;
-    var bold = el.bold && !el.reverse ? Math.max(1, Math.round(L.h / 28)) : 0, sx = L.w / L.h;
+    ctx.font = (L.weight || 700) + " " + L.h + "px " + (L.css || Z.FONT);
+    var bold = L.printerFont !== false && el.bold && !el.reverse ? Math.max(1, Math.round(L.h / 28)) : 0, sx = L.w / L.h;
     L.lines.forEach(function (t, i) {
       var lw = L.widths[i], lx = 0;
       if (L.block > 0) {
@@ -100,8 +100,20 @@
     ctx.drawImage(bmp.canvas, b.x, b.y);
   }
 
+  /* Serbest acili ya da yazi tipli oge: donmemis haliyle merkez etrafinda dondurerek ciz */
+  function drawRaster(ctx, el, L) {
+    var lo = L.local, b = L.box;
+    ctx.save();
+    ctx.translate(b.x + b.w / 2, b.y + b.h / 2);
+    ctx.rotate(L.angle * Math.PI / 180);
+    ctx.translate(-lo.L.box.w / 2, -lo.L.box.h / 2);
+    drawEl(ctx, lo.el, lo.L);
+    ctx.restore();
+  }
+
   function drawEl(ctx, el, L) {
     var b = L.box;
+    if (L.raster) return drawRaster(ctx, el, L);
     if (L.kind === "text") return drawText(ctx, el, L);
     if (L.kind === "qr") return drawQR(ctx, L);
     if (L.kind === "barcode") return drawBarcode(ctx, el, L);
@@ -162,5 +174,5 @@
     return layouts;
   }
 
-  G.R = { drawDoc: drawDoc };
+  G.R = { drawDoc: drawDoc, drawEl: drawEl, drawRaster: drawRaster };
 })(window);

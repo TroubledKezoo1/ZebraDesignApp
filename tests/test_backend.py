@@ -116,6 +116,9 @@ class ServerTest(unittest.TestCase):
         code, body = self.req("/static/js/zpl.js")
         self.assertEqual(code, 200)
         self.assertIn("printers", json.loads(self.req("/api/settings")[1]))
+        fams = json.loads(self.req("/api/fonts")[1])["families"]
+        self.assertIsInstance(fams, list)
+        self.assertEqual(self.req("/static/js/zplimport.js")[0], 200)
 
     def test_security(self):
         for headers, body in (({"X-ZebraApp": ""}, {}), ({"Origin": "http://evil.example"}, {})):

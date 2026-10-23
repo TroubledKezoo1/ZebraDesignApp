@@ -38,12 +38,12 @@
   function blankDoc() { var p = activePrinter(); return { id: uid(), name: __("Adsız etiket"), w: 80, h: 40, dpi: p && p.dpi ? +p.dpi : 300, settings: defaultSettings(), job: defaultJob(), elements: [] }; }
 
   var DEF = {
-    text: { type: "text", text: __("Metin"), size: 4, widthPct: 90, lineGap: 1.25, bold: false, align: "left", boxW: 0, wrap: false, rot: 0, reverse: false },
-    qr: { type: "qr", data: "https://ornek.com", mag: 5, ec: "M" },
+    text: { type: "text", text: __("Metin"), size: 4, widthPct: 90, lineGap: 1.25, bold: false, align: "left", boxW: 0, boxH: 0, wrap: false, fit: false, font: "", rot: 0, reverse: false },
+    qr: { type: "qr", data: "https://ornek.com", mag: 5, ec: "M", rot: 0 },
     barcode: { type: "barcode", kind: "code128", data: "123456789012", h: 10, module: 3, ratio: 3, human: true, humanAbove: false, rot: 0 },
-    line: { type: "line", dir: "h", len: 30, t: 0.3 },
-    box: { type: "box", w: 30, h: 15, t: 0.3, filled: false, round: 0, reverse: false },
-    ellipse: { type: "ellipse", w: 20, h: 15, t: 0.3, filled: false, reverse: false },
+    line: { type: "line", dir: "h", len: 30, t: 0.3, rot: 0 },
+    box: { type: "box", w: 30, h: 15, t: 0.3, filled: false, round: 0, reverse: false, rot: 0 },
+    ellipse: { type: "ellipse", w: 20, h: 15, t: 0.3, filled: false, reverse: false, rot: 0 },
     image: { type: "image", src: "", w: 25, h: 25, threshold: 128, dither: false, invert: false, keepAspect: true, rot: 0 }
   };
 
@@ -201,16 +201,39 @@
         ctx.strokeStyle = selCol; ctx.lineWidth = isSel ? 1.5 : 1;
         if (!isSel) ctx.globalAlpha = 0.6;
         if (el.locked) ctx.setLineDash([5, 3]);
-        ctx.strokeRect(Math.round(rx) - 1.5, Math.round(ry) - 1.5, Math.round(rw) + 3, Math.round(rh) + 3);
+        var Lc = layouts[i];
+        if (Lc.raster && Lc.angle % 90) {
+          var cs = Z.corners(Lc); ctx.beginPath();
+          cs.forEach(function (c, k) { if (k) ctx.lineTo(c[0] * S, c[1] * S); else ctx.moveTo(c[0] * S, c[1] * S); });
+          ctx.closePath(); ctx.stroke();
+          if (isSel) { ctx.globalAlpha = 0.35; ctx.setLineDash([3, 3]); ctx.strokeRect(Math.round(rx) - 1.5, Math.round(ry) - 1.5, Math.round(rw) + 3, Math.round(rh) + 3); }
+        } else ctx.strokeRect(Math.round(rx) - 1.5, Math.round(ry) - 1.5, Math.round(rw) + 3, Math.round(rh) + 3);
         ctx.restore();
       }
     });
     if (sel.length === 1) {
       var el1 = byId(sel[0]), L1 = layouts[idx(sel[0])];
-      if (el1 && L1 && !el1.locked) handles(L1.box).forEach(function (h) {
-        ctx.fillStyle = "#fff"; ctx.strokeStyle = selCol; ctx.lineWidth = 1.5;
-        ctx.fillRect(h.x * S - 4, h.y * S - 4, 8, 8); ctx.strokeRect(h.x * S - 4, h.y * S - 4, 8, 8);
-      });
+      if (el1 && L1 && !el1.locked) {
+        if (canResize(L1)) handles(L1.box).forEach(function (h) {
+          ctx.fillStyle = "#fff"; ctx.strokeStyle = selCol; ctx.lineWidth = 1.5;
+          ctx.fillRect(h.x * S - 4, h.y * S - 4, 8, 8); ctx.strokeRect(h.x * S - 4, h.y * S - 4, 8, 8);
+        });
+        /* dondurme tutamaci: kutunun ustunde */
+        var rp = rotHandle(L1.box), hx = rp.x * S, hy = rp.y * S;
+        ctx.save();
+        ctx.strokeStyle = selCol; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(hx, L1.box.y * S - 2); ctx.lineTo(hx, hy + 8); ctx.stroke();
+        ctx.fillStyle = "#fff"; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(hx, hy, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(hx, hy, 4.2, -Math.PI * 0.95, Math.PI * 0.55); ctx.stroke();
+        var ax = hx + 4.2 * Math.cos(Math.PI * 0.55), ay = hy + 4.2 * Math.sin(Math.PI * 0.55);
+        ctx.fillStyle = selCol; ctx.beginPath(); ctx.moveTo(ax - 3, ay + 1); ctx.lineTo(ax + 1.5, ay - 3.2); ctx.lineTo(ax + 2.2, ay + 2.6); ctx.closePath(); ctx.fill();
+        if (drag && drag.mode === "rotate") {
+          ctx.font = "600 12px system-ui, sans-serif"; ctx.fillStyle = selCol; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+          ctx.fillText(Z.normRot(el1.rot) + "°", hx + 14, hy);
+        }
+        ctx.restore();
+      }
     }
     /* kilavuzlar */
     ctx.strokeStyle = cvar("--guide") || "#e0237a"; ctx.lineWidth = 1;
@@ -296,10 +319,26 @@
             { k: "se", x: x1, y: y1 }, { k: "s", x: xm, y: y1 }, { k: "sw", x: x0, y: y1 }, { k: "w", x: x0, y: ym }];
   }
   var CURSORS = { nw: "nwse-resize", se: "nwse-resize", ne: "nesw-resize", sw: "nesw-resize", n: "ns-resize", s: "ns-resize", e: "ew-resize", w: "ew-resize" };
+  function canResize(L) { return !(L.raster && L.angle % 90); }
+  function rotHandle(b) { return { x: b.x + b.w / 2, y: b.y - 26 / s() }; }
+  function hitRot(p) {
+    if (sel.length !== 1) return false;
+    var el = byId(sel[0]); if (!el || el.locked) return false;
+    var L = layouts[idx(sel[0])]; if (!L) return false;
+    var hp = rotHandle(L.box), tol = 10 / s();
+    return Math.abs(p.x - hp.x) <= tol && Math.abs(p.y - hp.y) <= tol;
+  }
+  /* donus acisini degistir, ogenin merkezi yerinde kalsin */
+  function setRotKeep(el, deg, c) {
+    if (!c) { var L0 = Z.layout(el, doc, currentRec()); c = { x: L0.box.x + L0.box.w / 2, y: L0.box.y + L0.box.h / 2 }; }
+    el.rot = Z.normRot(deg);
+    var L = Z.layout(el, doc, currentRec());
+    el.x = mm(c.x - L.box.w / 2); el.y = mm(c.y - L.box.h / 2);
+  }
   function hitHandle(p) {
     if (sel.length !== 1) return null;
     var el = byId(sel[0]); if (!el || el.locked) return null;
-    var L = layouts[idx(sel[0])]; if (!L) return null;
+    var L = layouts[idx(sel[0])]; if (!L || !canResize(L)) return null;
     var tol = 6 / s(), hs = handles(L.box);
     for (var i = 0; i < hs.length; i++) if (Math.abs(p.x - hs[i].x) <= tol && Math.abs(p.y - hs[i].y) <= tol) return hs[i].k;
     return null;
@@ -372,6 +411,13 @@
       else setTimeout(focusContent, 0);
       return;
     }
+    if (hitRot(p)) {
+      var elr = byId(sel[0]), Lr = layouts[idx(sel[0])];
+      checkpoint(true);
+      drag = { mode: "rotate", id: elr.id, c: { x: Lr.box.x + Lr.box.w / 2, y: Lr.box.y + Lr.box.h / 2 } };
+      cv.style.cursor = "grabbing";
+      return;
+    }
     var h = hitHandle(p);
     if (h) {
       var el0 = byId(sel[0]), L0 = layouts[idx(sel[0])];
@@ -415,8 +461,8 @@
     if (!drag) {
       if (e.target !== cv) return;
       if (spaceDown) { cv.style.cursor = "grab"; schedule(); return; }
-      var h = tool === "select" ? hitHandle(p) : null, i = tool === "select" ? hitEl(p) : -1;
-      cv.style.cursor = tool !== "select" ? "crosshair" : (h ? CURSORS[h] : (i >= 0 ? (doc.elements[i].locked ? "not-allowed" : "move") : "default"));
+      var h = tool === "select" ? hitHandle(p) : null, i = tool === "select" ? hitEl(p) : -1, onRot = tool === "select" && hitRot(p);
+      cv.style.cursor = tool !== "select" ? "crosshair" : (onRot ? "grab" : (h ? CURSORS[h] : (i >= 0 ? (doc.elements[i].locked ? "not-allowed" : "move") : "default")));
       if (i !== hover) hover = i;
       schedule();
       return;
@@ -437,6 +483,16 @@
       return;
     }
     if (drag.mode === "resize") { doResize(p, e.shiftKey); return; }
+    if (drag.mode === "rotate") {
+      var elR = byId(drag.id); if (!elR) return;
+      var ang = Math.atan2(p.y - drag.c.y, p.x - drag.c.x) * 180 / Math.PI + 90;
+      ang = e.shiftKey ? Math.round(ang / 15) * 15 : Math.round(ang);
+      [0, 90, 180, 270, 360].forEach(function (k) { if (Math.abs(ang - k) <= 4 || Math.abs(ang + 360 - k) <= 4) ang = k; });
+      setRotKeep(elR, ang, drag.c);
+      $("stPos").textContent = __("Açı: ") + Z.normRot(elR.rot) + "°";
+      changed({ inspectorValues: true });
+      return;
+    }
     if (drag.mode === "marquee") {
       marquee.x1 = p.x; marquee.y1 = p.y;
       var x0 = Math.min(marquee.x0, p.x), x1 = Math.max(marquee.x0, p.x), y0 = Math.min(marquee.y0, p.y), y1 = Math.max(marquee.y0, p.y);
@@ -472,6 +528,7 @@
       setTool("select");
     }
     if (m === "move" || m === "resize") { refreshInspectorValues(); renderLayers(); }
+    if (m === "rotate") { renderInspector(); renderLayers(); }
     schedule();
   });
 
@@ -510,15 +567,18 @@
     if (aspect && k.length === 2) {
       var f = Math.max(nw / b0.w, nh / b0.h); nw = b0.w * f; nh = b0.h * f;
     }
-    var rot = +el.rot || 0, side = rot === 90 || rot === 270;
+    var rot = Z.normRot(el.rot), side = rot === 90 || rot === 270;
     switch (el.type) {
-      case "box": case "ellipse": case "image":
-        if (el.type === "image" && el.keepAspect && k.length === 1) {
+      case "box": case "ellipse":
+        if (side) { el.w = mm(nh); el.h = mm(nw); } else { el.w = mm(nw); el.h = mm(nh); }
+        break;
+      case "image":
+        if (el.keepAspect && k.length === 1) {
           if (k === "e" || k === "w") nh = nw * b0.h / b0.w; else nw = nh * b0.w / b0.h;
         }
         el.w = mm(nw); el.h = mm(nh); break;
       case "line":
-        if (el.dir === "v") el.len = mm(nh); else el.len = mm(nw); break;
+        if ((el.dir === "v") !== side) el.len = mm(nh); else el.len = mm(nw); break;
       case "qr":
         var n = drag.L0.mat.n; el.mag = clamp(Math.round(Math.max(nw, nh) / n), 1, 10); break;
       case "barcode":
@@ -778,7 +838,47 @@
     setVal(t.el, t.key, inp.value);
   }
 
-  var ROT = [[0, "0°"], [90, "90°"], [180, "180°"], [270, "270°"]];
+  function fRot(el) {
+    var inp = h("input", { type: "number", step: "1", min: "-360", max: "360" }); inp.value = Z.normRot(el.rot); inp.dataset.key = "rot";
+    inp.addEventListener("input", function () { var v = parseFloat(inp.value); if (!isFinite(v)) return; checkpoint(); setRotKeep(el, v); changed({ layers: false }); });
+    inp.addEventListener("change", function () { renderInspector(); });
+    var quick = h("div", { class: "seg" });
+    [0, 90, 180, 270].forEach(function (a) {
+      var b = h("button", { type: "button", text: a + "°" }); if (Z.normRot(el.rot) === a) b.classList.add("on");
+      b.addEventListener("click", function () { checkpoint(true); setRotKeep(el, a); changed({ inspector: true }); });
+      quick.appendChild(b);
+    });
+    return h("div", { class: "r2" }, [h("label", {}, [document.createTextNode(__("Döndür (°)")), inp]), h("label", {}, [document.createTextNode(__("Hızlı")), quick])]);
+  }
+  var FONTS = [];
+  function fontOptions(cur) {
+    var o = [["", __("Yazıcı yazı tipi (en hızlı)")], ["ZFont", __("Roboto Condensed (gömülü)")]];
+    FONTS.forEach(function (f) { o.push([f, f]); });
+    if (cur && cur !== "ZFont" && FONTS.indexOf(cur) < 0) o.push([cur, cur + " " + __("(bu bilgisayarda yok)")]);
+    return o;
+  }
+  /* bilgisayarda kurulu ve tarayicinin cizebildigi yazi tipleri */
+  function loadFonts() {
+    var probe = document.createElement("canvas").getContext("2d"), sample = "mmmmmmmmmmlli WŞğİ 0123456789";
+    function width(f) { probe.font = "40px " + f; return probe.measureText(sample).width; }
+    var base = { m: width("monospace"), s: width("serif"), a: width("sans-serif") };
+    function has(fam) { var q = '"' + fam.replace(/"/g, "") + '"'; return width(q + ", monospace") !== base.m || width(q + ", serif") !== base.s || width(q + ", sans-serif") !== base.a; }
+    var common = ["Arial", "Arial Narrow", "Helvetica", "Verdana", "Tahoma", "Segoe UI", "Calibri", "Times New Roman", "Georgia", "Courier New",
+      "Consolas", "Impact", "DejaVu Sans", "DejaVu Sans Condensed", "DejaVu Serif", "DejaVu Sans Mono", "Liberation Sans", "Liberation Sans Narrow",
+      "Liberation Serif", "Liberation Mono", "Ubuntu", "Ubuntu Condensed", "Ubuntu Mono", "Noto Sans", "Noto Serif", "Noto Sans Mono", "Cantarell",
+      "Roboto", "Open Sans", "Lato", "Montserrat", "Source Sans Pro", "Inter", "Futura", "Gill Sans", "Avenir", "Menlo", "Monaco"];
+    return api("/api/fonts").catch(function () { return { families: [] }; }).then(function (j) {
+      var all = {}, list = [];
+      (j.families || []).concat(common).forEach(function (f) { if (f && !all[f]) { all[f] = 1; list.push(f); } });
+      FONTS = list.filter(has).sort(function (a, b) { return a.localeCompare(b); });
+      fillFontSel();
+    });
+  }
+  function fillFontSel() {
+    var sl = $("fFont"), t = textSel()[0]; sl.innerHTML = "";
+    fontOptions(t ? t.font : "").forEach(function (o) { sl.appendChild(h("option", { value: o[0], text: o[1] })); });
+    sl.value = t ? (t.font || "") : "";
+  }
   function renderInspector() {
     insp.innerHTML = "";
     var els = selEls();
@@ -806,12 +906,15 @@
     if (el.type === "text") {
       add(fText(el, "text", __("İçerik (her satır ayrı)"), true, true));
       add(varChips());
+      add(fSelect(el, "font", __("Yazı tipi"), fontOptions(el.font), function () { renderInspector(); updateRibbon(); }));
+      if (el.font) add(h("p", { class: "note", text: __("Bu yazı tipi yazıcıya resim olarak gider: ekrandakiyle birebir aynı basılır, ama veri biraz büyür.") }));
       add(r("r2", [fNum(el, "size", __("Yazı yüksekliği"), "0.1", 0.5, 80, "mm"), fNum(el, "widthPct", __("Harf genişliği"), "5", 30, 200, "%")]));
       add(r("r2", [fNum(el, "lineGap", __("Satır aralığı"), "0.05", 0.8, 4, "×"), fSeg(el, "align", __("Hizalama"), [["left", __("Sol")], ["center", __("Orta")], ["right", __("Sağ")]])]));
-      add(r("r2", [fNum(el, "boxW", __("Metin kutusu genişliği"), "0.5", 0, 500, "mm"), fSelect(el, "rot", __("Döndür"), ROT)]));
+      add(r("r2", [fNum(el, "boxW", __("Metin kutusu genişliği"), "0.5", 0, 500, "mm"), fNum(el, "boxH", __("Metin kutusu yüksekliği"), "0.5", 0, 500, "mm")]));
       add(fCheck(el, "wrap", __("Kutuya sığmayan satırı alta kaydır")));
+      add(fCheck(el, "fit", __("Kutuya sığmazsa yazıyı küçült"), function () { if (el.fit && !(el.boxW > 0) && !(el.boxH > 0)) { el.boxW = r2(Math.max(5, doc.w - 2 * el.x)); renderInspector(); } }));
       add(r("r2", [fCheck(el, "bold", __("Kalın")), fCheck(el, "reverse", __("Ters baskı (siyah üstüne beyaz)"))]));
-      add(h("p", { class: "note", text: __("Ortalama ve sağa yaslama için kutu genişliği gerekir. 0 ise etiket genişliği kullanılır.") }));
+      add(h("p", { class: "note", text: __("Ortalama, sağa yaslama ve sığdırma için kutu genişliği gerekir. Sığdır açıkken uzun yazı her etikette ayrı ayrı küçültülür.") }));
       qsa("[data-seg=align] button", sec).forEach(function (b) {
         b.addEventListener("click", function () {
           if (el.align !== "left" && !(el.boxW > 0)) { el.boxW = r2(Math.max(5, doc.w - 2 * el.x)); refreshInspectorValues(); schedule(); }
@@ -829,7 +932,6 @@
       add(varChips());
       add(r("r2", [fNum(el, "h", __("Çubuk yüksekliği"), "0.5", 1, 200, "mm"), fNum(el, "module", __("Çubuk kalınlığı"), "1", 1, 10, "nokta")]));
       if (el.kind === "code39") add(fNum(el, "ratio", __("Kalın/ince oranı"), "0.1", 2, 3));
-      add(r("r2", [fSelect(el, "rot", __("Döndür"), ROT), h("span", {})]));
       add(r("r2", [fCheck(el, "human", __("Altında yazı")), fCheck(el, "humanAbove", __("Yazı üstte"))]));
     } else if (el.type === "line") {
       add(fSeg(el, "dir", __("Yön"), [["h", __("Yatay")], ["v", __("Dikey")]]));
@@ -845,12 +947,16 @@
       add(r("r2", [fNum(el, "w", __("Genişlik"), "0.5", 1, 1000, "mm"), fNum(el, "h", __("Yükseklik"), "0.5", 1, 1000, "mm")]));
       add(fRange(el, "threshold", __("Siyah eşiği"), 1, 254));
       add(r("r2", [fCheck(el, "dither", __("Gri tonları noktala")), fCheck(el, "invert", __("Renkleri ters çevir"))]));
-      add(r("r2", [fCheck(el, "keepAspect", __("En-boy oranını koru")), fSelect(el, "rot", __("Döndür"), ROT)]));
+      add(fCheck(el, "keepAspect", __("En-boy oranını koru")));
       add(h("p", { class: "note", text: __("Logo ve siyah-beyaz çizimler en iyi sonucu verir. Fotoğraf için 'noktala'yı aç.") }));
     }
     var common = h("div", { class: "sec" });
     common.appendChild(h("h4", { text: __("Konum ve katman") }));
     common.appendChild(r("r2", [fNum(el, "x", "X", "0.5", -500, 1000, "mm"), fNum(el, "y", "Y", "0.5", -500, 1000, "mm")]));
+    common.appendChild(fRot(el));
+    if (!Z.isNative(el) && Z.normRot(el.rot) % 90) common.appendChild(h("p", { class: "note", text: el.type === "barcode"
+      ? __("Bu açı resim olarak basılır; barkodun okunabilirliği düşebilir. 0°, 90°, 180° ve 270°'yi yazıcı kendisi çizer.")
+      : __("Bu açı resim olarak basılır. 0°, 90°, 180° ve 270°'yi yazıcı kendisi çizer.") }));
     common.appendChild(fText(el, "name", __("Katman adı (isteğe bağlı)")));
     common.appendChild(r("r2", [fCheck(el, "hidden", __("Gizle (basılmaz)"), function () { renderLayers(); }), fCheck(el, "locked", __("Kilitle"), function () { renderLayers(); })]));
     insp.appendChild(common);
@@ -1071,7 +1177,7 @@
   var haveFS = !!(window.showSaveFilePicker && window.showOpenFilePicker);
   function persist() { return api("/api/labels", docs); }   // yalniz eski kutuphane + ornekler
   function renderOpen() { $("docTitle").value = doc ? doc.name : ""; }
-  function nameFromFile(n) { return String(n || "").replace(/\.(zebra|json)$/i, ""); }
+  function nameFromFile(n) { return String(n || "").replace(/\.(zebra|json|zpl|prn|txt)$/i, ""); }
   function safeName() { return (doc.name || "etiket").replace(/[^\wçğıöşüÇĞİÖŞÜ\- ]+/g, "").trim().replace(/\s+/g, "_") || "etiket"; }
 
   /* son kullanilan dosyalar: dosya tutamaclari IndexedDB'de */
@@ -1147,7 +1253,45 @@
     });
   }
 
-  function loadFromText(text, hd) {
+  function looksZPL(t) { return /\^XA/i.test(t) && !/^\s*[\[{]/.test(t); }
+  function bmpToPng(b) {
+    var c = document.createElement("canvas"); c.width = b.w; c.height = b.h;
+    var g = c.getContext("2d"), id = g.createImageData(b.w, b.h);
+    for (var i = 0; i < b.w * b.h; i++) { var v = b.bits[i] ? 0 : 255; id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = v; id.data[i * 4 + 3] = 255; }
+    g.putImageData(id, 0, 0);
+    return c.toDataURL("image/png");
+  }
+  /* ZPL dosyasini duzenlenebilir etikete cevir. ZPL cozunurluk bilgisi tasimadigi icin once sorulur. */
+  function importZPL(text, name) {
+    var ap = activePrinter(), guess = Z.guessDpi(text), pref = ap && ap.dpi ? +ap.dpi : guess;
+    if (/\^PW/i.test(text)) pref = guess;
+    var selD = h("select", {});
+    [203, 300, 600].forEach(function (v) { selD.appendChild(h("option", { value: String(v), text: v + " dpi" + (v === guess ? " " + __("(önerilen)") : "") })); });
+    selD.value = String(pref);
+    var go = h("button", { type: "button", class: "tb primary", text: __("Aç"), onclick: function () { closeModal(); run(+selD.value); } });
+    openModal(__("ZPL dosyasını aç"), [
+      h("p", { class: "note", text: __("ZPL dosyaları çözünürlük bilgisi taşımaz. Bu dosya hangi çözünürlükteki yazıcı için yazıldı? Yanlış seçersen ölçüler büyük ya da küçük çıkar.") }),
+      h("label", {}, [document.createTextNode(__("Çözünürlük")), selD]), h("div", { class: "row" }, [go])]);
+    setTimeout(function () { go.focus(); }, 0);
+    function run(dpi) {
+      var r;
+      try { r = Z.parseZPL(text, dpi); } catch (e) { status(__("ZPL okunamadı: ") + e, true); return; }
+      var dd = blankDoc();
+      dd.name = name || __("İçe aktarılan etiket"); dd.w = r.w; dd.h = r.h; dd.dpi = dpi;
+      Object.keys(r.settings).forEach(function (k) { dd.settings[k] = r.settings[k]; });
+      dd.job.copies = r.copies;
+      dd.elements = r.elements.map(function (e) { if (e.type === "image" && e.bmp) { e.src = bmpToPng(e.bmp); delete e.bmp; } return e; });
+      loadDoc(dd); dirty = true; updateTitle();
+      preloadImages();
+      var msg = __("ZPL açıldı: {n} öğe.").replace("{n}", dd.elements.length);
+      if (r.labels > 1) msg += " " + __("Dosyada {n} etiket var, ilki açıldı.").replace("{n}", r.labels);
+      if (r.unsupported.length) msg += " " + __("Atlanan komutlar: ") + r.unsupported.join(" ");
+      msg += " " + __("Kaydetmek için Ctrl+S (.zebra olarak).");
+      status(msg, !dd.elements.length);
+    }
+  }
+  function loadFromText(text, hd, fname) {
+    if (looksZPL(text)) { importZPL(text, nameFromFile(hd ? hd.name : fname)); return true; }
     var data;
     try { data = JSON.parse(text); } catch (e) { status(__("Dosya okunamadı: geçerli bir ZebraApp etiketi değil."), true); return false; }
     if (Array.isArray(data)) data = data[0];
@@ -1169,14 +1313,14 @@
   function pickAndOpen() {
     if (!haveFS) { $("fileImport").click(); return; }
     window.showOpenFilePicker({ multiple: false, startIn: fileHandle || "documents",
-      types: [{ description: __("ZebraApp etiketi"), accept: { "application/json": [EXT, ".json"] } }] })
+      types: [{ description: __("ZebraApp etiketi ya da ZPL"), accept: { "application/json": [EXT, ".json"], "text/plain": [".zpl", ".prn", ".txt"] } }] })
       .then(function (a) { return openHandle(a[0]); })
       .catch(function (e) { if (!e || e.name !== "AbortError") status(__("Açılamadı: ") + ((e && e.message) || e), true); });
   }
   $("fileImport").addEventListener("change", function () {
     var f = this.files[0]; this.value = ""; if (!f) return;
     var rd = new FileReader();
-    rd.onload = function () { loadFromText(String(rd.result), null); };
+    rd.onload = function () { loadFromText(String(rd.result), null, f.name); };
     rd.readAsText(f, "utf-8");
   });
 
@@ -1563,21 +1707,35 @@
     if (!editing || ted.hidden) return;
     var el = editing, S = s();
     if (!byId(el.id)) { editing = null; ted.hidden = true; return; }
-    var L = Z.layout(el, doc, {}), sx = L.w / L.h;
+    var FL = Z.layout(el, doc, {}), L = FL.raster ? FL.local.L : FL, sx = L.w / L.h;
     var fontPx = L.h * S, gapPx = Math.max(L.gap, L.h) * S;
     var wDots = L.block > 0 ? L.block : L.W + L.h * 0.7;
     var hDots = (L.lines.length - 1) * Math.max(L.gap, L.h) + L.h;
-    var lead = (gapPx - fontPx * 1.17) / 2;          /* CSS satir kutusundaki ust bosluk */
-    ted.style.left = Math.round(origin.x + d(el.x) * S) + "px";
-    ted.style.top = Math.round(origin.y + d(el.y) * S - fontPx * 0.06 - Math.max(0, lead)) + "px";
+    var lead = Math.max(0, (gapPx - fontPx * 1.17) / 2);          /* CSS satir kutusundaki ust bosluk */
+    var wCss = Math.max(fontPx, wDots * S / sx), hCss = Math.max(gapPx, hDots * S + lead * 2);
+    ted.style.fontFamily = L.css || Z.FONT;
+    ted.style.fontWeight = String(L.weight || 700);
     ted.style.fontSize = fontPx + "px";
     ted.style.lineHeight = gapPx + "px";
-    ted.style.width = Math.max(fontPx, wDots * S / sx) + "px";
-    ted.style.height = Math.max(gapPx, hDots * S + Math.max(0, lead) * 2) + "px";
-    ted.style.transform = "scaleX(" + sx + ")";
+    ted.style.width = wCss + "px";
+    ted.style.height = hCss + "px";
     ted.style.textAlign = L.block > 0 ? (el.align || "left") : "left";
     ted.classList.toggle("wrap", !!(el.wrap && L.block > 0));
     ted.classList.toggle("rev", !!el.reverse);
+    var top0 = -fontPx * 0.06 - lead;
+    if (FL.raster) {
+      /* donmus metin: kutunun merkezine yerlestir ve ayni aciyla dondur */
+      var cx = origin.x + (d(el.x) + FL.box.w / 2) * S, cy = origin.y + (d(el.y) + FL.box.h / 2) * S;
+      var lw = L.box.w * S, lh = L.box.h * S;
+      ted.style.transformOrigin = "0 0";
+      ted.style.left = cx + "px"; ted.style.top = cy + "px";
+      ted.style.transform = "rotate(" + FL.angle + "deg) translate(" + (-lw / 2) + "px," + (-lh / 2 + top0) + "px) scaleX(" + sx + ")";
+    } else {
+      ted.style.transformOrigin = "0 0";
+      ted.style.left = Math.round(origin.x + d(el.x) * S) + "px";
+      ted.style.top = Math.round(origin.y + d(el.y) * S + top0) + "px";
+      ted.style.transform = "scaleX(" + sx + ")";
+    }
   }
   ted.addEventListener("input", function () {
     if (!editing) return;
@@ -1631,7 +1789,7 @@
   function toggleText(key) {
     var els = textSel(); if (!els.length) return;
     var v = !els[0][key];
-    applyText(function (el) { el[key] = v; if (key === "wrap" && v) autoBox(el); });
+    applyText(function (el) { el[key] = v; if ((key === "wrap" || key === "fit") && v && !(key === "fit" && el.boxH > 0)) autoBox(el); });
   }
   var SIZES = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 10, 12, 15, 20, 25, 30, 40, 50, 60, 80];
   function stepSize(dir) {
@@ -1645,6 +1803,9 @@
   $("fSize").addEventListener("input", function () { var v = parseFloat(this.value); if (v > 0) applyText(function (el) { el.size = clamp(v, 0.5, 80); }, true); });
   $("fWidth").addEventListener("input", function () { var v = parseFloat(this.value); if (v > 0) applyText(function (el) { el.widthPct = clamp(v, 30, 200); }, true); });
   $("fBoxW").addEventListener("input", function () { var v = parseFloat(this.value); if (v >= 0) applyText(function (el) { el.boxW = clamp(v, 0, 500); }, true); });
+  $("fBoxH").addEventListener("input", function () { var v = parseFloat(this.value); if (v >= 0) applyText(function (el) { el.boxH = clamp(v, 0, 500); }, true); });
+  $("fFont").addEventListener("change", function () { var v = this.value; applyText(function (el) { el.font = v; }); });
+  $("fFit").addEventListener("click", function () { toggleText("fit"); });
   $("fGap").addEventListener("change", function () { var v = +this.value; applyText(function (el) { el.lineGap = v; }); });
   $("fGrow").addEventListener("click", function () { stepSize(1); });
   $("fShrink").addEventListener("click", function () { stepSize(-1); });
@@ -1659,21 +1820,23 @@
   function updateRibbon() {
     if (!doc) return;
     var ts = textSel(), on = ts.length > 0, t = ts[0], n = sel.length;
-    qsa("#gFont button, #gFont input, #gPara button, #gPara input, #gPara select").forEach(function (x) { x.disabled = !on; });
+    qsa("#gFont button, #gFont input, #gFont select, #gPara button, #gPara input, #gPara select").forEach(function (x) { x.disabled = !on; });
     qsa("#gFont .rin, #gPara .rin").forEach(function (x) { x.classList.toggle("dis", !on); });
     if (on) {
-      setIf("fSize", t.size); setIf("fWidth", t.widthPct); setIf("fBoxW", t.boxW);
+      setIf("fSize", t.size); setIf("fWidth", t.widthPct); setIf("fBoxW", t.boxW); setIf("fBoxH", t.boxH);
+      if (document.activeElement !== $("fFont")) fillFontSel();
       var best = "1.25", diff = 99;
       qsa("#fGap option").forEach(function (o) { var dd = Math.abs(+o.value - (+t.lineGap || 1.25)); if (dd < diff) { diff = dd; best = o.value; } });
       $("fGap").value = best;
-    } else { setIf("fSize", ""); setIf("fWidth", ""); setIf("fBoxW", ""); }
+    } else { setIf("fSize", ""); setIf("fWidth", ""); setIf("fBoxW", ""); setIf("fBoxH", ""); $("fFont").value = ""; }
+    $("fFit").classList.toggle("on", !!(on && t.fit));
     $("fBold").classList.toggle("on", !!(on && t.bold));
     $("fRev").classList.toggle("on", !!(on && t.reverse));
     $("fWrap").classList.toggle("on", !!(on && t.wrap));
     qsa("[data-falign]").forEach(function (b) { b.classList.toggle("on", !!(on && (t.align || "left") === b.dataset.falign)); });
     $("rPaste").disabled = !clipboard;
     qsa("#rCut, #rCopy, #dupBtn, #delBtn, #toFront, #toBack, #rLock, #rHide, [data-al]").forEach(function (b) { b.disabled = n === 0; });
-    $("rRotate").disabled = !selEls().some(function (e) { return "rot" in DEF[e.type]; });
+    $("rRotate").disabled = !selEls().some(function (e) { return !e.locked; });
     $("rEditText").disabled = !(n === 1 && on);
     var els = selEls(), allLocked = els.length && els.every(function (e) { return e.locked; }), allHid = els.length && els.every(function (e) { return e.hidden; });
     $("rLock").querySelector("span").textContent = allLocked ? __("Kilidi aç") : __("Kilitle");
@@ -1685,8 +1848,8 @@
   $("rSelAll").addEventListener("click", function () { sel = doc.elements.filter(function (x) { return !x.hidden; }).map(function (x) { return x.id; }); selectionChanged(); schedule(); });
   $("rEditText").addEventListener("click", function () { var t = textSel()[0]; if (t) startEdit(t, false); });
   $("rRotate").addEventListener("click", function () {
-    var els = selEls().filter(function (e) { return "rot" in DEF[e.type] && !e.locked; }); if (!els.length) return;
-    checkpoint(true); els.forEach(function (e) { e.rot = ((+e.rot || 0) + 90) % 360; }); changed({ inspector: true });
+    var els = selEls().filter(function (e) { return !e.locked; }); if (!els.length) return;
+    checkpoint(true); els.forEach(function (e) { setRotKeep(e, (Z.normRot(e.rot) + 90) % 360); }); changed({ inspector: true });
   });
   $("rLock").addEventListener("click", function () {
     var els = selEls(); if (!els.length) return; var v = !els.every(function (e) { return e.locked; });
@@ -1842,6 +2005,7 @@
     refreshState();
     fetch("/api/ping").catch(function () {});
     openBackstage("home");
+    loadFonts();
     if (!settings.printers.length) setTimeout(function () { status(__("Başlamak için sağ üstten bir yazıcı ekle.")); }, 300);
   }
   var fontsReady = document.fonts && document.fonts.load ? Promise.all([
@@ -1859,5 +2023,5 @@
     return Promise.all([fontsReady, api("/api/labels").catch(function () { return []; })]);
   }).then(function (res) { start(res[1]); });
 
-  window.ZebraApp = { get doc() { return doc; }, get sel() { return sel; }, select: function (ids) { sel = ids; selectionChanged(); schedule(); }, zpl: buildJobZPL, undo: undo, redo: redo, align: align, setTool: setTool };
+  window.ZebraApp = { toScreen: function (x, y) { var r = cv.getBoundingClientRect(); return { x: r.left + origin.x + x * s(), y: r.top + origin.y + y * s() }; }, get doc() { return doc; }, get sel() { return sel; }, select: function (ids) { sel = ids; selectionChanged(); schedule(); }, zpl: buildJobZPL, undo: undo, redo: redo, align: align, setTool: setTool };
 })();

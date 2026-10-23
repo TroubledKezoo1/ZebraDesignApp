@@ -21,7 +21,7 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from . import __version__, transports
+from . import __version__, fonts, transports
 from .messages import localize
 from .storage import Store
 
@@ -170,6 +170,8 @@ class Handler(BaseHTTPRequestHandler):
                         "printers": cfg.get("printers"), "available": transports.available(), "data_dir": str(store.base)})
         elif path == "/api/state":
             self._json(state())
+        elif path == "/api/fonts":
+            self._json({"families": fonts.families()})
         elif path == "/api/ping":
             global last_ping
             last_ping = time.time()

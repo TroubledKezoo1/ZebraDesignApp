@@ -73,6 +73,10 @@ Metne **çift tıkla** (ya da seçip **F2** veya **Enter**'a bas) ve doğrudan e
 - Milimetre olarak yazı yüksekliği, **A+** / **A−** (Ctrl+Shift+> / <), **K** kalın (Ctrl+B), ters baskı (siyah üstüne beyaz), harf genişliği.
 - Sola, ortaya, sağa yaslama; uzun satırı alta kaydırma; satır aralığı; metin kutusu genişliği (0 = otomatik).
 
+**Yazı tipi:** *Yazıcı yazı tipi* yazıcının kendi yazı tipidir ve en hızlı basılandır. Başka bir yazı tipi (gömülü Roboto Condensed ya da bilgisayarında kurulu herhangi biri) ZebraApp tarafından çizilip resim olarak gönderilir, ekranda gördüğün gibi basılır.
+
+**Kutuya sığdır** (kaydırma düğmesinin yanındaki düğme, ya da Özellikler'de *Kutuya sığmazsa yazıyı küçült*): metne bir kutu genişliği (istersen yükseklik de) ver. Uzun yazı sığana kadar küçültülür. CSV listesiyle bu her etikette ayrı yapılır: uzun isim küçülür, kısa isim boyunu korur.
+
 Biçim tek tek kelimelere değil, metin kutusunun tamamına uygulanır, çünkü yazıcı her kutuyu tek yazı tipiyle basar.
 
 **Pano** grubunda Yapıştır, Kes, Kopyala ve Çoğalt var. **Düzenleme** grubunda Seç, Tümünü seç, Sil ve Metni düzenle var.
@@ -84,6 +88,8 @@ Biçim tek tek kelimelere değil, metin kutusunun tamamına uygulanır, çünkü
 - Sola, ortaya, sağa, üste, dikey ortaya, alta hizala. Tek öğe etikete göre, birden fazla öğe birbirine göre hizalanır.
 - Eşit dağıt (3 ya da daha fazla öğe).
 - Öne getir, arkaya gönder, 90° döndür, kilitle, gizle (gizli öğe basılmaz).
+
+**İstediğin açıyla döndür:** seçili öğenin üstündeki yuvarlak tutamacı sürükle. **Shift** basılıyken 15° adımla döner; 0°, 90°, 180° ve 270°'ye kendiliğinden yapışır. Açıyı Özellikler'de *Konum ve katman* altına da yazabilirsin. 0°, 90°, 180° ve 270°'yi yazıcı kendisi çizer; diğer açılar resim olarak gider. Eğik barkodlar daha zor okunabilir.
 
 Fareyle: sürükleyerek taşı, sekiz tutamaçla boyutlandır, **Shift** ile tıkla ya da boş alanda sürükleyerek birden çok öğe seç, sürüklerken **Alt** basılıysa yapışma kapanır. Ok tuşları az, **Shift** ile 10 kat taşır.
 
@@ -122,6 +128,8 @@ Etiketler `.zebra` uzantılı sıradan dosyalardır (içi JSON). Nerede duracakl
 | **Farklı kaydet:** her seferinde sorar | Ctrl+Shift+S, F12 |
 | **Aç:** dosya seç ya da son kullanılanlardan seç | Ctrl+O |
 | **Yeni** | Ctrl+N (Chrome bu kısayolu kendine ayırabilir; Dosya → Yeni'yi kullan) |
+
+**Aç** başka programların yazdığı `.zpl` dosyalarını da açar. ZPL hangi çözünürlük için yazıldığını söylemez, bu yüzden ZebraApp sorar (ve bir öneri getirir). Metinler, metin blokları, kutular, çizgiler, elipsler, barkodlar, QR kodlar ve resimler düzenlenebilir öğelere dönüşür; tanımadığı komutlar durum çubuğunda listelenir. Sonucu Ctrl+S ile `.zebra` dosyası olarak kaydet; asıl `.zpl` dosyası değişmez.
 
 **Dosya → Dışa aktar** ZPL'i `.zpl` dosyası olarak kaydeder ya da kodu gösterir; kopyalayabilir, düzenleyip elle gönderebilirsin.
 

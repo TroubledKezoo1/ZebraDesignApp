@@ -3,8 +3,8 @@
 const fs = require("fs"), path = require("path"), assert = require("assert");
 const root = path.join(__dirname, "..", "..", "zebraapp", "static", "js");
 global.window = global;
-global.document = { createElement: () => ({ getContext: () => ({ font: "", measureText: (s) => ({ width: s.length * 10 }) }) }) };
-for (const f of ["barcodes.js", "zpl.js"]) eval(fs.readFileSync(path.join(root, f), "utf8"));
+global.document = { createElement: () => ({ getContext: () => ({ font: "", measureText(s) { const m = /(\d+(?:\.\d+)?)px/.exec(this.font); return { width: s.length * (m ? +m[1] : 20) * 0.5 }; } }) }) };
+for (const f of ["barcodes.js", "zpl.js", "zplimport.js"]) eval(fs.readFileSync(path.join(root, f), "utf8"));
 const Z = global.Z, B = global.Barcodes;
 let n = 0;
 function test(name, fn) { fn(); n++; console.log("ok -", name); }
@@ -85,4 +85,54 @@ test("special ZPL characters are stripped from data", () => {
   const z = Z.labelZPL({ w: 50, h: 30, dpi: 203, settings: {}, elements: [{ type: "text", x: 1, y: 1, size: 3, text: "a^b~c" }] }, {}, 1);
   assert.ok(z.includes("^FDabc^FS"));
 });
+
+test("ZPL import reads back what ZebraApp writes", () => {
+  const z = Z.labelZPL(doc, { __counter: "7" }, 3);
+  const r = Z.parseZPL(z, 300);
+  assert.strictEqual(r.w, 80); assert.strictEqual(r.h, 40); assert.strictEqual(r.copies, 3);
+  assert.strictEqual(r.settings.media, "gap"); assert.strictEqual(r.settings.darkness, 15); assert.strictEqual(r.settings.rotate180, true);
+  const types = r.elements.map(e => e.type).join(",");
+  assert.strictEqual(types, "text,text,qr,barcode,line,box", types);
+  const t = r.elements[0];
+  assert.strictEqual(t.text, "Seri 7\nİkinci satır"); assert.strictEqual(t.bold, true);
+  assert.ok(Math.abs(t.x - 3) < 0.1 && Math.abs(t.y - 2) < 0.1 && Math.abs(t.size - 4) < 0.1, JSON.stringify(t));
+  assert.strictEqual(r.elements[1].reverse, true); assert.strictEqual(r.elements[1].align, "center"); assert.ok(Math.abs(r.elements[1].boxW - 80) < 0.05);
+  assert.strictEqual(r.elements[2].data, "https://example.com/7"); assert.strictEqual(r.elements[2].ec, "Q"); assert.strictEqual(r.elements[2].mag, 5);
+  assert.strictEqual(r.elements[3].rot, 90); assert.strictEqual(r.elements[3].data, "ZB7"); assert.strictEqual(r.elements[3].module, 2);
+  assert.strictEqual(r.elements[4].dir, "h"); assert.ok(Math.abs(r.elements[4].len - 60) < 0.1);
+  assert.strictEqual(r.elements[5].round, 2); assert.deepStrictEqual(r.unsupported, []);
+});
+test("ZPL import: hand-written label, ^FT, ^FB, ^GD, ^FH, ^GFA and unknown commands", () => {
+  const z = "^XA^PW812^LL406^CF0,40\n^FO20,20^FDMerhaba^FS\n^FT20,140^A0N,50,40^FDAlt^FS\n^FO20,160^FB400,3,0,C^FH^FDCaf_C3_A9\\&2. satir^FS\n" +
+            "^FO300,20^GD100,50,4,B,L^FS\n^FO500,20^GFA,8,8,1,FF00FF00FF00FF00^FS\n^FO20,300^BY3^BCN,60,Y,N,N^FD>:ABC123^FS\n^FO0,0^XGR:LOGO.GRF^FS^XZ";
+  assert.strictEqual(Z.guessDpi(z), 203);
+  const r = Z.parseZPL(z, 203), e = r.elements;
+  assert.strictEqual(e[0].text, "Merhaba"); assert.ok(Math.abs(e[0].size - 5) < 0.05);
+  assert.ok(Math.abs(e[1].y - (140 - 50) * 25.4 / 203) < 0.05); assert.strictEqual(e[1].widthPct, 80);
+  assert.strictEqual(e[2].text, "Café\n2. satir"); assert.strictEqual(e[2].align, "center"); assert.strictEqual(e[2].wrap, true);
+  assert.strictEqual(e[3].type, "line"); assert.strictEqual(e[3].rot, 27);
+  assert.strictEqual(e[4].type, "image"); assert.strictEqual(e[4].bmp.h, 8); assert.strictEqual(e[4].bmp.bits[0], 1); assert.strictEqual(e[4].bmp.bits[8], 0);
+  assert.strictEqual(e[5].kind, "code128"); assert.strictEqual(e[5].data, "ABC123"); assert.strictEqual(e[5].module, 3);
+  assert.ok(r.unsupported.indexOf("^XG") >= 0, r.unsupported.join());
+  assert.strictEqual(Z.guessDpi("^XA^PW945^XZ"), 300);
+});
+test("free rotation lays out the bounding box and keeps 90° steps native", () => {
+  const d = { w: 80, h: 40, dpi: 300, elements: [] };
+  const box = { type: "box", x: 10, y: 10, w: 20, h: 10, t: 0.5, rot: 90 };
+  assert.ok(Z.isNative(box)); const Lb = Z.layout(box, d, {}); assert.strictEqual(Lb.box.w, Z.dots(10, 300)); assert.strictEqual(Lb.box.h, Z.dots(20, 300));
+  const z90 = Z.elementZPL(box, d, {}).join(""); assert.ok(z90.includes("^GB" + Z.dots(10, 300) + "," + Z.dots(20, 300)), z90);
+  const tilt = Object.assign({}, box, { rot: 45 }); assert.ok(!Z.isNative(tilt));
+  const L = Z.layout(tilt, d, {}); assert.ok(L.raster); assert.strictEqual(L.angle, 45);
+  const exp = Math.ceil((Z.dots(20, 300) + Z.dots(10, 300)) * Math.SQRT1_2);
+  assert.ok(Math.abs(L.box.w - exp) <= 1 && Math.abs(L.box.h - exp) <= 1, JSON.stringify(L.box));
+  assert.ok(!Z.isNative({ type: "text", rot: 0, font: "DejaVu Sans" }));
+  assert.strictEqual(Z.normRot(-90), 270); assert.strictEqual(Z.normRot(450), 90);
+});
+test("fit to box shrinks long text", () => {
+  const d = { w: 80, h: 40, dpi: 300, elements: [] };
+  const el = { type: "text", x: 0, y: 0, size: 6, widthPct: 90, lineGap: 1.25, boxW: 20, fit: true, text: "Çok uzun bir müşteri adı burada" };
+  const L = Z.layout(el, d, {}); assert.ok(L.shrunk); assert.ok(Math.max(...L.widths) <= L.block + 0.5);
+  const L2 = Z.layout(Object.assign({}, el, { fit: false }), d, {}); assert.ok(!L2.shrunk);
+});
+
 console.log("\n" + n + " tests passed");

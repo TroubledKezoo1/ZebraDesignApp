@@ -21,7 +21,10 @@ ZebraDesigner only runs on Windows, and most open-source label tools do not spea
 - Select, move and resize with the mouse (8 handles), multi-select and rubber-band selection
 - Snapping to the grid and to other items with guide lines, mm rulers and zoom
 - Layers you can hide, lock, rename and reorder by dragging
-- Align and distribute, bring to front / send to back, rotation in 90° steps
+- Align and distribute, bring to front / send to back
+- Rotate anything to any angle with the handle above the selection (Shift for 15° steps). 0°, 90°, 180° and 270° are drawn by the printer itself; other angles are sent as an image
+- Any font installed on your computer (sent as an image, printed exactly as on screen), or the printer's built-in font
+- Shrink to fit: long text from a CSV list is made smaller label by label so it stays inside its box
 - Bold text, character width, line spacing, centered or right-aligned text boxes, automatic line wrap, reverse print (white on black)
 - Undo and redo, copy and paste, keyboard shortcuts
 
@@ -32,6 +35,7 @@ ZebraDesigner only runs on Windows, and most open-source label tools do not spea
 - Several printers with models and resolutions; warnings when the label does not match the printer
 - Printer preview through [Labelary](https://labelary.com) (needs internet), and a ZPL view where you can edit and send code by hand
 - Calibrate, feed one label, print the configuration label, read printer status (paper out, head open, paused…)
+- Open existing `.zpl` files and edit them: text, `^FB` blocks, boxes, lines (also diagonal), ellipses, Code 128 / Code 39 / EAN-13 / UPC-A, QR codes and `^GFA` images become editable items; other commands are listed as skipped
 - Labels are plain files (`.zebra`, JSON inside): Save, Save as and Open use your system's file dialog, with a recent-files list; export the ZPL as a `.zpl` file
 - English and Turkish interface
 

@@ -280,3 +280,5 @@ code { font-family: var(--mono); font-size: 11.5px; background: var(--accent-sof
 .rrow { min-height: 26px; }
 .rcol { gap: 1px; }
 .recent > .tb { justify-self: start; margin-top: 8px; }
+.rin select.fontsel { width: 196px; }
+.rotinfo { font-size: 12px; color: var(--muted); }
