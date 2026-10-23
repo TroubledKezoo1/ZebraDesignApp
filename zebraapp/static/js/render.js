@@ -146,7 +146,7 @@
       var L;
       try { L = Z.layout(el, doc, rec); } catch (e) { L = { box: { x: 0, y: 0, w: 1, h: 1 }, err: e }; }
       layouts.push(L);
-      if (el.hidden || L.err) return;
+      if (el.hidden || L.err || (opts.skip && el.id === opts.skip)) return;
       ctx.save();
       ctx.fillStyle = "#111111";
       if (el.reverse) { ctx.globalCompositeOperation = "difference"; ctx.fillStyle = "#ffffff"; }

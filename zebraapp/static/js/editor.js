@@ -170,7 +170,7 @@
     ctx.fillStyle = "#fff"; ctx.fillRect(origin.x, origin.y, lp.w, lp.h); ctx.restore();
 
     var S = s();
-    layouts = R.drawDoc(ctx, doc, S, origin.x, origin.y, currentRec(), {});
+    layouts = R.drawDoc(ctx, doc, S, origin.x, origin.y, currentRec(), { skip: editing ? editing.id : null });
 
     ctx.save();
     ctx.translate(origin.x, origin.y);
@@ -229,6 +229,7 @@
     }
     ctx.restore();
     drawRulers(cw, ch);
+    positionEditor();
   }
 
   function drawRulers(cw, ch) {
@@ -261,12 +262,14 @@
     ctx.restore();
   }
   wrap.addEventListener("scroll", schedule);
-  window.addEventListener("resize", schedule);
+  window.addEventListener("resize", function () { schedule(); drawPrintPreview(); });
+  if (window.ResizeObserver) new ResizeObserver(schedule).observe(wrap);
 
   function setZoom(z, anchor) {
     var old = view.zoom;
     view.zoom = clamp(z, 1, 40);
-    $("zoomVal").textContent = Math.round(view.zoom / 6 * 100) + "%";
+    var pct = Math.round(view.zoom / 6 * 100);
+    $("zoomVal").textContent = pct + "%"; $("zSlider").value = pct;
     if (anchor) {
       var ratio = view.zoom / old;
       requestAnimationFrame(function () {
@@ -344,13 +347,14 @@
   }
 
   cv.addEventListener("mousedown", function (e) {
-    if (e.button === 1 || spaceDown) {
+    if (e.button === 1 || (spaceDown && e.button === 0)) {
       drag = { mode: "pan", sx: e.clientX, sy: e.clientY, l: wrap.scrollLeft, t: wrap.scrollTop };
       cv.style.cursor = "grabbing"; e.preventDefault(); return;
     }
     if (e.button !== 0) return;
     e.preventDefault();
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    if (layouts.length !== doc.elements.length) render();
     var p = ptr(e);
     if (tool !== "select") {
       if (tool === "box" || tool === "ellipse" || tool === "line") {
@@ -361,9 +365,11 @@
       }
       var q = snapPoint(p);
       if (tool === "image") { pendingImagePos = q; $("fileImage").click(); setTool("select"); return; }
-      addElement(newEl(tool, Math.max(0, mm(q.x)), Math.max(0, mm(q.y))));
+      var made = newEl(tool, Math.max(0, mm(q.x)), Math.max(0, mm(q.y)));
+      addElement(made);
       setTool("select");
-      setTimeout(focusContent, 0);
+      if (made.type === "text") setTimeout(function () { startEdit(made, true); }, 0);
+      else setTimeout(focusContent, 0);
       return;
     }
     var h = hitHandle(p);
@@ -471,7 +477,10 @@
 
   cv.addEventListener("dblclick", function (e) {
     var i = hitEl(ptr(e));
-    if (i >= 0) { sel = [doc.elements[i].id]; selectionChanged(); focusContent(); }
+    if (i < 0) return;
+    var hitE = doc.elements[i];
+    if (hitE.type === "text" && !hitE.locked) { startEdit(hitE, false); return; }
+    sel = [hitE.id]; selectionChanged(); focusContent();
   });
   cv.addEventListener("mouseleave", function () { lastPointer = null; hover = -1; schedule(); });
   wrap.addEventListener("wheel", function (e) {
@@ -617,6 +626,7 @@
     if (opts.inspectorValues) refreshInspectorValues();
     if (opts.inspector) renderInspector();
     updatePrintSummary();
+    updateRibbon(); updateCount();
     schedule();
   }
   function selectionChanged(light) {
@@ -624,15 +634,17 @@
     if (!light) renderInspector();
     var n = sel.length, el = n === 1 ? byId(sel[0]) : null;
     $("stSel").textContent = n === 0 ? __("Seçim yok") : (n === 1 ? TYPE_NAMES[el.type] + __(" seçili") : n + __(" öğe seçili"));
-    qsa("#arrange [data-al], #toFront, #toBack, #dupBtn, #delBtn").forEach(function (b) { b.disabled = n === 0; });
-    if (n && !light) showTab("props");
+    updateRibbon();
   }
+  function updateCount() { if (doc) $("stCount").textContent = doc.elements.length + " " + __("öğe"); }
   function refreshAll() {
-    renderLayers(); renderInspector(); syncLabelTab(); syncPrintTab(); updateTitle(); updateUndoBtns();
+    renderLayers(); renderInspector(); syncLabelTab(); syncPrintTab(); updateTitle(); updateUndoBtns(); updateCount();
     selectionChanged();
     schedule();
   }
-  function status(msg, err) { var e = $("stMsg"); e.textContent = msg || ""; e.className = err ? "err" : ""; }
+  function status(msg, err) {
+    ["stMsg", "ppStatus"].forEach(function (id) { var e = $(id); if (e) { e.textContent = msg || ""; e.className = (id === "ppStatus" ? "note pps" : "") + (err ? " err" : ""); } });
+  }
 
   /* ================= katmanlar ================= */
   function elLabel(el) {
@@ -646,7 +658,7 @@
   var dragLayer = null;
   function renderLayers() {
     var ul = $("layers"); ul.innerHTML = "";
-    if (!doc.elements.length) { var li0 = document.createElement("li"); li0.className = "empty"; li0.textContent = __("Henüz öğe yok. Soldaki araçlardan birini seçip etikete tıkla."); ul.appendChild(li0); return; }
+    if (!doc.elements.length) { var li0 = document.createElement("li"); li0.className = "empty"; li0.textContent = __("Henüz öğe yok. Ekle sekmesinden bir araç seçip etikete tıkla."); ul.appendChild(li0); return; }
     for (var i = doc.elements.length - 1; i >= 0; i--) (function (el, i) {
       var li = document.createElement("li");
       li.className = (sel.indexOf(el.id) >= 0 ? "sel " : "") + (el.hidden ? "hid" : "");
@@ -773,7 +785,7 @@
     if (!els.length) {
       insp.appendChild(h("div", { class: "insp-empty", html:
         __("<b>Öğe seçili değil.</b>") +
-        __("<span>Soldan bir araç seçip etikete tıkla. Kutu, elips ve çizgiyi sürükleyerek çiz.</span>") +
+        __("<span>Ekle sekmesinden bir araç seçip etikete tıkla. Kutu, elips ve çizgiyi sürükleyerek çiz. Yazıyı değiştirmek için üstüne çift tıkla.</span>") +
         __("<span><span class='kbd'>Shift</span> ile çoklu seç, boş alanda sürükleyerek alan seç.</span>") +
         __("<span><span class='kbd'>Ctrl+Z</span> geri al · <span class='kbd'>Ctrl+D</span> çoğalt · <span class='kbd'>Ctrl+C/V</span> kopyala/yapıştır · <span class='kbd'>Del</span> sil</span>") +
         __("<span>Ok tuşları taşır (<span class='kbd'>Shift</span> ile 10 kat). <span class='kbd'>Alt</span> basılıyken sürüklersen yakalama kapanır.</span>") +
@@ -854,23 +866,16 @@
     if (info && L && L.mat) info.textContent = __("Yaklaşık boyut: ") + mm(L.box.w).toFixed(1) + __(" mm (") + L.mat.n + "×" + L.mat.n + __(" modül)");
   }
   function focusContent() {
-    showTab("props");
     var c = insp.querySelector(".content");
     if (c) { c.focus(); if (c.select) c.select(); }
   }
 
   /* ================= sekmeler ================= */
-  function showTab(t) {
-    qsa(".tabs button").forEach(function (b) { b.classList.toggle("on", b.dataset.tab === t); });
-    qsa(".tabp").forEach(function (p) { p.hidden = p.id !== "tab-" + t; });
-    if (t === "print") updatePrintSummary();
-  }
-  qsa(".tabs button").forEach(function (b) { b.addEventListener("click", function () { showTab(b.dataset.tab); }); });
 
   /* ================= etiket sekmesi ================= */
   function syncLabelTab() {
     var st = doc.settings;
-    $("lName").value = doc.name; $("lW").value = doc.w; $("lH").value = doc.h; $("lDpi").value = String(doc.dpi);
+    $("lW").value = doc.w; $("lH").value = doc.h; $("lDpi").value = String(doc.dpi);
     $("sMedia").value = st.media; $("sDark").value = st.darkness; $("sSpeed").value = String(st.speed || "");
     $("sShiftX").value = st.shiftX; $("sShiftY").value = st.shiftY; $("sRot").checked = !!st.rotate180;
     $("lPreset").value = "";
@@ -880,10 +885,10 @@
   function bindDoc(id, fn, ev) {
     $(id).addEventListener(ev || "input", function () { checkpoint(); fn(this); updateLabelStatus(); changed({ inspectorValues: true }); });
   }
-  bindDoc("lName", function (e) { doc.name = e.value; $("docTitle").value = e.value; updateTitle(); });
-  $("docTitle").addEventListener("input", function () { checkpoint(); doc.name = this.value; $("lName").value = this.value; updateTitle(); changed({ inspectorValues: true }); });
-  $("docTitle").addEventListener("keydown", function (e) { if (e.key === "Enter") this.blur(); });
-  $("docTitle").addEventListener("blur", function () { if (!this.value.trim()) { this.value = doc.name = __("Adsız etiket"); $("lName").value = doc.name; updateTitle(); } });
+  $("docTitle").addEventListener("input", function () { checkpoint(); doc.name = this.value; updateTitle(); });
+  $("docTitle").addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === "Escape") this.blur(); });
+  $("docTitle").addEventListener("focus", function () { var t = this; setTimeout(function () { t.select(); }, 0); });
+  $("docTitle").addEventListener("blur", function () { if (!this.value.trim()) { this.value = doc.name = __("Adsız etiket"); updateTitle(); } });
   bindDoc("lW", function (e) { var v = parseFloat(e.value); if (v > 0) doc.w = v; });
   bindDoc("lH", function (e) { var v = parseFloat(e.value); if (v > 0) doc.h = v; });
   bindDoc("lDpi", function (e) { doc.dpi = +e.value; }, "change");
@@ -905,7 +910,7 @@
   function syncPrintTab() {
     var j = doc.job;
     $("pCopies").value = j.copies; $("pCount").value = j.count; $("pStart").value = j.start; $("pStep").value = j.step;
-    $("pDigits").value = j.digits; $("pCsv").value = j.csv || ""; $("pRec").value = previewIdx + 1;
+    $("pDigits").value = j.digits; $("pRec").value = previewIdx + 1;
     renderCols(); updatePrintSummary();
   }
   function bindJob(id, key, num) {
@@ -917,19 +922,39 @@
     });
   }
   bindJob("pCopies", "copies", true); bindJob("pCount", "count", true); bindJob("pStart", "start", true);
-  bindJob("pStep", "step", true); bindJob("pDigits", "digits", true); bindJob("pCsv", "csv", false);
-  $("pRec").addEventListener("input", function () { previewIdx = Math.max(0, (+this.value || 1) - 1); schedule(); });
+  bindJob("pStep", "step", true); bindJob("pDigits", "digits", true);
+  function setRec(i) {
+    var n = Z.records(jobForRecords()).length;
+    previewIdx = clamp(i, 0, Math.max(0, n - 1)); $("pRec").value = previewIdx + 1;
+    schedule(); drawPrintPreview();
+  }
+  $("pRec").addEventListener("input", function () { setRec((+this.value || 1) - 1); });
+  $("pRecPrev").addEventListener("click", function () { setRec(previewIdx - 1); });
+  $("pRecNext").addEventListener("click", function () { setRec(previewIdx + 1); });
+  $("ppPrev").addEventListener("click", function () { setRec(previewIdx - 1); });
+  $("ppNext").addEventListener("click", function () { setRec(previewIdx + 1); });
+  $("pCsvEdit").addEventListener("click", function () {
+    var ta = h("textarea", { spellcheck: "false", placeholder: __("ad;adres;telefon") + "\n" + __("Örnek Makina;Kadıköy;0212 000 00 00") });
+    ta.value = doc.job.csv || "";
+    ta.addEventListener("input", function () { checkpoint(); doc.job.csv = ta.value; renderCols(); updatePrintSummary(); schedule(); });
+    openModal(__("Veri listesi (CSV)"), [h("p", { class: "note", text: __("İlk satır sütun adlarıdır; ; , ya da sekme ile ayır. Alanlara {sütun_adı} yazınca her satır için bir etiket basılır.") }), ta]);
+    setTimeout(function () { ta.focus(); }, 0);
+  });
   function renderCols() {
-    var cols = Z.parseCSV(doc.job.csv).cols, box = $("pCols"); box.innerHTML = "";
-    cols.forEach(function (c) { box.appendChild(h("button", { type: "button", class: "chip", text: "{" + c + "}", title: __("Seçili alana ekle"), onclick: function () { insertVar("{" + c + "}"); } })); });
+    var csv = Z.parseCSV(doc.job.csv), cols = csv.cols, box = $("pCols"); box.innerHTML = "";
+    if (!cols.length) box.appendChild(h("span", { class: "empty", text: __("Liste yükleyince sütun adları burada çıkar; tıklayınca seçili metne eklenir.") }));
+    cols.forEach(function (c) { box.appendChild(h("button", { type: "button", class: "chip", text: "{" + c + "}", title: __("Seçili alana ekle"), onclick: function () { insertToken("{" + c + "}"); } })); });
+    $("pCsvInfo").textContent = csv.rows.length ? csv.rows.length + " " + __("satır") : __("Liste yok");
   }
   function updatePrintSummary() {
     if (!doc) return;
     var j = jobForRecords(), n = Z.records(j).length, c = Math.max(1, Math.round(+doc.job.copies || 1));
     var tpl = j.rows.length ? __("{n} CSV satırı × {c} adet = toplam {t} etiket basılacak.") : __("{n} farklı etiket × {c} adet = toplam {t} etiket basılacak.");
     $("pSummary").textContent = tpl.replace("{n}", n).replace("{c}", c).replace("{t}", n * c);
-    $("pRec").max = n;
+    $("pRec").max = n; $("pRecMax").textContent = "/ " + n;
+    if (previewIdx > n - 1) previewIdx = Math.max(0, n - 1);
     renderPrinterInfo();
+    if (curBs === "print") drawPrintPreview();
   }
   $("pCsvFile").addEventListener("click", function () { $("fileCsv").click(); });
   $("fileCsv").addEventListener("change", function () {
@@ -968,15 +993,15 @@
   /* ================= araclar ================= */
   function setTool(t) {
     tool = t;
-    qsa(".tool").forEach(function (b) { b.classList.toggle("on", b.dataset.tool === t); });
+    qsa("[data-tool]").forEach(function (b) { b.classList.toggle("on", b.dataset.tool === t); });
     cv.style.cursor = t === "select" ? "default" : "crosshair";
     if (t === "image") { pendingImagePos = null; $("fileImage").click(); setTool("select"); return; }
     status(t === "select" ? "" : ({ text: __("Metni koymak için etikete tıkla."), qr: __("QR kodu koymak için tıkla."), barcode: __("Barkodu koymak için tıkla."),
       line: __("Çizgi çizmek için sürükle."), box: __("Kutu çizmek için sürükle."), ellipse: __("Elips çizmek için sürükle.") }[t] || ""));
   }
-  qsa(".tool").forEach(function (b) { b.addEventListener("click", function () { setTool(b.dataset.tool); }); });
+  qsa("[data-tool]").forEach(function (b) { b.addEventListener("click", function () { setTool(b.dataset.tool); }); });
 
-  qsa("#arrange [data-al]").forEach(function (b) { b.addEventListener("click", function () { align(b.dataset.al); }); });
+  qsa("[data-al]").forEach(function (b) { b.addEventListener("click", function () { align(b.dataset.al); }); });
   $("toFront").addEventListener("click", function () { reorder(1); });
   $("toBack").addEventListener("click", function () { reorder(-1); });
   $("dupBtn").addEventListener("click", function () { duplicateSel(); });
@@ -986,6 +1011,11 @@
   $("zIn").addEventListener("click", function () { setZoom(view.zoom * 1.25); });
   $("zOut").addEventListener("click", function () { setZoom(view.zoom / 1.25); });
   $("zFit").addEventListener("click", fit);
+  $("z100").addEventListener("click", function () { setZoom(6); });
+  $("zInS").addEventListener("click", function () { setZoom(view.zoom * 1.25); });
+  $("zOutS").addEventListener("click", function () { setZoom(view.zoom / 1.25); });
+  $("zSlider").addEventListener("input", function () { setZoom(+this.value / 100 * 6); });
+  $("zoomVal").addEventListener("click", fit);
   $("gridOn").addEventListener("change", function () { view.grid = this.checked; schedule(); });
   $("snapOn").addEventListener("change", function () { view.snap = this.checked; });
 
@@ -993,11 +1023,20 @@
   function typing(e) { var t = e.target; return t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable); }
   window.addEventListener("keydown", function (e) {
     var k = e.key, ctrl = e.ctrlKey || e.metaKey;
-    if (ctrl && (k === "s" || k === "S")) { e.preventDefault(); saveDoc(); return; }
-    if (ctrl && (k === "p" || k === "P")) { e.preventDefault(); printJob(); return; }
-    if (ctrl && (k === "o" || k === "O")) { e.preventDefault(); if ($("modal").hidden) openDialog(); return; }
+    if (ctrl && (k === "s" || k === "S")) { e.preventDefault(); saveDoc(e.shiftKey); return; }
+    if (ctrl && (k === "p" || k === "P")) { e.preventDefault(); if ($("modal").hidden) openBackstage("print"); return; }
+    if (ctrl && (k === "n" || k === "N")) { e.preventDefault(); newDoc(); return; }
+    if (ctrl && (k === "o" || k === "O")) { e.preventDefault(); if ($("modal").hidden) askOpen(); return; }
+    if (k === "F12") { e.preventDefault(); saveDoc(true); return; }
     if (!$("modal").hidden) { if (k === "Escape") closeModal(); return; }
+    if (!$("bs").hidden) { if (k === "Escape" && !typing(e)) closeBackstage(); return; }
     if (typing(e)) { if (k === "Escape") e.target.blur(); return; }
+    if (ctrl && (k === "b" || k === "B")) { e.preventDefault(); toggleText("bold"); return; }
+    if (ctrl && e.shiftKey && (k === ">" || k === "<")) { e.preventDefault(); stepSize(k === ">" ? 1 : -1); return; }
+    if ((k === "F2" || k === "Enter") && sel.length === 1) {
+      var eEl = byId(sel[0]);
+      if (eEl && eEl.type === "text") { e.preventDefault(); startEdit(eEl, k === "F2" ? false : true); return; }
+    }
     if (ctrl && (k === "z" || k === "Z")) { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
     if (ctrl && (k === "y" || k === "Y")) { e.preventDefault(); redo(); return; }
     if (ctrl && (k === "d" || k === "D")) { e.preventDefault(); duplicateSel(); return; }
@@ -1005,7 +1044,6 @@
     if (ctrl && (k === "x" || k === "X")) { e.preventDefault(); copySel(); deleteSel(); return; }
     if (ctrl && (k === "v" || k === "V")) { e.preventDefault(); paste(); return; }
     if (ctrl && (k === "a" || k === "A")) { e.preventDefault(); sel = doc.elements.filter(function (x) { return !x.hidden; }).map(function (x) { return x.id; }); selectionChanged(); schedule(); return; }
-    if (ctrl && (k === "n" || k === "N")) { e.preventDefault(); newDoc(); return; }
     if (ctrl && k === "]") { e.preventDefault(); reorder(1); return; }
     if (ctrl && k === "[") { e.preventDefault(); reorder(-1); return; }
     if (k === "Delete" || k === "Backspace") { e.preventDefault(); deleteSel(); return; }
@@ -1024,71 +1062,168 @@
     if (tk) setTool(tk);
   });
   window.addEventListener("keyup", function (e) { if (e.key === " ") { spaceDown = false; cv.style.cursor = ""; } });
+  /* pencere odagi kaybedince basili tuslari unut: yoksa sol tik "kaydir" gibi davranir */
+  window.addEventListener("blur", function () { spaceDown = false; cv.style.cursor = ""; });
+  document.addEventListener("visibilitychange", function () { spaceDown = false; });
 
-  /* ================= dosya islemleri ================= */
-  function persist() { return api("/api/labels", docs); }
+  /* ================= dosya islemleri (dosya tabanli) ================= */
+  var fileHandle = null, EXT = ".zebra";
+  var haveFS = !!(window.showSaveFilePicker && window.showOpenFilePicker);
+  function persist() { return api("/api/labels", docs); }   // yalniz eski kutuphane + ornekler
   function renderOpen() { $("docTitle").value = doc ? doc.name : ""; }
-  function openDialog() {
-    var list = h("div", { class: "openList" });
-    function fill() {
-      list.innerHTML = "";
-      if (!docs.length) { list.appendChild(h("div", { class: "openEmpty", text: __("Kayıtlı etiket yok.") })); return; }
-      docs.slice().reverse().forEach(function (dd) {
-        var row = h("div", { class: "openRow" + (dd.id === doc.id ? " cur" : "") }, [
-          h("div", { class: "on" }, [h("b", { text: dd.name || __("Adsız etiket") }),
-            h("small", { text: dd.w + " × " + dd.h + " mm · " + (dd.elements || []).length + " " + __("öğe") })]),
-          h("button", { class: "tb", text: __("Sil"), onclick: function (ev) {
-            ev.stopPropagation();
-            if (!confirm(__("'{a}' silinsin mi?").replace("{a}", dd.name))) return;
-            docs = docs.filter(function (x) { return x.id !== dd.id; }); persist();
-            if (dd.id === doc.id) { loadDoc(blankDoc()); }
-            fill();
-          } })
-        ]);
-        row.addEventListener("click", function () {
-          if (dd.id !== doc.id && !confirmDiscard()) return;
-          closeModal(); if (dd.id !== doc.id) loadDoc(dd);
-        });
-        list.appendChild(row);
+  function nameFromFile(n) { return String(n || "").replace(/\.(zebra|json)$/i, ""); }
+  function safeName() { return (doc.name || "etiket").replace(/[^\wçğıöşüÇĞİÖŞÜ\- ]+/g, "").trim().replace(/\s+/g, "_") || "etiket"; }
+
+  /* son kullanilan dosyalar: dosya tutamaclari IndexedDB'de */
+  var Recent = (function () {
+    var ST = "recent";
+    function db() {
+      return new Promise(function (res, rej) {
+        var r = indexedDB.open("zebraapp", 1);
+        r.onupgradeneeded = function () { r.result.createObjectStore(ST, { keyPath: "key" }); };
+        r.onsuccess = function () { res(r.result); }; r.onerror = function () { rej(r.error); };
       });
     }
-    fill(); openModal(__("Etiket aç"), [list]);
-  }
-  $("fOpenBtn").addEventListener("click", openDialog);
+    function tx(mode, fn) {
+      return db().then(function (d) {
+        return new Promise(function (res, rej) {
+          var t = d.transaction(ST, mode), out = fn(t.objectStore(ST));
+          t.oncomplete = function () { res(out && out.result); }; t.onerror = function () { rej(t.error); };
+        });
+      });
+    }
+    function list() {
+      return tx("readonly", function (s) { return s.getAll(); })
+        .then(function (a) { return (a || []).sort(function (x, y) { return y.t - x.t; }); })
+        .catch(function () { return []; });
+    }
+    return {
+      list: list,
+      remove: function (key) { return tx("readwrite", function (s) { s.delete(key); }).catch(function () {}); },
+      add: function (handle) {
+        return list().then(function (items) {
+          return Promise.all(items.map(function (it, i) {
+            return Promise.resolve(it.handle.isSameEntry(handle)).then(function (same) { return same || i >= 11 ? it.key : null; }, function () { return null; });
+          })).then(function (keys) {
+            return tx("readwrite", function (s) {
+              keys.forEach(function (k) { if (k) s.delete(k); });
+              s.put({ key: String(Date.now()) + Math.random(), name: handle.name, handle: handle, t: Date.now() });
+            });
+          });
+        }).catch(function () {});
+      }
+    };
+  })();
+
   function confirmDiscard() { return !dirty || confirm(__("Kaydedilmemiş değişiklikler var. Devam edersen kaybolacak.")); }
-  function loadDoc(dd) {
-    doc = migrate(clone(dd)); sel = []; undoStack = []; redoStack = []; dirty = false; previewIdx = 0;
-    preloadImages(); refreshAll(); renderOpen(); requestAnimationFrame(fit);
+  function loadDoc(dd, handle) {
+    doc = migrate(clone(dd)); fileHandle = handle || null;
+    if (handle) doc.name = nameFromFile(handle.name) || doc.name;
+    if (editing) { editing = null; ted.hidden = true; }
+    sel = []; undoStack = []; redoStack = []; dirty = false; previewIdx = 0;
+    preloadImages(); refreshAll(); renderOpen(); closeBackstage(); requestAnimationFrame(fit);
   }
   function newDoc() { if (!confirmDiscard()) return; loadDoc(blankDoc()); }
-  function saveDoc() {
-    var at = -1;
-    docs.forEach(function (x, i) { if (x.id === doc.id) at = i; });
-    if (at >= 0) docs[at] = clone(doc); else docs.push(clone(doc));
-    persist().then(function () { dirty = false; updateTitle(); renderOpen(); status(__("Kaydedildi: ") + doc.name); })
-      .catch(function () { status(__("Kaydedilemedi. Uygulama sunucusu kapalı olabilir."), true); });
+
+  function docText() { return JSON.stringify(doc, null, 2); }
+  function writeHandle(hd, text) {
+    return hd.createWritable().then(function (w) { return w.write(text).then(function () { return w.close(); }); });
   }
-  $("fNew").addEventListener("click", newDoc);
-  $("fSave").addEventListener("click", saveDoc);
-  $("fSaveQuick").addEventListener("click", saveDoc);
-  $("fSamples").addEventListener("click", function () {
-    var add = samples(); docs = docs.concat(add); persist(); openDialog();
-    status(add.length + __(" örnek etiket eklendi."));
+  function saveDoc(asNew) {
+    if (!haveFS) { download(safeName() + EXT, docText(), "application/json"); dirty = false; updateTitle(); return Promise.resolve(); }
+    var pick = (fileHandle && !asNew) ? Promise.resolve(fileHandle) : window.showSaveFilePicker({
+      suggestedName: safeName() + EXT, startIn: fileHandle || "documents",
+      types: [{ description: __("ZebraApp etiketi"), accept: { "application/json": [EXT] } }]
+    });
+    return pick.then(function (hd) {
+      if (hd !== fileHandle) doc.name = nameFromFile(hd.name) || doc.name;
+      return writeHandle(hd, docText()).then(function () {
+        fileHandle = hd; dirty = false; renderOpen(); updateTitle();
+        status(__("Kaydedildi: ") + hd.name); Recent.add(hd);
+      });
+    }).catch(function (e) {
+      if (e && e.name === "AbortError") return;
+      status(__("Kaydedilemedi: ") + ((e && e.message) || e), true);
+    });
+  }
+
+  function loadFromText(text, hd) {
+    var data;
+    try { data = JSON.parse(text); } catch (e) { status(__("Dosya okunamadı: geçerli bir ZebraApp etiketi değil."), true); return false; }
+    if (Array.isArray(data)) data = data[0];
+    if (!data || typeof data !== "object" || !Array.isArray(data.elements)) { status(__("Dosya okunamadı: geçerli bir ZebraApp etiketi değil."), true); return false; }
+    data = migrate(data); if (!data.id) data.id = uid();
+    loadDoc(data, hd); if (hd) { status(__("Açıldı: ") + hd.name); Recent.add(hd); }
+    return true;
+  }
+  function openHandle(hd, key) {
+    var perm = hd.requestPermission ? hd.requestPermission({ mode: "readwrite" }) : Promise.resolve("granted");
+    return perm.then(function (pm) { if (pm !== "granted") throw new Error(__("İzin verilmedi.")); return hd.getFile(); })
+      .then(function (f) { return f.text(); })
+      .then(function (t) { loadFromText(t, hd); })
+      .catch(function (e) {
+        if (e && e.name === "NotFoundError" && key) { Recent.remove(key); status(__("Dosya bulunamadı, listeden kaldırıldı."), true); }
+        else status(__("Açılamadı: ") + ((e && e.message) || e), true);
+      });
+  }
+  function pickAndOpen() {
+    if (!haveFS) { $("fileImport").click(); return; }
+    window.showOpenFilePicker({ multiple: false, startIn: fileHandle || "documents",
+      types: [{ description: __("ZebraApp etiketi"), accept: { "application/json": [EXT, ".json"] } }] })
+      .then(function (a) { return openHandle(a[0]); })
+      .catch(function (e) { if (!e || e.name !== "AbortError") status(__("Açılamadı: ") + ((e && e.message) || e), true); });
+  }
+  $("fileImport").addEventListener("change", function () {
+    var f = this.files[0]; this.value = ""; if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function () { loadFromText(String(rd.result), null); };
+    rd.readAsText(f, "utf-8");
   });
-  $("fileBtn").addEventListener("click", function (e) { e.stopPropagation(); $("fileMenu").hidden = !$("fileMenu").hidden; });
-  document.addEventListener("click", function (e) { if (!e.target.closest(".menu")) $("fileMenu").hidden = true; else if (e.target.closest(".menuList button")) $("fileMenu").hidden = true; });
-  $("fSaveAs").addEventListener("click", function () {
-    var n = prompt(__("Yeni etiketin adı"), doc.name + __(" (kopya)")); if (n == null) return;
-    doc = clone(doc); doc.id = uid(); doc.name = n.trim() || doc.name; saveDoc(); syncLabelTab();
-  });
-  $("fDelete").addEventListener("click", function () {
-    if (!docs.some(function (x) { return x.id === doc.id; })) { status(__("Bu etiket henüz kaydedilmedi."), true); return; }
-    if (!confirm(__("'{a}' silinsin mi?").replace("{a}", doc.name))) return;
-    docs = docs.filter(function (x) { return x.id !== doc.id; });
-    persist(); dirty = false;
-    loadDoc(blankDoc());
-    status(__("Silindi."));
-  });
+
+  /* Ac sayfasi (Dosya > Ac) */
+  function renderOpenPage() {
+    var box = $("openList");
+    function section(title) { box.appendChild(h("div", { class: "openHead", text: title })); }
+    function render(recent) {
+      box.innerHTML = "";
+      box.appendChild(h("button", { class: "tb primary", text: __("Bilgisayardan aç…"), onclick: function () { if (confirmDiscard()) pickAndOpen(); } }));
+      if (haveFS) {
+        section(__("Son kullanılanlar"));
+        if (!recent.length) box.appendChild(h("div", { class: "openEmpty", text: __("Henüz son kullanılan dosya yok.") }));
+        recent.forEach(function (it) {
+          var row = h("div", { class: "openRow" }, [
+            h("div", { class: "on" }, [h("b", { text: it.name }), h("small", { text: new Date(it.t).toLocaleString() })]),
+            h("button", { class: "tb", text: __("Kaldır"), onclick: function (ev) { ev.stopPropagation(); Recent.remove(it.key).then(function () { render(recent.filter(function (x) { return x.key !== it.key; })); }); } })
+          ]);
+          row.addEventListener("click", function () { if (confirmDiscard()) openHandle(it.handle, it.key); });
+          box.appendChild(row);
+        });
+      }
+      if (docs.length) {
+        section(__("Uygulama içinde kayıtlı etiketler (eski sürüm)"));
+        docs.slice().reverse().forEach(function (dd) {
+          var row = h("div", { class: "openRow" }, [
+            h("div", { class: "on" }, [h("b", { text: dd.name || __("Adsız etiket") }),
+              h("small", { text: dd.w + " × " + dd.h + " mm · " + (dd.elements || []).length + " " + __("öğe") })]),
+            h("button", { class: "tb", text: __("Sil"), onclick: function (ev) {
+              ev.stopPropagation();
+              if (!confirm(__("'{a}' silinsin mi?").replace("{a}", dd.name))) return;
+              docs = docs.filter(function (x) { return x.id !== dd.id; }); persist(); render(recent);
+            } })
+          ]);
+          row.addEventListener("click", function () { if (!confirmDiscard()) return; loadDoc(dd); dirty = true; updateTitle(); status(__("Kopya açıldı. Dosya olarak kaydetmek için Ctrl+S.")); });
+          box.appendChild(row);
+        });
+      }
+    }
+    render([]);
+    Recent.list().then(function (r) { if (curBs === "open") render(r); });
+  }
+  function askOpen() { openBackstage("open"); }
+
+  $("fSave").addEventListener("click", function () { saveDoc(false).then(closeBackstage); });
+  $("fSaveQuick").addEventListener("click", function () { saveDoc(false); });
+  $("fSaveAs").addEventListener("click", function () { saveDoc(true).then(closeBackstage); });
   function download(name, text, type) {
     type = type || "text/plain";
     function fallback() {
@@ -1099,26 +1234,11 @@
     }
     if (!window.showSaveFilePicker) { fallback(); return; }
     var acc = {}; acc[type] = [(name.match(/\.[^.]+$/) || [".txt"])[0]];
-    window.showSaveFilePicker({ suggestedName: name, types: [{ description: name, accept: acc }] })
-      .then(function (fh) { return fh.createWritable().then(function (w) { return w.write(text).then(function () { return w.close(); }); }).then(function () { status(__("Dışa aktarıldı: ") + fh.name); }); })
+    window.showSaveFilePicker({ suggestedName: name, startIn: fileHandle || "documents", types: [{ description: name, accept: acc }] })
+      .then(function (fh) { return writeHandle(fh, text).then(function () { status(__("Dışa aktarıldı: ") + fh.name); }); })
       .catch(function (err) { if (err && err.name === "AbortError") return; fallback(); });
   }
-  function safeName() { return (doc.name || "etiket").replace(/[^\wçğıöşüÇĞİÖŞÜ\- ]+/g, "").trim().replace(/\s+/g, "_") || "etiket"; }
-  $("fExportJson").addEventListener("click", function () { download(safeName() + ".json", JSON.stringify(doc, null, 2), "application/json"); });
   $("fExportZpl").addEventListener("click", function () { buildJobZPL().then(function (z) { download(safeName() + ".zpl", z); }); });
-  $("fImport").addEventListener("click", function () { $("fileImport").click(); });
-  $("fileImport").addEventListener("change", function () {
-    var f = this.files[0]; this.value = ""; if (!f) return;
-    var rd = new FileReader();
-    rd.onload = function () {
-      try {
-        var data = JSON.parse(String(rd.result)), arr = Array.isArray(data) ? data : [data];
-        arr = arr.map(function (x) { var m = migrate(x); m.id = uid(); return m; });
-        docs = docs.concat(arr); persist(); loadDoc(arr[0]); status(arr.length + __(" etiket içe aktarıldı."));
-      } catch (err) { status(__("Dosya okunamadı: geçerli bir ZebraApp JSON dosyası değil."), true); }
-    };
-    rd.readAsText(f, "utf-8");
-  });
   window.addEventListener("beforeunload", function (e) { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
 
   function preloadImages() {
@@ -1412,6 +1532,298 @@
     pick(focus || (list[0] ? list[0].id : "new"));
   }
 
+  /* ================= yerinde yazi duzenleme ================= */
+  var ted = $("ted"), editing = null, editDirty = false;
+  function startEdit(el, selectAll) {
+    if (!el || el.type !== "text" || el.locked) return;
+    if (editing && editing !== el) finishEdit();
+    if (!$("bs").hidden) closeBackstage();
+    editing = el; editDirty = false;
+    sel = [el.id]; selectionChanged();
+    ted.value = el.text || "";
+    ted.hidden = false;
+    positionEditor();
+    ted.focus();
+    if (selectAll) ted.select(); else ted.selectionStart = ted.selectionEnd = ted.value.length;
+    status(__("Yazıyı düzenliyorsun. Bitirmek için Esc'ye bas ya da dışarı tıkla."));
+    schedule();
+  }
+  function finishEdit() {
+    if (!editing) return;
+    var el = editing; editing = null; ted.hidden = true;
+    if (byId(el.id) && !String(el.text || "").trim()) {
+      if (!editDirty) checkpoint(true);
+      doc.elements = doc.elements.filter(function (x) { return x.id !== el.id; });
+      sel = []; selectionChanged(); changed({ layers: true });
+    } else changed({ layers: true, inspector: true });
+    status("");
+    schedule();
+  }
+  function positionEditor() {
+    if (!editing || ted.hidden) return;
+    var el = editing, S = s();
+    if (!byId(el.id)) { editing = null; ted.hidden = true; return; }
+    var L = Z.layout(el, doc, {}), sx = L.w / L.h;
+    var fontPx = L.h * S, gapPx = Math.max(L.gap, L.h) * S;
+    var wDots = L.block > 0 ? L.block : L.W + L.h * 0.7;
+    var hDots = (L.lines.length - 1) * Math.max(L.gap, L.h) + L.h;
+    var lead = (gapPx - fontPx * 1.17) / 2;          /* CSS satir kutusundaki ust bosluk */
+    ted.style.left = Math.round(origin.x + d(el.x) * S) + "px";
+    ted.style.top = Math.round(origin.y + d(el.y) * S - fontPx * 0.06 - Math.max(0, lead)) + "px";
+    ted.style.fontSize = fontPx + "px";
+    ted.style.lineHeight = gapPx + "px";
+    ted.style.width = Math.max(fontPx, wDots * S / sx) + "px";
+    ted.style.height = Math.max(gapPx, hDots * S + Math.max(0, lead) * 2) + "px";
+    ted.style.transform = "scaleX(" + sx + ")";
+    ted.style.textAlign = L.block > 0 ? (el.align || "left") : "left";
+    ted.classList.toggle("wrap", !!(el.wrap && L.block > 0));
+    ted.classList.toggle("rev", !!el.reverse);
+  }
+  ted.addEventListener("input", function () {
+    if (!editing) return;
+    if (!editDirty) { checkpoint(true); editDirty = true; } else { dirty = true; updateTitle(); }
+    editing.text = ted.value;
+    changed({ layers: true, inspectorValues: true });
+    positionEditor();
+  });
+  ted.addEventListener("blur", function () { finishEdit(); });
+  ted.addEventListener("keydown", function (e) {
+    var ctrl = e.ctrlKey || e.metaKey;
+    if (ctrl && (e.key === "b" || e.key === "B")) { e.preventDefault(); toggleText("bold"); }
+    else if (ctrl && e.shiftKey && (e.key === ">" || e.key === "<")) { e.preventDefault(); stepSize(e.key === ">" ? 1 : -1); }
+  });
+
+  /* ================= serit (ribbon) ================= */
+  function ls(k, v) { try { if (v === undefined) return localStorage.getItem("zebraapp." + k); localStorage.setItem("zebraapp." + k, v); } catch (e) { return null; } return null; }
+  function showRt(t) {
+    qsa(".rtab[data-rt]").forEach(function (b) { b.classList.toggle("on", b.dataset.rt === t); });
+    qsa(".rpanel").forEach(function (p) { p.hidden = p.dataset.rp !== t; });
+  }
+  qsa(".rtab[data-rt]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      showRt(b.dataset.rt);
+      if (document.body.classList.contains("rcollapsed")) document.body.classList.add("rpeek");
+    });
+    b.addEventListener("dblclick", function () { $("ribbonPin").click(); });
+  });
+  $("fileTab").addEventListener("click", function () { openBackstage("home"); });
+  $("ribbonPin").addEventListener("click", function () {
+    var c = document.body.classList.toggle("rcollapsed"); document.body.classList.remove("rpeek");
+    ls("ribbon", c ? "0" : "1"); schedule();
+  });
+  if (ls("ribbon") === "0") document.body.classList.add("rcollapsed");
+  document.addEventListener("mousedown", function (e) {
+    if (document.body.classList.contains("rpeek") && !e.target.closest(".ribbon, .rtabs")) document.body.classList.remove("rpeek");
+  });
+  /* seritteki dugmeler, duzenlenen yazidan odagi almasin */
+  $("ribbon").addEventListener("mousedown", function (e) { if (editing && e.target.closest("button")) e.preventDefault(); });
+
+  function textSel() { return selEls().filter(function (e) { return e.type === "text"; }); }
+  function autoBox(el) { if (!(el.boxW > 0)) el.boxW = r2(Math.max(5, doc.w - 2 * el.x)); }
+  function applyText(fn, soft) {
+    var els = textSel(); if (!els.length) return;
+    if (soft) checkpoint(); else checkpoint(true);
+    if (editing) editDirty = true;
+    els.forEach(fn);
+    changed({ layers: true, inspector: true });
+    positionEditor();
+  }
+  function toggleText(key) {
+    var els = textSel(); if (!els.length) return;
+    var v = !els[0][key];
+    applyText(function (el) { el[key] = v; if (key === "wrap" && v) autoBox(el); });
+  }
+  var SIZES = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 10, 12, 15, 20, 25, 30, 40, 50, 60, 80];
+  function stepSize(dir) {
+    applyText(function (el) {
+      var cur = +el.size || 4, next = cur;
+      if (dir > 0) { for (var i = 0; i < SIZES.length; i++) if (SIZES[i] > cur + 0.01) { next = SIZES[i]; break; } }
+      else { for (var j = SIZES.length - 1; j >= 0; j--) if (SIZES[j] < cur - 0.01) { next = SIZES[j]; break; } }
+      el.size = next;
+    });
+  }
+  $("fSize").addEventListener("input", function () { var v = parseFloat(this.value); if (v > 0) applyText(function (el) { el.size = clamp(v, 0.5, 80); }, true); });
+  $("fWidth").addEventListener("input", function () { var v = parseFloat(this.value); if (v > 0) applyText(function (el) { el.widthPct = clamp(v, 30, 200); }, true); });
+  $("fBoxW").addEventListener("input", function () { var v = parseFloat(this.value); if (v >= 0) applyText(function (el) { el.boxW = clamp(v, 0, 500); }, true); });
+  $("fGap").addEventListener("change", function () { var v = +this.value; applyText(function (el) { el.lineGap = v; }); });
+  $("fGrow").addEventListener("click", function () { stepSize(1); });
+  $("fShrink").addEventListener("click", function () { stepSize(-1); });
+  $("fBold").addEventListener("click", function () { toggleText("bold"); });
+  $("fRev").addEventListener("click", function () { toggleText("reverse"); });
+  $("fWrap").addEventListener("click", function () { toggleText("wrap"); });
+  qsa("[data-falign]").forEach(function (b) {
+    b.addEventListener("click", function () { var a = b.dataset.falign; applyText(function (el) { el.align = a; if (a !== "left") autoBox(el); }); });
+  });
+
+  function setIf(id, v) { var e = $(id); if (document.activeElement !== e) e.value = v == null ? "" : v; }
+  function updateRibbon() {
+    if (!doc) return;
+    var ts = textSel(), on = ts.length > 0, t = ts[0], n = sel.length;
+    qsa("#gFont button, #gFont input, #gPara button, #gPara input, #gPara select").forEach(function (x) { x.disabled = !on; });
+    qsa("#gFont .rin, #gPara .rin").forEach(function (x) { x.classList.toggle("dis", !on); });
+    if (on) {
+      setIf("fSize", t.size); setIf("fWidth", t.widthPct); setIf("fBoxW", t.boxW);
+      var best = "1.25", diff = 99;
+      qsa("#fGap option").forEach(function (o) { var dd = Math.abs(+o.value - (+t.lineGap || 1.25)); if (dd < diff) { diff = dd; best = o.value; } });
+      $("fGap").value = best;
+    } else { setIf("fSize", ""); setIf("fWidth", ""); setIf("fBoxW", ""); }
+    $("fBold").classList.toggle("on", !!(on && t.bold));
+    $("fRev").classList.toggle("on", !!(on && t.reverse));
+    $("fWrap").classList.toggle("on", !!(on && t.wrap));
+    qsa("[data-falign]").forEach(function (b) { b.classList.toggle("on", !!(on && (t.align || "left") === b.dataset.falign)); });
+    $("rPaste").disabled = !clipboard;
+    qsa("#rCut, #rCopy, #dupBtn, #delBtn, #toFront, #toBack, #rLock, #rHide, [data-al]").forEach(function (b) { b.disabled = n === 0; });
+    $("rRotate").disabled = !selEls().some(function (e) { return "rot" in DEF[e.type]; });
+    $("rEditText").disabled = !(n === 1 && on);
+    var els = selEls(), allLocked = els.length && els.every(function (e) { return e.locked; }), allHid = els.length && els.every(function (e) { return e.hidden; });
+    $("rLock").querySelector("span").textContent = allLocked ? __("Kilidi aç") : __("Kilitle");
+    $("rHide").querySelector("span").textContent = allHid ? __("Göster") : __("Gizle");
+  }
+  $("rPaste").addEventListener("click", function () { paste(); updateRibbon(); });
+  $("rCopy").addEventListener("click", function () { copySel(); updateRibbon(); });
+  $("rCut").addEventListener("click", function () { copySel(); deleteSel(); updateRibbon(); });
+  $("rSelAll").addEventListener("click", function () { sel = doc.elements.filter(function (x) { return !x.hidden; }).map(function (x) { return x.id; }); selectionChanged(); schedule(); });
+  $("rEditText").addEventListener("click", function () { var t = textSel()[0]; if (t) startEdit(t, false); });
+  $("rRotate").addEventListener("click", function () {
+    var els = selEls().filter(function (e) { return "rot" in DEF[e.type] && !e.locked; }); if (!els.length) return;
+    checkpoint(true); els.forEach(function (e) { e.rot = ((+e.rot || 0) + 90) % 360; }); changed({ inspector: true });
+  });
+  $("rLock").addEventListener("click", function () {
+    var els = selEls(); if (!els.length) return; var v = !els.every(function (e) { return e.locked; });
+    checkpoint(true); els.forEach(function (e) { e.locked = v; }); changed({ layers: true, inspector: true });
+  });
+  $("rHide").addEventListener("click", function () {
+    var els = selEls(); if (!els.length) return; var v = !els.every(function (e) { return e.hidden; });
+    checkpoint(true); els.forEach(function (e) { e.hidden = v; }); changed({ layers: true, inspector: true });
+  });
+
+  /* {SAYAC} gibi alanlari ekle */
+  function insertToken(tok) {
+    if (editing) {
+      var st = ted.selectionStart, en = ted.selectionEnd;
+      ted.setRangeText(tok, st, en, "end"); ted.dispatchEvent(new Event("input")); ted.focus(); return;
+    }
+    if (lastContentField && document.activeElement === lastContentField.inp) { insertVar(tok); return; }
+    var els = selEls();
+    if (els.length === 1 && els[0].type === "text" && !els[0].locked) { startEdit(els[0], false); insertToken(tok); return; }
+    if (els.length === 1 && (els[0].type === "qr" || els[0].type === "barcode")) {
+      checkpoint(true); els[0].data = String(els[0].data || "") + tok; changed({ layers: true, inspector: true }); return;
+    }
+    var el = newEl("text", 3, 3, { text: tok, size: 4 });
+    addElement(el); startEdit(el, false);
+  }
+  qsa("[data-token]").forEach(function (b) { b.addEventListener("click", function () { insertToken(b.dataset.token); }); });
+
+  /* paneller */
+  function setPane(cls, btn, on) {
+    $("ws").classList.toggle(cls, !on); $(btn).classList.toggle("on", on); ls(cls, on ? "1" : "0"); schedule();
+  }
+  $("vLayers").addEventListener("click", function () { setPane("noLayers", "vLayers", $("ws").classList.contains("noLayers")); });
+  $("vProps").addEventListener("click", function () { setPane("noProps", "vProps", $("ws").classList.contains("noProps")); });
+  $("propsClose").addEventListener("click", function () { setPane("noProps", "vProps", false); });
+  if (ls("noLayers") === "0") setPane("noLayers", "vLayers", false);
+  if (ls("noProps") === "0") setPane("noProps", "vProps", false);
+
+  $("qPrint").addEventListener("click", function () { printJob(); });
+  $("hPrint").addEventListener("click", function () { openBackstage("print"); });
+
+  /* ================= Dosya ekrani (backstage) ================= */
+  var curBs = null;
+  function openBackstage(page) {
+    if (editing) finishEdit();
+    if (drag) drag = null;
+    $("bs").hidden = false; showBs(page || "home");
+  }
+  function closeBackstage() { if ($("bs").hidden) return; $("bs").hidden = true; curBs = null; schedule(); }
+  function showBs(p) {
+    curBs = p;
+    qsa(".bsnav [data-bs]").forEach(function (b) { b.classList.toggle("on", b.dataset.bs === p); });
+    qsa(".bspage").forEach(function (x) { x.hidden = x.dataset.bp !== p; });
+    $("bs").querySelector(".bsmain").scrollTop = 0;
+    if (p === "home") renderHome();
+    else if (p === "new") renderNew();
+    else if (p === "open") renderOpenPage();
+    else if (p === "print") { updatePrintSummary(); requestAnimationFrame(drawPrintPreview); }
+  }
+  qsa(".bsnav [data-bs]").forEach(function (b) { b.addEventListener("click", function () { showBs(b.dataset.bs); }); });
+  $("bsBack").addEventListener("click", closeBackstage);
+  $("bsPrinters").addEventListener("click", function () { var ap = activePrinter(); openPrinters(ap ? ap.id : "new"); });
+
+  function paintDoc(dd, maxW, maxH, crisp) {
+    var c = document.createElement("canvas"), k = Math.min(maxW / dd.w, maxH / dd.h);
+    var w = Math.max(1, Math.round(dd.w * k)), hh = Math.max(1, Math.round(dd.h * k)), dpr = window.devicePixelRatio || 1;
+    c.width = Math.round(w * dpr); c.height = Math.round(hh * dpr); c.style.width = w + "px"; c.style.height = hh + "px";
+    var g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var recs = Z.records({ copies: 1, count: 1, start: dd.job.start, step: dd.job.step, digits: dd.job.digits, rows: Z.parseCSV(dd.job.csv).rows });
+    try { R.drawDoc(g, dd, k * 25.4 / dd.dpi, 0, 0, recs[0], { outline: !crisp }); } catch (e) { /* bos birak */ }
+    return c;
+  }
+  function tile(title, sub, visual, onclick) {
+    return h("button", { type: "button", class: "tile", onclick: onclick }, [h("span", { class: "tv" }, [visual]), h("b", { text: title }), h("small", { text: sub || "" })]);
+  }
+  function paper(w, hh, blank) {
+    var k = Math.min(120 / w, 104 / hh);
+    var p = h("span", { class: "paper" + (blank ? " blank" : ""), text: blank ? "+" : "" });
+    p.style.width = Math.round(w * k) + "px"; p.style.height = Math.round(hh * k) + "px";
+    return p;
+  }
+  function newFromSize(w, hh, dpi) {
+    if (!confirmDiscard()) return;
+    var n = blankDoc(); n.w = w; n.h = hh; if (dpi) n.dpi = dpi;
+    loadDoc(n);
+  }
+  function newFromTemplate(t) {
+    if (!confirmDiscard()) return;
+    var n = clone(t); n.id = uid(); loadDoc(n);
+  }
+  var PRESETS = [[80, 40], [100, 50], [100, 150], [100, 100], [58, 40], [50, 30], [40, 30], [50, 25]];
+  function renderHome() {
+    var hr = new Date().getHours();
+    $("bsGreet").textContent = hr < 5 ? __("İyi geceler") : hr < 12 ? __("Günaydın") : hr < 18 ? __("İyi günler") : __("İyi akşamlar");
+    var box = $("homeTiles"); box.innerHTML = "";
+    box.appendChild(tile(__("Boş etiket"), "80 × 40 mm", paper(80, 40, true), function () { newFromSize(80, 40); }));
+    samples().forEach(function (t) { box.appendChild(tile(t.name, t.w + " × " + t.h + " mm", paintDoc(t, 120, 104), function () { newFromTemplate(t); })); });
+    box.appendChild(tile(__("Diğer boyutlar…"), __("Hazır boyutlar ve özel boyut"), paper(60, 60, true), function () { showBs("new"); }));
+    var rb = $("homeRecent"); rb.innerHTML = "";
+    if (!haveFS) { rb.appendChild(h("div", { class: "empty", text: __("Bu tarayıcı son kullanılan dosyaları hatırlayamıyor. Chrome ya da Edge kullan.") })); return; }
+    Recent.list().then(function (items) {
+      if (curBs !== "home") return;
+      rb.innerHTML = "";
+      if (!items.length) rb.appendChild(h("div", { class: "empty", text: __("Henüz son kullanılan dosya yok. Kaydettiğin ve açtığın dosyalar burada görünür.") }));
+      items.slice(0, 10).forEach(function (it) {
+        var row = h("div", { class: "rrowi", html: '<svg><use href="#i-new"/></svg>' }, [h("b", { text: it.name }), h("small", { text: new Date(it.t).toLocaleString() })]);
+        row.appendChild(h("span", {}));
+        row.addEventListener("click", function () { if (confirmDiscard()) openHandle(it.handle, it.key); });
+        rb.appendChild(row);
+      });
+      rb.appendChild(h("button", { type: "button", class: "tb", text: __("Bilgisayardan aç…"), onclick: function () { if (confirmDiscard()) pickAndOpen(); } }));
+    });
+  }
+  function renderNew() {
+    var a = $("newSizes"); a.innerHTML = "";
+    PRESETS.forEach(function (p) { a.appendChild(tile(p[0] + " × " + p[1] + " mm", p[0] === 100 && p[1] === 150 ? __("kargo") : "", paper(p[0], p[1], true), function () { newFromSize(p[0], p[1]); })); });
+    var b = $("newTemplates"); b.innerHTML = "";
+    samples().forEach(function (t) { b.appendChild(tile(t.name, t.w + " × " + t.h + " mm", paintDoc(t, 120, 104), function () { newFromTemplate(t); })); });
+    var ap = activePrinter(); $("nDpi").value = String(ap && ap.dpi ? ap.dpi : doc.dpi);
+  }
+  $("nCreate").addEventListener("click", function () {
+    var w = parseFloat($("nW").value), hh = parseFloat($("nH").value);
+    if (!(w >= 5 && hh >= 5)) { status(__("Geçerli bir genişlik ve yükseklik gir."), true); return; }
+    newFromSize(w, hh, +$("nDpi").value);
+  });
+  function drawPrintPreview() {
+    if (curBs !== "print" || !doc) return;
+    var c = $("ppCanvas"), box = c.parentNode;
+    var maxW = Math.max(200, box.clientWidth - 48), maxH = Math.max(200, window.innerHeight - 280);
+    var k = Math.min(maxW / doc.w, maxH / doc.h, 14), w = Math.round(doc.w * k), hh = Math.round(doc.h * k), dpr = window.devicePixelRatio || 1;
+    c.width = Math.round(w * dpr); c.height = Math.round(hh * dpr); c.style.width = w + "px"; c.style.height = hh + "px";
+    var g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, hh);
+    R.drawDoc(g, doc, k * 25.4 / doc.dpi, 0, 0, currentRec(), {});
+    var n = Z.records(jobForRecords()).length;
+    $("ppInfo").textContent = __("Kayıt {a} / {b}").replace("{a}", clamp(previewIdx, 0, n - 1) + 1).replace("{b}", n);
+    $("ppPrev").disabled = previewIdx <= 0; $("ppNext").disabled = previewIdx >= n - 1;
+  }
+
   /* ================= dil ================= */
   $("langSel").addEventListener("change", function () {
     var v = this.value;
@@ -1422,16 +1834,14 @@
   /* ================= baslat ================= */
   function start(list) {
     docs = (list || []).map(migrate);
-    var seeded = false;
-    if (!docs.length) { docs = samples(); seeded = true; }
     doc = blankDoc();
-    if (seeded) persist().catch(function () {});
     $("zoomVal").textContent = "100%";
     renderPrinterSel();
     refreshAll(); renderOpen(); preloadImages();
     requestAnimationFrame(fit);
     refreshState();
     fetch("/api/ping").catch(function () {});
+    openBackstage("home");
     if (!settings.printers.length) setTimeout(function () { status(__("Başlamak için sağ üstten bir yazıcı ekle.")); }, 300);
   }
   var fontsReady = document.fonts && document.fonts.load ? Promise.all([
@@ -1445,6 +1855,7 @@
     $("langSel").value = langv;
     if (!settings.language) saveSettings({ language: langv }).catch(function () {});
     $("verLbl").textContent = settings.version ? "v" + settings.version : "";
+    $("aboutVer").textContent = "ZebraApp " + (settings.version ? "v" + settings.version : "");
     return Promise.all([fontsReady, api("/api/labels").catch(function () { return []; })]);
   }).then(function (res) { start(res[1]); });
 
