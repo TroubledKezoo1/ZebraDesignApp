@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Item Type="BarcodeDocumentItem">
+          <Id>4a1872b5-3ea0-4ed2-a8ee-14e0c2e2f6ed</Id>
+          <Name>Barkod_1</Name>
+          <Color>FF000000</Color>
+          <BarcodeData Type="QRBarcodeData">
+            <QRBarcodeVersion>0</QRBarcodeVersion>
+            <QRBarcodeEncoding>0</QRBarcodeEncoding>
+            <QRBarcodeErrorCorrectionLevel>0</QRBarcodeErrorCorrectionLevel>
+            <BaseBarWidth>84.6666666666667</BaseBarWidth>
+            <UserBarWidth>84.6666666666667</UserBarWidth>
+            <ModuleHeight>0</ModuleHeight>
+            <UserRatio>0</UserRatio>
+            <HumanInterpretationPosition>0</HumanInterpretationPosition>
+            <AutoFontScaling>False</AutoFontScaling>
+            <DisplayCheckDigit>False</DisplayCheckDigit>
+            <AutomaticCheckDigit>False</AutomaticCheckDigit>
+            <CodePage>932</CodePage>
+            <HumanInterpretationFontDescriptor Type="FontDescriptor">
+              <Name>Arial</Name>
+              <Height>10</Height>
+              <Width>0</Width>
+              <Color>FF000000</Color>
+              <LogFontWrapper Type="LogFontWrapper">
+                <Height>42</Height>
+                <Width>0</Width>
+                <Weight>700</Weight>
+                <PitchAndFamily>0</PitchAndFamily>
+                <FaceName>Arial</FaceName>
+              </LogFontWrapper>
+            </HumanInterpretationFontDescriptor>
+          </BarcodeData>
+          <SampleValue Type="StringContents">
+            <StringValue>123456789012</StringValue>
+            <UserValue>123456789012</UserValue>
+          </SampleValue>
+          <PrintAsGraphics>False</PrintAsGraphics>
+          <Geometry Type="PositionGeometry">
+            <X>6478</X>
+            <Y>28260</Y>
+          </Geometry>
+          <FixedContents>123456789012</FixedContents>
+          <ZOrder>10006</ZOrder>
+          <MergeName>Barkod_1</MergeName>
+        </Item>
+        

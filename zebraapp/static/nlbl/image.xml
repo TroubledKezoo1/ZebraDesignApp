@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Item Type="GraphicDocumentItem">
+          <Id>92a7238c-d458-47f8-b8e6-0f27e2f53624</Id>
+          <Name>Resim</Name>
+          <Color>FF000000</Color>
+          <SampleValue Type="StringContents" />
+          <PrintAsGraphics>False</PrintAsGraphics>
+          <Geometry Type="RectGeometry">
+            <Width>10160</Width>
+            <Height>5080</Height>
+            <Left>28659</Left>
+            <Top>28260</Top>
+          </Geometry>
+          <GraphicFileName>image.png</GraphicFileName>
+          <EmbeddedGraphicContents Type="BinaryContents">
+            <Base64StringValue>iVBORw0KGgoAAAANSUhEUgAAAHgAAAA8CAIAAAAiz+n/AAAAt0lEQVR4nO3QMQrDQBAEQf3/03Z+axAsorFxVTyT9PUarmFuONxG+xBR6AWhI0JHhI4IHXkmNAtCR4SOCB0ROiJ0ZBN6bjgIHRE6InRE6IjQEaEjQkeEjggdETpSh57fnyZ0ROiI0BGhI0JHhI4IHRE6InRE6IjQEaEjQkeEjnxv6L8ldEToiNARoSNCR4SOCB0ROiJ0ROjIM6FZEDoidEToiNARoSOb0HPDQeiI0BGhI0JHbqO9AWdW+7VO4PC5AAAAAElFTkSuQmCC</Base64StringValue>
+          </EmbeddedGraphicContents>
+          <ResizeMode>1</ResizeMode>
+          <CropVariableGraphics>False</CropVariableGraphics>
+          <ZOrder>10008</ZOrder>
+          <KeepAspectRatio>True</KeepAspectRatio>
+          <MergeName>Resim</MergeName>
+        </Item>
+      

@@ -140,3 +140,57 @@ class ServerTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TemplatesTest(unittest.TestCase):
+    def test_templates_roundtrip_and_validation(self):
+        with tempfile.TemporaryDirectory() as d:
+            st = Store(Path(d))
+            self.assertEqual(st.templates(), [])
+            t = {"id": "a", "name": "Adres", "w": 80, "h": 40, "dpi": 300, "elements": []}
+            st.save_templates([t])
+            self.assertEqual(st.templates()[0]["name"], "Adres")
+            for bad in ([{"w": 80, "h": 40, "dpi": 300}], [dict(t, dpi=250)], [dict(t, w=True)], [dict(t, h=0)], "x"):
+                with self.assertRaises(ValueError):
+                    st.save_templates(bad)
+
+
+class NlblTest(unittest.TestCase):
+    def setUp(self):
+        try:
+            import pyzipper  # noqa: F401
+            import PIL  # noqa: F401
+        except ImportError:
+            self.skipTest("pyzipper/Pillow not installed")
+
+    def test_export_then_import(self):
+        from zebraapp.nlbl import export_label, import_label
+        label = {"name": "Deneme", "w": 80, "h": 40, "dpi": 300, "elements": [
+            {"type": "text", "x": 3, "y": 2, "size": 4, "text": "Merhaba Şişli", "bold": True, "font": ""},
+            {"type": "qr", "x": 50, "y": 5, "mag": 5, "ec": "Q", "data": "https://example.com"},
+            {"type": "barcode", "kind": "code128", "x": 3, "y": 20, "h": 8, "module": 2, "data": "ABC123", "human": True},
+            {"type": "line", "x": 3, "y": 15, "dir": "h", "len": 60, "t": 0.3},
+            {"type": "box", "x": 1, "y": 1, "w": 78, "h": 38, "t": 0.5, "round": 2},
+        ]}
+        raw, _ = export_label(label)
+        back, _ = import_label(raw)
+        kinds = [e["type"] for e in back["elements"]]
+        self.assertEqual(sorted(kinds), sorted(["text", "qr", "barcode", "line", "box"]))
+        self.assertEqual((back["w"], back["h"], back["dpi"]), (80, 40, 300))
+        text = next(e for e in back["elements"] if e["type"] == "text")
+        self.assertEqual(text["text"], "Merhaba Şişli")
+        self.assertTrue(text["bold"])
+        qr = next(e for e in back["elements"] if e["type"] == "qr")
+        self.assertEqual((qr["data"], qr["ec"], qr["mag"]), ("https://example.com", "Q", 5))
+
+    def test_rejects_what_it_cannot_carry(self):
+        from zebraapp.nlbl import export_label
+        base = {"name": "x", "w": 80, "h": 40, "dpi": 300, "elements": []}
+        with self.assertRaises(ValueError):
+            export_label(dict(base, dpi=203))
+        with self.assertRaises(ValueError):
+            export_label(dict(base, elements=[{"type": "text", "x": 0, "y": 0, "text": "a", "rot": 90}]))
+        with self.assertRaises(ValueError):
+            from zebraapp.nlbl import import_label
+            import_label(b"not a zip")
+

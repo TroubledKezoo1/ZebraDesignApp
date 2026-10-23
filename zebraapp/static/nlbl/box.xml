@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Item Type="RectangleDocumentItem">
+          <Id>8ace9d33-8e20-49a6-bbad-53615e55964f</Id>
+          <Name>Dikdörtgen</Name>
+          <Color>FF000000</Color>
+          <SampleValue Type="StringContents" />
+          <PrintAsGraphics>False</PrintAsGraphics>
+          <Geometry Type="RectGeometry">
+            <Width>21327</Width>
+            <Height>7678</Height>
+            <Left>38896</Left>
+            <Top>3520</Top>
+          </Geometry>
+          <Radius>0</Radius>
+          <Thickness>1000</Thickness>
+          <LineStyle>1</LineStyle>
+          <FillStyle>0</FillStyle>
+          <FillColor>FF000000</FillColor>
+          <ZOrder>10003</ZOrder>
+          <MergeName>Dikdörtgen</MergeName>
+        </Item>
+        

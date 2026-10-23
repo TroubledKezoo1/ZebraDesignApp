@@ -24,7 +24,8 @@ dependencies = []
 ble = ["bleak>=0.20"]
 serial = ["pyserial>=3.5"]
 windows = ["pywin32>=300; sys_platform == 'win32'"]
-all = ["bleak>=0.20", "pyserial>=3.5", "pywin32>=300; sys_platform == 'win32'"]
+nlbl = ["pyzipper>=0.3.6", "Pillow>=10"]
+all = ["bleak>=0.20", "pyserial>=3.5", "pywin32>=300; sys_platform == 'win32'", "pyzipper>=0.3.6", "Pillow>=10"]
 
 [project.scripts]
 zebraapp = "zebraapp.server:main"
@@ -33,4 +34,4 @@ zebraapp = "zebraapp.server:main"
 packages = ["zebraapp"]
 
 [tool.setuptools.package-data]
-zebraapp = ["static/*", "static/js/*", "static/vendor/*", "static/fonts/*"]
+zebraapp = ["static/*", "static/js/*", "static/vendor/*", "static/fonts/*", "static/nlbl/*"]

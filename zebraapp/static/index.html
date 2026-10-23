@@ -480,6 +480,7 @@
     <hr>
     <button id="fSave"><svg><use href="#i-save"/></svg><span>Kaydet</span></button>
     <button id="fSaveAs"><svg><use href="#i-save"/></svg><span>Farklı kaydet</span></button>
+    <button id="fSaveTpl"><svg><use href="#i-new"/></svg><span>Şablon olarak kaydet</span></button>
     <button data-bs="print"><svg><use href="#i-print"/></svg><span>Yazdır</span></button>
     <button data-bs="export"><svg><use href="#i-export"/></svg><span>Dışa aktar</span></button>
     <span class="grow"></span>
@@ -500,6 +501,13 @@
       <div class="tiles" id="newSizes"></div>
       <h2>Şablonlar</h2>
       <div class="tiles" id="newTemplates"></div>
+      <h2>Şablonlarım</h2>
+      <div class="row wrap tplbar">
+        <button class="tb" id="tplSaveCur">Açık tasarımı şablon olarak kaydet</button>
+        <button class="tb" id="tplImport">Dosyadan şablon ekle…</button>
+        <input type="file" id="tplFile" accept=".zebra,.json,.nlbl,application/json" multiple hidden>
+      </div>
+      <div class="tiles" id="newMine"></div>
       <h2>Özel boyut</h2>
       <div class="customsize">
         <label>Genişlik mm<input id="nW" type="number" value="80" min="10" max="168"></label>
@@ -549,6 +557,7 @@
     <div class="bspage" data-bp="export" hidden>
       <h1>Dışa aktar</h1>
       <div class="bigbtns">
+        <button class="bigopt" id="fExportNlbl"><svg><use href="#i-save"/></svg><span><b>ZebraDesigner için kaydet (.nlbl)…</b><small>Deneysel. ZebraDesigner 3'te açılabilen dosya üretir: sabit metin, Code 128, QR, görsel, çizgi, kutu ve elips. 300 dpi; döndürme ve ters baskı yok.</small></span></button>
         <button class="bigopt" id="fExportZpl"><svg><use href="#i-export"/></svg><span><b>ZPL dosyası olarak dışa aktar…</b><small>Yazıcıya giden kodu .zpl dosyası olarak kaydeder. Başka programlardan da basılabilir.</small></span></button>
         <button class="bigopt" id="pZpl"><svg><use href="#i-code"/></svg><span><b>ZPL kodunu göster</b><small>Kodu gör, kopyala, elle düzenleyip gönder.</small></span></button>
       </div>

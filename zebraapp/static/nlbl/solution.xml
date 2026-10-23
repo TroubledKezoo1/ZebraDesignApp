@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<EuroPlus.NiceLabel>
+  <FileVersion>50</FileVersion>
+  <SolutionFileVersion Type="SolutionFileVersion">
+    <FileVersion>1</FileVersion>
+  </SolutionFileVersion>
+  <Id>4b154564-7b3e-4c41-a8a9-4f1c7a3e73f2</Id>
+  <Name>Etiket Deneme</Name>
+  <SampleValue Type="StringContents" />
+  <SolutionType>1</SolutionType>
+  <LicenseInfos>
+    <Item Type="SolutionLicenseInfo">
+      <SerialNumber>DEMO TRIAL</SerialNumber>
+    </Item>
+  </LicenseInfos>
+  <SolutionSummary Type="SolutionSummary">
+    <SolutionName>Etiket Deneme</SolutionName>
+    <FormatCount>1</FormatCount>
+    <HasErrors>True</HasErrors>
+  </SolutionSummary>
+  <MergeName>Etiket Deneme</MergeName>
+</EuroPlus.NiceLabel>

@@ -155,4 +155,13 @@ test("rich text: word formatting, justify, case and vertical align", () => {
   assert.ok(!Z.isNative(u)); assert.ok(Z.layout(u, d, {}).raster);
 });
 
+test("sideways images keep their box when rotated freely", () => {
+  const d = { w: 80, h: 40, dpi: 300, elements: [] };
+  assert.ok(Z.sideways(90) && Z.sideways(-90) && Z.sideways(80) && !Z.sideways(30) && !Z.sideways(180));
+  const img = { type: "image", x: 0, y: 0, w: 10, h: 20, rot: 90, src: "" };
+  const L90 = Z.layout(img, d, {}), L85 = Z.layout(Object.assign({}, img, { rot: 85 }), d, {});
+  assert.strictEqual(L90.box.w, Z.dots(10, 300)); assert.strictEqual(L90.box.h, Z.dots(20, 300));
+  assert.ok(Math.abs(L85.box.w - L90.box.w) < 25 && Math.abs(L85.box.h - L90.box.h) < 25, JSON.stringify([L85.box, L90.box]));
+});
+
 console.log("\n" + n + " tests passed");

@@ -38,6 +38,9 @@ ZebraDesigner yalnızca Windows'ta çalışıyor, açık kaynak etiket programla
 - Kalibrasyon, boş etiket ilerletme, ayar etiketi basma, yazıcı durumunu okuma (kâğıt bitti, kapak açık, duraklatıldı…)
 - Hazır `.zpl` dosyalarını açıp düzenleme: metin, `^FB` blokları, kutu, çizgi (çapraz dahil), elips, Code 128 / Code 39 / EAN-13 / UPC-A, QR kod ve `^GFA` resimleri düzenlenebilir öğelere dönüşür; diğer komutlar atlandı diye listelenir
 - Etiketler düz dosyadır (`.zebra`, içi JSON): Kaydet, Farklı kaydet ve Aç sistemin dosya penceresini kullanır, son kullanılanlar listelenir; ZPL `.zpl` dosyası olarak dışa aktarılır
+- Şablon kitaplığı: hazır şablonlar (adres, gönderici ve alıcı, ürün, raf etiketi) ve kendi şablonların. Her tasarım şablon olarak kaydedilebilir; `{Ad Soyad}` gibi alanlar şablondan etiket açılırken bir formda sorulur
+- ZebraDesigner 3 dosyaları (`.nlbl`, deneysel): aç ve ZebraDesigner için kaydet. Sabit metin, Code 128, QR, görsel, çizgi, kutu ve elips; yalnızca 300 dpi. `pip install ".[nlbl]"` gerekir
+- Açılan dosyalar denetlenir (boyut, biçim, gömülü görseller); bozuk ya da yabancı bir dosya açık bir mesaj verir
 - Türkçe ve İngilizce arayüz
 
 ## Desteklenen bağlantılar
@@ -67,7 +70,7 @@ Python 3.8 ya da üstü gerekir.
 ```sh
 git clone https://github.com/TroubledKezoo1/ZebraDesignApp.git
 cd ZebraDesignApp
-pip install ".[ble]"        # Bluetooth, seri port ve Windows için ".[all]"
+pip install ".[ble]"        # Bluetooth, seri port, Windows ve .nlbl için ".[all]"
 zebraapp
 ```
 
@@ -79,6 +82,16 @@ Editör Chrome, Chromium ya da Edge'de uygulama penceresi olarak, yoksa varsayı
 - Linux: `scripts/install-linux.sh` uygulama menüsüne ve masaüstüne ekler.
 - Windows: `scripts\ZebraApp.bat` dosyasına çift tıkla.
 - macOS: `scripts/ZebraApp.command` dosyasına çift tıkla.
+
+**git olmadan Windows'ta** (indirilen ZIP ile): ZIP'i bir klasöre çıkar, o klasörde terminal açıp şunu çalıştır
+
+```bat
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install ".[all]"
+.venv\Scripts\python.exe -m zebraapp
+```
+
+Yazıcıları ve şablonları programın yanında tutmak için sonuna `--data-dir veriler` ekle.
 
 Ubuntu gibi pip'in sisteme kurmaya izin vermediği yerlerde sanal ortam (`python3 -m venv .venv && . .venv/bin/activate`) ya da `pipx install ".[ble]"` kullan.
 
@@ -112,7 +125,7 @@ Bluetooth LE yazıcı aynı anda yalnızca bir cihaza bağlanır. Bağlanmıyors
 
 ## Veriler nerede
 
-Etiketler seçtiğin yere (`.zebra` dosyası) kaydedilir. Yazıcı ayarları şu klasördeki JSON dosyasında durur:
+Etiketler seçtiğin yere (`.zebra` dosyası) kaydedilir. Yazıcı ayarları ve şablonların (`templates.json`) şu klasördeki JSON dosyalarında durur:
 - Linux: `~/.config/zebraapp/`
 - macOS: `~/Library/Application Support/ZebraApp/`
 - Windows: `%APPDATA%\ZebraApp\`

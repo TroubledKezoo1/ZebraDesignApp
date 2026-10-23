@@ -300,3 +300,9 @@ code { font-family: var(--mono); font-size: 11.5px; background: var(--accent-sof
 .popm.grid button { justify-content: center; padding: 0; height: 34px; font-size: 18px; font-weight: 400; }
 .popm .ph { grid-column: 1 / -1; font-size: 11px; color: var(--muted); padding: 4px 6px; font-weight: 600; }
 .findbox { display: grid; gap: 10px; min-width: 420px; }
+.tilew { display: grid; gap: 4px; width: 150px; }
+.tilew .tacts { display: flex; gap: 4px; }
+.tilew .tacts .tb { height: 24px; padding: 0 8px; font-size: 12px; }
+.tplbar { margin-bottom: 12px; }
+.tplform { display: grid; gap: 12px; min-width: min(460px, 80vw); }
+#mBody .tplform textarea { min-height: 70px; height: 76px; font-family: inherit; font-size: inherit; white-space: pre-wrap; }

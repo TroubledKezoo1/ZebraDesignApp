@@ -71,6 +71,7 @@
       e = Object.assign(base, e);
       e.id = e.id || uid();
       if (e.hidden == null) e.hidden = false;
+      if (e.type === "text" && (e.font === "zebra" || e.font === "ZEBRA 0")) e.font = "";   /* baska ZebraApp surumleri */
       if (e.locked == null) e.locked = false;
       return e;
     });
@@ -108,7 +109,20 @@
       T("barcode", { x: 10, y: 100, h: 25, module: c.dpi >= 300 ? 4 : 3, data: "{takip}" })
     ];
     c.job.csv = __("gonderici;alici;adres;takip\nÖrnek Teknoloji A.Ş.;Örnek Makina Ltd. Şti.;Atatürk Caddesi No: 12 Örnek İş Merkezi 34000 Kadıköy / İstanbul;TR0000000001\nÖrnek Teknoloji A.Ş.;Deneme Ticaret;Cumhuriyet Mah. 5. Sokak No: 7 06000 Çankaya / Ankara;TR0000000002");
-    return [a, b, c];
+    function tx(x, y, size, value, width, bold) { return T("text", { x: x, y: y, size: size, text: value, boxW: width, wrap: true, bold: !!bold }); }
+    var d1 = blankDoc(); d1.name = __("Adres etiketi (doldurmalı)"); d1.w = 80; d1.h = 40;
+    d1.elements = [tx(3, 2, 2.5, __("ALICI"), 74), tx(3, 6, 4.5, "{" + __("Ad Soyad") + "}", 74, true), T("line", { x: 3, y: 12, len: 74, t: 0.25 }),
+      tx(3, 14, 3.5, "{" + __("Adres") + "}", 74), tx(3, 28, 3.5, "{" + __("Posta Kodu") + "} {" + __("İlçe") + "} / {" + __("İl") + "}", 74, true), tx(3, 34, 3, __("Tel: ") + "{" + __("Telefon") + "}", 74)];
+    var d2 = blankDoc(); d2.name = __("Gönderici ve alıcı"); d2.w = 100; d2.h = 100;
+    d2.elements = [tx(4, 3, 3, __("GÖNDERİCİ"), 92), tx(4, 8, 4, "{" + __("Gönderici") + "}", 92, true), tx(4, 15, 3.5, "{" + __("Gönderici Adresi") + "}", 92),
+      T("line", { x: 4, y: 32, len: 92, t: 0.4 }), tx(4, 36, 3, __("ALICI"), 92), tx(4, 42, 5, "{" + __("Ad Soyad") + "}", 92, true), tx(4, 52, 4, "{" + __("Adres") + "}", 92),
+      tx(4, 77, 4, "{" + __("Posta Kodu") + "} {" + __("İlçe") + "} / {" + __("İl") + "}", 92, true), tx(4, 88, 3.5, __("Tel: ") + "{" + __("Telefon") + "}", 92)];
+    var d3 = blankDoc(); d3.name = __("Ürün ve barkod"); d3.w = 80; d3.h = 40;
+    d3.elements = [tx(3, 3, 4.5, "{" + __("Ürün Adı") + "}", 74, true), tx(3, 10, 3, __("Kod: ") + "{" + __("Ürün Kodu") + "}", 74),
+      T("barcode", { x: 3, y: 17, h: 10, module: 2, data: "{" + __("Ürün Kodu") + "}", human: true }), tx(53, 31, 4, "{" + __("Fiyat") + "} TL", 24, true)];
+    var d4 = blankDoc(); d4.name = __("Dosya ve raf etiketi"); d4.w = 80; d4.h = 30;
+    d4.elements = [tx(3, 3, 5, "{" + __("Başlık") + "}", 74, true), T("line", { x: 3, y: 10, len: 74, t: 0.3 }), tx(3, 13, 3.5, "{" + __("Açıklama") + "}", 74), tx(3, 23, 3, "{" + __("Referans") + "}", 74)];
+    return [a, b, c, d1, d2, d3, d4];
   }
 
   /* ================= geri al ================= */
@@ -332,7 +346,10 @@
   /* donus acisini degistir, ogenin merkezi yerinde kalsin */
   function setRotKeep(el, deg, c) {
     if (!c) { var L0 = Z.layout(el, doc, currentRec()); c = { x: L0.box.x + L0.box.w / 2, y: L0.box.y + L0.box.h / 2 }; }
-    el.rot = Z.normRot(deg);
+    var nr = Z.normRot(deg);
+    /* gorsel yan yatinca kutusu da yan yatar: genislik ve yukseklik yer degistirir */
+    if (el.type === "image" && Z.sideways(el.rot) !== Z.sideways(nr)) { var tw = el.w; el.w = el.h; el.h = tw; }
+    el.rot = nr;
     var L = Z.layout(el, doc, currentRec());
     el.x = mm(c.x - L.box.w / 2); el.y = mm(c.y - L.box.h / 2);
   }
@@ -770,6 +787,11 @@
   }
   function setVal(el, key, v, opts) {
     checkpoint();
+    /* en-boy orani korunan gorselde genislik/yukseklik birlikte degisir */
+    if (el.type === "image" && (key === "w" || key === "h") && el.keepAspect && v > 0 && el.w > 0 && el.h > 0) {
+      var ratio = el.w / el.h;
+      if (isFinite(ratio)) { el[key === "w" ? "h" : "w"] = r2(key === "w" ? v / ratio : v * ratio); opts = Object.assign({ inspectorValues: true }, opts || {}); }
+    }
     el[key] = v;
     changed(Object.assign({ layers: key === "text" || key === "data" || key === "name" || key === "kind" || key === "dir" }, opts || {}));
   }
@@ -1099,7 +1121,7 @@
         var ratio = img.naturalHeight / img.naturalWidth;
         if (pendingImagePos && pendingImagePos.replace) {
           var el = byId(pendingImagePos.replace);
-          if (el) { checkpoint(true); el.src = src; el.h = r2(el.w * ratio); changed({ inspector: true }); }
+          if (el) { checkpoint(true); el.src = src; el.h = r2(el.w * (Z.sideways(el.rot) ? 1 / ratio : ratio)); changed({ inspector: true }); }
         } else {
           var p = pendingImagePos || { x: d(doc.w / 2 - 12), y: d(Math.max(1, doc.h / 2 - 10)) };
           var w = Math.min(30, doc.w - mm(p.x) - 2), hh = w * ratio;
@@ -1197,7 +1219,7 @@
   var haveFS = !!(window.showSaveFilePicker && window.showOpenFilePicker);
   function persist() { return api("/api/labels", docs); }   // yalniz eski kutuphane + ornekler
   function renderOpen() { $("docTitle").value = doc ? doc.name : ""; }
-  function nameFromFile(n) { return String(n || "").replace(/\.(zebra|json|zpl|prn|txt)$/i, ""); }
+  function nameFromFile(n) { return String(n || "").replace(/\.(zebra|json|zpl|prn|txt|nlbl)$/i, ""); }
   function safeName() { return (doc.name || "etiket").replace(/[^\wçğıöşüÇĞİÖŞÜ\- ]+/g, "").trim().replace(/\s+/g, "_") || "etiket"; }
 
   /* son kullanilan dosyalar: dosya tutamaclari IndexedDB'de */
@@ -1251,19 +1273,79 @@
   }
   function newDoc() { if (!confirmDiscard()) return; loadDoc(blankDoc()); }
 
-  function docText() { return JSON.stringify(doc, null, 2); }
+  function docText() { return JSON.stringify(Object.assign({ format: "ZebraApp", formatVersion: 1 }, doc), null, 2); }
   function writeHandle(hd, text) {
     return hd.createWritable().then(function (w) { return w.write(text).then(function () { return w.close(); }); });
   }
-  function saveDoc(asNew) {
-    if (!haveFS) { download(safeName() + EXT, docText(), "application/json"); dirty = false; updateTitle(); return Promise.resolve(); }
+  /* ---------- ZebraDesigner 3 (.nlbl), deneysel; donusturme sunucuda (nlbl.py) ---------- */
+  function isNlbl(name) { return /\.nlbl$/i.test(name || ""); }
+  var NLBL_TYPE = { description: __("ZebraDesigner 3 etiketi (deneysel)"), accept: { "application/octet-stream": [".nlbl"] } };
+  function nlblApi(action, body) { return api("/api/nlbl/" + action, body).then(function (j) { if (!j.ok) throw new Error(j.message); return j; }); }
+  function nlblWarn(ws) {
+    if (ws && ws.length && !confirm(ws.join("\n") + "\n\n" + __("Devam edilsin mi?"))) { var e = new Error("cancel"); e.name = "AbortError"; throw e; }
+  }
+  function toB64(buf) {
+    var bytes = new Uint8Array(buf), bin = "";
+    for (var i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+    return btoa(bin);
+  }
+  function readNlbl(file) {
+    if (file.size > MAX_FILE) return Promise.reject(new Error(__("Etiket dosyası en fazla 20 MB olabilir.")));
+    return file.arrayBuffer().then(function (buf) { return nlblApi("import", { data: toB64(buf) }); })
+      .then(function (j) { nlblWarn(j.warnings); return j.label; });
+  }
+  /* ZebraDesigner'in bilmedigi ZebraApp ayarlarini sadelestir, gorselleri baski gorunumune cevir */
+  function prepareNlbl(d) {
+    var copy = clone(d), warn = [];
+    var hidden = copy.elements.filter(function (e) { return e.hidden; }).length;
+    if (hidden) { copy.elements = copy.elements.filter(function (e) { return !e.hidden; }); warn.push(__("Gizli öğeler aktarılmadı.")); }
+    copy.elements.forEach(function (e) {
+      if (e.type !== "text") return;
+      if (e.rich) { setRuns(e, e.rich); e.rich = null; warn.push(__("Kelime kelime biçim ZebraDesigner'a taşınmaz; metin düz yazı olarak aktarılır.")); }
+      if (e.caseMode) { e.text = Z.caseT(e.text, e.caseMode); }
+      if (e.italic || e.underline || e.strike || +e.spacing || e.align === "justify" || e.fit || e.boxH)
+        warn.push(__("İtalik, altı/üstü çizili, karakter aralığı, iki yana yaslama ve kutuya sığdır ZebraDesigner'a taşınmaz."));
+    });
+    var imgs = copy.elements.filter(function (e) { return e.type === "image" && e.src && Z.isNative(e); });
+    return Promise.all(imgs.map(function (e) { return Z.loadImage(e.src); })).then(function () {
+      imgs.forEach(function (e) {
+        var w = Math.max(8, Z.dots(e.w, copy.dpi)), hh = Math.max(1, Z.dots(e.h, copy.dpi));
+        if (w * hh > 4000000) throw new Error(__("Görsel baskı boyutu en fazla 4 milyon piksel olabilir."));
+        var bmp = Z.bitmap(e, w, hh); if (!bmp) throw new Error(__("Etiketteki görsel okunamadı."));
+        e.src = bmpToPng(bmp); e.threshold = 128; e.dither = false; e.invert = false; e.rot = 0;   /* donus resme islendi */
+      });
+      return { label: copy, warnings: warn.filter(function (x, i) { return warn.indexOf(x) === i; }) };
+    });
+  }
+  function encodeFor(name) {
+    if (!isNlbl(name)) return Promise.resolve(docText());
+    return prepareNlbl(doc).then(function (r) {
+      return nlblApi("export", { label: r.label }).then(function (j) {
+        nlblWarn(r.warnings.concat(j.warnings || []));
+        return Uint8Array.from(atob(j.data), function (c) { return c.charCodeAt(0); });
+      });
+    });
+  }
+  function saveDoc(asNew, kind) {
+    var nl = kind === "nlbl";
+    if (!haveFS) {
+      var fn = safeName() + (nl ? ".nlbl" : EXT);
+      return encodeFor(fn).then(function (data) {
+        var a = document.createElement("a"), url = URL.createObjectURL(new Blob([data], { type: nl ? "application/octet-stream" : "application/json" }));
+        a.href = url; a.download = fn; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+        if (!nl) { dirty = false; updateTitle(); }
+        status(__("İndirilenler klasörüne kaydedildi: ") + fn);
+      }).catch(function (e) { if (!e || e.name !== "AbortError") status(__("Kaydedilemedi: ") + ((e && e.message) || e), true); });
+    }
     var pick = (fileHandle && !asNew) ? Promise.resolve(fileHandle) : window.showSaveFilePicker({
-      suggestedName: safeName() + EXT, startIn: fileHandle || "documents",
-      types: [{ description: __("ZebraApp etiketi"), accept: { "application/json": [EXT] } }]
+      suggestedName: safeName() + (nl ? ".nlbl" : EXT), startIn: fileHandle || "documents",
+      types: [nl ? NLBL_TYPE : { description: __("ZebraApp etiketi"), accept: { "application/json": [EXT] } }]
     });
     return pick.then(function (hd) {
-      if (hd !== fileHandle) doc.name = nameFromFile(hd.name) || doc.name;
-      return writeHandle(hd, docText()).then(function () {
+      if (hd !== fileHandle && !nl) doc.name = nameFromFile(hd.name) || doc.name;
+      return encodeFor(hd.name).then(function (data) { return writeHandle(hd, data); }).then(function () {
+        if (nl && hd !== fileHandle) { status(__("ZebraDesigner dosyası kaydedildi: ") + hd.name); Recent.add(hd); return; }
         fileHandle = hd; dirty = false; renderOpen(); updateTitle();
         status(__("Kaydedildi: ") + hd.name); Recent.add(hd);
       });
@@ -1310,12 +1392,27 @@
       status(msg, !dd.elements.length);
     }
   }
+  /* .zebra dosyasini kontrol et: bozuk ya da baska programin dosyasi editoru bozmasin */
+  var MAX_FILE = 20 * 1024 * 1024, EL_TYPES = ["text", "qr", "barcode", "line", "box", "ellipse", "image"];
+  function checkDoc(v) {
+    if (!v || typeof v !== "object" || Array.isArray(v)) throw new Error(__("Geçerli bir ZebraApp etiket dosyası seç (.zebra)."));
+    if (v.format && v.format !== "ZebraApp") throw new Error(__("Bu dosya ZebraApp tasarımı değil."));
+    if (v.formatVersion && v.formatVersion > 1) throw new Error(__("Bu dosya daha yeni bir ZebraApp sürümü gerektiriyor."));
+    var okNum = function (n, a, b) { return typeof n === "number" && isFinite(n) && n >= a && n <= b; };
+    if (!Array.isArray(v.elements) || v.elements.length > 2000 || !okNum(v.w, 1, 2000) || !okNum(v.h, 1, 2000) || [203, 300, 600].indexOf(+v.dpi) < 0)
+      throw new Error(__("Geçerli bir ZebraApp etiket dosyası seç (.zebra)."));
+    v.elements.forEach(function (e) {
+      if (!e || EL_TYPES.indexOf(e.type) < 0 || !isFinite(e.x) || !isFinite(e.y)) throw new Error(__("Etiket öğeleri geçersiz."));
+      if (e.type === "image" && e.src && !/^data:image\/(png|jpeg|webp|gif|bmp);base64,/i.test(e.src)) throw new Error(__("Etiketteki görseller dosyanın içine gömülü olmalı."));
+    });
+    return v;
+  }
   function loadFromText(text, hd, fname) {
     if (looksZPL(text)) { importZPL(text, nameFromFile(hd ? hd.name : fname)); return true; }
     var data;
-    try { data = JSON.parse(text); } catch (e) { status(__("Dosya okunamadı: geçerli bir ZebraApp etiketi değil."), true); return false; }
+    try { data = JSON.parse(String(text).replace(/^\uFEFF/, "")); } catch (e) { status(__("Dosya okunamadı: geçerli bir ZebraApp etiketi değil."), true); return false; }
     if (Array.isArray(data)) data = data[0];
-    if (!data || typeof data !== "object" || !Array.isArray(data.elements)) { status(__("Dosya okunamadı: geçerli bir ZebraApp etiketi değil."), true); return false; }
+    try { checkDoc(data); } catch (e) { status(e.message, true); return false; }
     data = migrate(data); if (!data.id) data.id = uid();
     loadDoc(data, hd); if (hd) { status(__("Açıldı: ") + hd.name); Recent.add(hd); }
     return true;
@@ -1323,22 +1420,35 @@
   function openHandle(hd, key) {
     var perm = hd.requestPermission ? hd.requestPermission({ mode: "readwrite" }) : Promise.resolve("granted");
     return perm.then(function (pm) { if (pm !== "granted") throw new Error(__("İzin verilmedi.")); return hd.getFile(); })
-      .then(function (f) { return f.text(); })
-      .then(function (t) { loadFromText(t, hd); })
+      .then(function (f) {
+        if (f.size > MAX_FILE) throw new Error(__("Etiket dosyası en fazla 20 MB olabilir."));
+        if (isNlbl(f.name)) return readNlbl(f).then(function (label) { loadLabelObject(label, hd); });
+        return f.text().then(function (t) { loadFromText(t, hd); });
+      })
       .catch(function (e) {
         if (e && e.name === "NotFoundError" && key) { Recent.remove(key); status(__("Dosya bulunamadı, listeden kaldırıldı."), true); }
-        else status(__("Açılamadı: ") + ((e && e.message) || e), true);
+        else if (!e || e.name !== "AbortError") status(__("Açılamadı: ") + ((e && e.message) || e), true);
       });
+  }
+  /* sunucudan gelen etiket nesnesi (NLBL) */
+  function loadLabelObject(label, hd) {
+    try { checkDoc(label); } catch (e) { status(e.message, true); return; }
+    var dd = migrate(label); dd.id = dd.id || uid();
+    loadDoc(dd, hd);
+    if (hd) Recent.add(hd);
+    status(__("ZebraDesigner dosyası açıldı. Kaydet aynı .nlbl dosyasını günceller; .zebra kopyası için Farklı kaydet."));
   }
   function pickAndOpen() {
     if (!haveFS) { $("fileImport").click(); return; }
     window.showOpenFilePicker({ multiple: false, startIn: fileHandle || "documents",
-      types: [{ description: __("ZebraApp etiketi ya da ZPL"), accept: { "application/json": [EXT, ".json"], "text/plain": [".zpl", ".prn", ".txt"] } }] })
+      types: [{ description: __("Etiket dosyaları (.zebra, .zpl, .nlbl)"), accept: { "application/json": [EXT, ".json"], "text/plain": [".zpl", ".prn", ".txt"], "application/octet-stream": [".nlbl"] } }] })
       .then(function (a) { return openHandle(a[0]); })
       .catch(function (e) { if (!e || e.name !== "AbortError") status(__("Açılamadı: ") + ((e && e.message) || e), true); });
   }
   $("fileImport").addEventListener("change", function () {
     var f = this.files[0]; this.value = ""; if (!f) return;
+    if (f.size > MAX_FILE) { status(__("Etiket dosyası en fazla 20 MB olabilir."), true); return; }
+    if (isNlbl(f.name)) { readNlbl(f).then(function (label) { loadLabelObject(label, null); }).catch(function (e) { if (e.name !== "AbortError") status(__("Açılamadı: ") + e.message, true); }); return; }
     var rd = new FileReader();
     rd.onload = function () { loadFromText(String(rd.result), null, f.name); };
     rd.readAsText(f, "utf-8");
@@ -1402,6 +1512,7 @@
       .then(function (fh) { return writeHandle(fh, text).then(function () { status(__("Dışa aktarıldı: ") + fh.name); }); })
       .catch(function (err) { if (err && err.name === "AbortError") return; fallback(); });
   }
+  $("fExportNlbl").addEventListener("click", function () { saveDoc(true, "nlbl"); });
   $("fExportZpl").addEventListener("click", function () { buildJobZPL().then(function (z) { download(safeName() + ".zpl", z); }); });
   window.addEventListener("beforeunload", function (e) { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
 
@@ -2345,18 +2456,110 @@
     var n = blankDoc(); n.w = w; n.h = hh; if (dpi) n.dpi = dpi;
     loadDoc(n);
   }
-  function newFromTemplate(t) {
-    if (!confirmDiscard()) return;
-    var n = clone(t); n.id = uid(); loadDoc(n);
+  function newFromTemplate(t) { useTemplate(t); }
+
+  /* ---------- Sablon kutuphanesi ---------- */
+  var myTemplates = [];
+  function loadTemplates() {
+    return api("/api/templates").then(function (l) { myTemplates = Array.isArray(l) ? l.map(migrate) : []; return myTemplates; })
+      .catch(function () { return myTemplates; });
   }
+  function saveTemplates(list) {
+    return api("/api/templates", list).then(function (j) { if (!j.ok) throw new Error(j.message); myTemplates = list; });
+  }
+  /* {Ad Soyad} gibi doldurulacak alanlar (yazdirma degiskenleri ve sablonun CSV sutunlari haric) */
+  function templateFields(t) {
+    var skip = ["SAYAC", "SAYAÇ", "TARIH", "TARİH", "SAAT"].concat(Z.parseCSV((t.job || {}).csv).cols), out = [];
+    t.elements.forEach(function (e) {
+      [e.text, e.data].forEach(function (v) {
+        String(v || "").replace(/\{([^{}]+)\}/g, function (m, k) {
+          if (skip.indexOf(k.trim().toLocaleUpperCase("tr")) < 0 && skip.indexOf(k) < 0 && out.indexOf(k) < 0) out.push(k);
+        });
+      });
+    });
+    return out;
+  }
+  function useTemplate(t) {
+    if (!confirmDiscard()) return;
+    var fields = templateFields(t);
+    function open(values) {
+      var n = clone(t); n.id = uid();
+      if (values) {
+        var fill = function (str) { return String(str).replace(/\{([^{}]+)\}/g, function (m, k) { return Object.prototype.hasOwnProperty.call(values, k) ? values[k] : m; }); };
+        n.elements.forEach(function (e) {
+          if (typeof e.data === "string") e.data = fill(e.data);
+          if (e.type === "text") { var rr = runsOf(e); rr.forEach(function (r) { r.t = fill(r.t); }); setRuns(e, rr); }
+        });
+      }
+      closeModal(); loadDoc(n); dirty = !!values; updateTitle();
+      if (values) status(__("Şablondan yeni etiket oluşturuldu. Kaynak şablon değişmedi."));
+    }
+    if (!fields.length) { open(null); return; }
+    var inputs = {}, form = h("div", { class: "tplform" });
+    form.appendChild(h("p", { class: "note", text: __("Alanları doldur. Uzun adreslerde açılan tasarımı kontrol et.") }));
+    fields.forEach(function (k) {
+      var inp = h(/adres|address|açıklama/i.test(k) ? "textarea" : "input", { placeholder: k });
+      inputs[k] = inp; form.appendChild(h("label", {}, [document.createTextNode(k), inp]));
+    });
+    form.appendChild(h("div", { class: "row wrap" }, [
+      h("button", { type: "button", class: "tb primary", text: __("Etiketi oluştur"), onclick: function () {
+        var v = {}; Object.keys(inputs).forEach(function (k) { v[k] = inputs[k].value; }); open(v);
+      } }),
+      h("button", { type: "button", class: "tb", text: __("Boş şablonu düzenle"), onclick: function () { open(null); } })
+    ]));
+    openModal(t.name + " — " + __("bilgileri doldur"), [form]);
+    setTimeout(function () { var f = form.querySelector("input, textarea"); if (f) f.focus(); }, 0);
+  }
+  function thumb(t) {
+    var c = paintDoc(t, 120, 104), imgs = t.elements.filter(function (e) { return e.type === "image" && e.src; });
+    if (imgs.length) Promise.all(imgs.map(function (e) { return Z.loadImage(e.src); })).then(function () { var c2 = paintDoc(t, 120, 104); if (c.parentNode) c.parentNode.replaceChild(c2, c); });
+    return c;
+  }
+  function mineTile(t) {
+    var wrapT = h("div", { class: "tilew" }, [tile(t.name, t.w + " × " + t.h + " mm", thumb(t), function () { useTemplate(t); })]);
+    wrapT.appendChild(h("div", { class: "tacts" }, [
+      h("button", { type: "button", class: "tb", text: __("Dışa aktar"), onclick: function () { download((t.name || "sablon").replace(/[^\wçğıöşüÇĞİÖŞÜ\- ]+/g, "") + ".zebra", JSON.stringify(Object.assign({ format: "ZebraApp", formatVersion: 1 }, t), null, 2), "application/json"); } }),
+      h("button", { type: "button", class: "tb", text: __("Sil"), onclick: function () {
+        if (!confirm(__("'{a}' silinsin mi?").replace("{a}", t.name))) return;
+        saveTemplates(myTemplates.filter(function (x) { return x.id !== t.id; })).then(renderNew).catch(function (e) { status(e.message, true); });
+      } })
+    ]));
+    return wrapT;
+  }
+  function saveCurrentAsTemplate() {
+    var name = prompt(__("Şablon adı"), doc.name); if (!name || !name.trim()) return;
+    var copy = clone(doc); copy.id = uid(); copy.name = name.trim();
+    saveTemplates(myTemplates.concat([copy])).then(function () { status(__("Şablon kaydedildi: ") + copy.name); if (curBs === "new") renderNew(); })
+      .catch(function (e) { status(__("Şablon kaydedilemedi: ") + e.message, true); });
+  }
+  $("fSaveTpl").addEventListener("click", saveCurrentAsTemplate);
+  $("tplSaveCur").addEventListener("click", saveCurrentAsTemplate);
+  $("tplImport").addEventListener("click", function () { $("tplFile").click(); });
+  $("tplFile").addEventListener("change", function () {
+    var files = Array.prototype.slice.call(this.files), inp = this, added = [];
+    var seq = files.reduce(function (pr, f) {
+      return pr.then(function () {
+        if (f.size > MAX_FILE) throw new Error(__("Etiket dosyası en fazla 20 MB olabilir."));
+        var get = isNlbl(f.name) ? readNlbl(f) : f.text().then(function (t) { return JSON.parse(String(t).replace(/^\uFEFF/, "")); });
+        return get.then(function (v) {
+          (Array.isArray(v) ? v : [v]).forEach(function (x) { checkDoc(x); var m = migrate(x); m.id = uid(); added.push(m); });
+        });
+      });
+    }, Promise.resolve());
+    seq.then(function () { if (added.length) return saveTemplates(myTemplates.concat(added)); })
+      .then(function () { if (added.length) status(added.length + " " + __("şablon eklendi.")); renderNew(); })
+      .catch(function (e) { if (e.name !== "AbortError") status(__("Şablon eklenemedi: ") + e.message, true); })
+      .then(function () { inp.value = ""; });
+  });
   var PRESETS = [[80, 40], [100, 50], [100, 150], [100, 100], [58, 40], [50, 30], [40, 30], [50, 25]];
   function renderHome() {
     var hr = new Date().getHours();
     $("bsGreet").textContent = hr < 5 ? __("İyi geceler") : hr < 12 ? __("Günaydın") : hr < 18 ? __("İyi günler") : __("İyi akşamlar");
     var box = $("homeTiles"); box.innerHTML = "";
     box.appendChild(tile(__("Boş etiket"), "80 × 40 mm", paper(80, 40, true), function () { newFromSize(80, 40); }));
-    samples().forEach(function (t) { box.appendChild(tile(t.name, t.w + " × " + t.h + " mm", paintDoc(t, 120, 104), function () { newFromTemplate(t); })); });
-    box.appendChild(tile(__("Diğer boyutlar…"), __("Hazır boyutlar ve özel boyut"), paper(60, 60, true), function () { showBs("new"); }));
+    samples().slice(0, 3).forEach(function (t) { box.appendChild(tile(t.name, t.w + " × " + t.h + " mm", paintDoc(t, 120, 104), function () { newFromTemplate(t); })); });
+    myTemplates.slice(-3).forEach(function (t) { box.appendChild(tile(t.name, __("Şablonlarım"), thumb(t), function () { useTemplate(t); })); });
+    box.appendChild(tile(__("Diğer şablonlar…"), __("Hazır boyutlar, şablonlar, şablonlarım"), paper(60, 60, true), function () { showBs("new"); }));
     var rb = $("homeRecent"); rb.innerHTML = "";
     if (!haveFS) { rb.appendChild(h("div", { class: "empty", text: __("Bu tarayıcı son kullanılan dosyaları hatırlayamıyor. Chrome ya da Edge kullan.") })); return; }
     Recent.list().then(function (items) {
@@ -2377,6 +2580,9 @@
     PRESETS.forEach(function (p) { a.appendChild(tile(p[0] + " × " + p[1] + " mm", p[0] === 100 && p[1] === 150 ? __("kargo") : "", paper(p[0], p[1], true), function () { newFromSize(p[0], p[1]); })); });
     var b = $("newTemplates"); b.innerHTML = "";
     samples().forEach(function (t) { b.appendChild(tile(t.name, t.w + " × " + t.h + " mm", paintDoc(t, 120, 104), function () { newFromTemplate(t); })); });
+    var m = $("newMine"); m.innerHTML = "";
+    if (!myTemplates.length) m.appendChild(h("p", { class: "note", text: __("Henüz kendi şablonun yok. Bir tasarımı şablon olarak kaydet ya da dosyadan ekle; {Ad Soyad} gibi alanlar açılırken sorulur.") }));
+    myTemplates.forEach(function (t) { m.appendChild(mineTile(t)); });
     var ap = activePrinter(); $("nDpi").value = String(ap && ap.dpi ? ap.dpi : doc.dpi);
   }
   $("nCreate").addEventListener("click", function () {
@@ -2414,6 +2620,7 @@
     requestAnimationFrame(fit);
     refreshState();
     fetch("/api/ping").catch(function () {});
+    loadTemplates().then(function () { if (curBs === "home") renderHome(); });
     openBackstage("home");
     loadFonts();
     if (window.I18N && window.I18N.lang === "en") $("fUnder").innerHTML = "<u>U</u>";

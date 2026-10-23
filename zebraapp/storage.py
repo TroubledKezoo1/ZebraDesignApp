@@ -74,6 +74,25 @@ class Store:
             raise ValueError("labels must be a list")
         _write(self.labels_path, labels)
 
+    # kullanicinin kendi sablonlari (Dosya > Yeni > Sablonlarim)
+    def templates(self):
+        data = _read(self.base / "templates.json", [])
+        return data if isinstance(data, list) else []
+
+    def save_templates(self, templates):
+        if not isinstance(templates, list) or len(templates) > 500:
+            raise ValueError("invalid template list")
+        for item in templates:
+            if not isinstance(item, dict) or not isinstance(item.get("elements"), list) or len(item["elements"]) > 2000:
+                raise ValueError("invalid template items")
+            for key in ("w", "h"):
+                value = item.get(key)
+                if isinstance(value, bool) or not isinstance(value, (int, float)) or not 1 <= value <= 2000:
+                    raise ValueError("invalid template size")
+            if item.get("dpi") not in (203, 300, 600):
+                raise ValueError("invalid template resolution")
+        _write(self.base / "templates.json", templates)
+
     def config(self) -> dict:
         cfg = dict(DEFAULT_CONFIG)
         cfg.update(_read(self.config_path, {}) or {})

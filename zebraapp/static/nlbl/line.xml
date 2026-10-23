@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Item Type="LineDocumentItem">
+          <Id>f39f8f94-24a1-4180-a5dc-28208989c8f7</Id>
+          <Name>Çizgi</Name>
+          <Color>FF000000</Color>
+          <SampleValue Type="StringContents" />
+          <PrintAsGraphics>False</PrintAsGraphics>
+          <Geometry Type="PointGeometry">
+            <StartPointX>38896</StartPointX>
+            <StartPointY>23141</StartPointY>
+            <EndPointX>60223</EndPointX>
+            <EndPointY>23141</EndPointY>
+          </Geometry>
+          <Thickness>1000</Thickness>
+          <LineStyle>1</LineStyle>
+          <FillStyle>0</FillStyle>
+          <FillColor>FF000000</FillColor>
+          <ZOrder>10005</ZOrder>
+          <MergeName>Çizgi</MergeName>
+        </Item>
+        

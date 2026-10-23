@@ -36,6 +36,7 @@
   var NATIVE = { text: [0, 90, 180, 270], barcode: [0, 90, 180, 270], image: [0, 90, 180, 270], qr: [0],
     line: [0, 90, 180, 270], box: [0, 90, 180, 270], ellipse: [0, 90, 180, 270] };
   function normRot(r) { r = Math.round(+r || 0) % 360; return r < 0 ? r + 360 : r; }
+  function sideways(r) { return Math.round(normRot(r) / 90) % 2 === 1; }
   /* Yazicinin kendi yazi tipiyle basilamayan metin ayarlari: bunlar varsa metin bitmap olarak gider */
   function textRaster(el) {
     return !!(el.font || (el.rich && el.rich.length) || el.italic || el.underline || el.strike || (+el.spacing) || el.align === "justify");
@@ -267,6 +268,8 @@
   function rasterLayout(el, doc, rec) {
     var dpi = doc.dpi, x = dots(el.x, dpi), y = dots(el.y, dpi), ang = normRot(el.rot);
     var lel = Object.assign({}, el, { x: 0, y: 0, rot: 0 });
+    /* gorselin w/h degerleri 90/270'de donmus kutunun olculeridir; ara acilarda da ayni kalsin */
+    if (el.type === "image" && sideways(ang)) { lel.w = el.h; lel.h = el.w; }
     var LL = layout(lel, doc, rec, true), lw = LL.box.w, lh = LL.box.h;
     var a = ang * Math.PI / 180, c = Math.abs(Math.cos(a)), sn = Math.abs(Math.sin(a));
     var bw = Math.max(1, Math.ceil(lw * c + lh * sn)), bh = Math.max(1, Math.ceil(lw * sn + lh * c));
@@ -516,7 +519,7 @@
 
   G.Z = {
     dots: dots, layout: layout, elementZPL: elementZPL, docZPL: docZPL, labelZPL: labelZPL, records: records,
-    subst: subst, measure: measure, mapRect: mapRect, normRot: normRot, textRaster: textRaster, caseT: caseT, isNative: isNative, corners: corners, fontCSS: fontCSS, NATIVE: NATIVE, loadImage: loadImage, imageReady: imageReady,
+    subst: subst, measure: measure, mapRect: mapRect, normRot: normRot, sideways: sideways, textRaster: textRaster, caseT: caseT, isNative: isNative, corners: corners, fontCSS: fontCSS, NATIVE: NATIVE, loadImage: loadImage, imageReady: imageReady,
     bitmap: bitmap, gfa: gfa, compressRow: compressRow, parseCSV: parseCSV, FONT: FONT, ORI: ORI
   };
 })(window);

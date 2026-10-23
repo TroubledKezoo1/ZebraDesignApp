@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Item Type="EllipseDocumentItem">
+          <Id>2d81e053-3374-49e3-91de-5c39d70693fa</Id>
+          <Name>Elips</Name>
+          <Color>FF000000</Color>
+          <SampleValue Type="StringContents" />
+          <PrintAsGraphics>False</PrintAsGraphics>
+          <Geometry Type="EllipseGeometry">
+            <CenterPointX>49133</CenterPointX>
+            <CenterPointY>16743</CenterPointY>
+            <RadiusX>10237</RadiusX>
+            <RadiusY>3839</RadiusY>
+          </Geometry>
+          <Thickness>1000</Thickness>
+          <LineStyle>1</LineStyle>
+          <FillStyle>0</FillStyle>
+          <FillColor>FF000000</FillColor>
+          <ZOrder>10004</ZOrder>
+          <MergeName>Elips</MergeName>
+        </Item>
+        

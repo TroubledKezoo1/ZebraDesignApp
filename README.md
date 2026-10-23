@@ -38,6 +38,9 @@ ZebraDesigner only runs on Windows, and most open-source label tools do not spea
 - Calibrate, feed one label, print the configuration label, read printer status (paper out, head open, paused…)
 - Open existing `.zpl` files and edit them: text, `^FB` blocks, boxes, lines (also diagonal), ellipses, Code 128 / Code 39 / EAN-13 / UPC-A, QR codes and `^GFA` images become editable items; other commands are listed as skipped
 - Labels are plain files (`.zebra`, JSON inside): Save, Save as and Open use your system's file dialog, with a recent-files list; export the ZPL as a `.zpl` file
+- Template library: built-in templates (address, sender and recipient, product, shelf label) and your own. Save any design as a template; `{Name}`-style fields are asked for in a form when you start a label from it
+- ZebraDesigner 3 files (`.nlbl`, experimental): open them and save for ZebraDesigner. Fixed text, Code 128, QR, image, line, box and ellipse; 300 dpi only. Needs `pip install ".[nlbl]"`
+- Files are checked when opened (size, format, embedded images), so a broken or foreign file gives a clear message
 - English and Turkish interface
 
 ## Supported connections
@@ -67,7 +70,7 @@ Python 3.8 or newer is required.
 ```sh
 git clone https://github.com/TroubledKezoo1/ZebraDesignApp.git
 cd ZebraDesignApp
-pip install ".[ble]"        # or ".[all]" for Bluetooth, serial and Windows printing
+pip install ".[ble]"        # or ".[all]" for Bluetooth, serial, Windows printing and .nlbl
 zebraapp
 ```
 
@@ -79,6 +82,16 @@ The editor opens as an app window in Chrome, Chromium or Edge, or in your defaul
 - Linux: `scripts/install-linux.sh` adds ZebraApp to the application menu and the desktop.
 - Windows: double-click `scripts\ZebraApp.bat`.
 - macOS: double-click `scripts/ZebraApp.command`.
+
+**Windows without git** (from a downloaded ZIP): unpack it, open a terminal in the folder and run
+
+```bat
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install ".[all]"
+.venv\Scripts\python.exe -m zebraapp
+```
+
+Add `--data-dir data` to keep printers and templates next to the program.
 
 On Ubuntu and other systems where pip refuses to install system-wide, use a virtual environment (`python3 -m venv .venv && . .venv/bin/activate`) or `pipx install ".[ble]"`.
 
@@ -112,7 +125,7 @@ A Bluetooth LE printer accepts one connection at a time. If it will not connect,
 
 ## Where data is stored
 
-Labels are saved wherever you choose (`.zebra` files). Printer settings are a JSON file in:
+Labels are saved wherever you choose (`.zebra` files). Printer settings and your templates (`templates.json`) are JSON files in:
 - Linux: `~/.config/zebraapp/`
 - macOS: `~/Library/Application Support/ZebraApp/`
 - Windows: `%APPDATA%\ZebraApp\`

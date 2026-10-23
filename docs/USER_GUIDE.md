@@ -12,7 +12,7 @@ Install as described in the README, then run `zebraapp` (or double-click the lau
 
 The app opens on the **File** screen:
 
-- **New**: a blank 80 × 40 mm label, one of the templates (recipient, product label with QR and barcode, 100 × 150 shipping label), or **More sizes…** for preset and custom sizes.
+- **New**: a blank 80 × 40 mm label, a few templates and your own templates, or **More templates…** for all sizes, templates and *My templates*.
 - **Recent files**: the labels you saved or opened lately. Click one to open it.
 
 Press **Esc** or the back arrow at the top left to go to the editor.
@@ -101,6 +101,7 @@ Select items, then use **Arrange**:
 - Align left, center, right, top, middle, bottom. One item aligns to the label; several items align to each other.
 - Distribute evenly (3 or more items).
 - Bring to front, send to back, rotate 90°, lock, hide (hidden items are not printed).
+- Rotating an image by 90° or 270° swaps its width and height, so it keeps its shape. With *keep aspect ratio* on, changing the width also changes the height.
 
 **Rotate to any angle**: drag the round handle above the selected item. Hold **Shift** for 15° steps; it snaps to 0°, 90°, 180° and 270° on its own. You can also type the angle under *Position and layer* in Properties. The printer draws 0°, 90°, 180° and 270° itself; any other angle is sent as an image. Barcodes at odd angles may be harder to scan.
 
@@ -146,6 +147,12 @@ Labels are ordinary files with the extension `.zebra` (JSON inside). You decide 
 
 **Open** also opens `.zpl` files written by other programs. ZPL does not say which resolution it was written for, so ZebraApp asks (and suggests one). Text, text blocks, boxes, lines, ellipses, barcodes, QR codes and images become items you can edit; commands it does not know are listed in the status bar. Save the result with Ctrl+S as a `.zebra` file; the original `.zpl` is not changed.
 
+**Templates.** *File → New* lists the built-in templates and **My templates**. **Save as template** (in the File menu, or *Save the open design as a template* on the New page) keeps the current design; **Add template from file…** brings in `.zebra` files, for example from a colleague. Write fields as `{Full Name}` or `{Phone}`: when you start a label from the template, a form asks for them (counter, date, time and CSV columns are left out). *Edit blank template* opens it with the fields still in place. Each template tile has **Export** and **Delete**.
+
+**ZebraDesigner 3 (`.nlbl`, experimental).** Needs `pip install ".[nlbl]"`. **Open** reads `.nlbl` files; **Ctrl+S** then writes back to the same file, **Save as** makes a `.zebra` copy. **File → Export → Save for ZebraDesigner (.nlbl)…** writes a new one. Only fixed text, Code 128, QR, image, line, box and ellipse carry over, at 300 dpi. Hidden items, word-by-word formatting, italic, underline, spacing, justify and shrink to fit are dropped (ZebraApp warns first). Rotated images are turned in the image itself; other rotations and reverse print are not supported.
+
+**File checks.** A file larger than 20 MB, a file that is not a ZebraApp design, one from a newer version or one with images linked instead of embedded is refused with a message.
+
 **File → Export** saves the ZPL as a `.zpl` file or shows the code, which you can copy, edit and send by hand.
 
 **File → Options** sets the language. The app asks before closing or opening another label if there are unsaved changes.
@@ -167,6 +174,6 @@ Labels are ordinary files with the extension `.zebra` (JSON inside). You decide 
 ## 12. Where things are stored
 
 - Your labels: wherever you saved them.
-- Printer list and language: the folder named in the README (`~/.config/zebraapp/` on Linux).
+- Printer list, language and your templates: the folder named in the README (`~/.config/zebraapp/` on Linux).
 
 Nothing leaves your computer except when you press **Printer preview (Labelary)**.

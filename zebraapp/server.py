@@ -48,6 +48,8 @@ def msg(template, *args):
 def err_text(e):
     if isinstance(e, (transports.TransportError, AppError)):
         return localize(e.template, e.params, lang())
+    if isinstance(e, ValueError) and str(e):
+        return str(e)          # dogrulama mesajlari (orn. NLBL aktarimi) oldugu gibi gosterilir
     return msg("Unexpected error: %s", e)
 
 
@@ -170,6 +172,8 @@ class Handler(BaseHTTPRequestHandler):
                         "printers": cfg.get("printers"), "available": transports.available(), "data_dir": str(store.base)})
         elif path == "/api/state":
             self._json(state())
+        elif path == "/api/templates":
+            self._json(store.templates())
         elif path == "/api/fonts":
             self._json({"families": fonts.families()})
         elif path == "/api/ping":
@@ -186,9 +190,23 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             n = int(self.headers.get("Content-Length") or 0)
+            if n < 0 or n > 30 * 1024 * 1024:
+                raise ValueError("request too large")
             data = json.loads(self.rfile.read(n) or b"{}")
             path = self.path
-            if path == "/api/labels":
+            if path == "/api/nlbl/import":
+                from .nlbl import import_label
+                raw = base64.b64decode(data.get("data", ""), validate=True)
+                label, warnings = import_label(raw)
+                self._json({"ok": True, "label": label, "warnings": warnings})
+            elif path == "/api/nlbl/export":
+                from .nlbl import export_label
+                raw, warnings = export_label(data.get("label") or {})
+                self._json({"ok": True, "data": base64.b64encode(raw).decode("ascii"), "warnings": warnings})
+            elif path == "/api/templates":
+                store.save_templates(data)
+                self._json({"ok": True})
+            elif path == "/api/labels":
                 store.save_labels(data)
                 self._json({"ok": True})
             elif path == "/api/settings":

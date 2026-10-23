@@ -12,7 +12,7 @@ README'deki gibi kur, sonra `zebraapp` komutunu çalıştır (ya da sistemin iç
 
 Uygulama **Dosya** ekranında açılır:
 
-- **Yeni:** boş 80 × 40 mm etiket, şablonlardan biri (alıcı etiketi, QR ve barkodlu ürün etiketi, 100 × 150 kargo etiketi) ya da hazır ve özel boyutlar için **Diğer boyutlar…**
+- **Yeni:** boş 80 × 40 mm etiket, birkaç şablon ve kendi şablonların ya da tüm boyutlar, şablonlar ve *Şablonlarım* için **Diğer şablonlar…**
 - **Son kullanılanlar:** son kaydettiğin ya da açtığın etiketler. Tıklayınca açılır.
 
 Editöre geçmek için **Esc**'ye ya da sol üstteki geri okuna bas.
@@ -101,6 +101,7 @@ Kelime işlemci gibi çalışır: **yazarken kelimeleri seç, biçimi sadece onl
 - Sola, ortaya, sağa, üste, dikey ortaya, alta hizala. Tek öğe etikete göre, birden fazla öğe birbirine göre hizalanır.
 - Eşit dağıt (3 ya da daha fazla öğe).
 - Öne getir, arkaya gönder, 90° döndür, kilitle, gizle (gizli öğe basılmaz).
+- Bir görseli 90° ya da 270° döndürünce genişliği ile yüksekliği yer değiştirir, şekli bozulmaz. *En-boy oranını koru* açıksa genişliği değiştirmek yüksekliği de değiştirir.
 
 **İstediğin açıyla döndür:** seçili öğenin üstündeki yuvarlak tutamacı sürükle. **Shift** basılıyken 15° adımla döner; 0°, 90°, 180° ve 270°'ye kendiliğinden yapışır. Açıyı Özellikler'de *Konum ve katman* altına da yazabilirsin. 0°, 90°, 180° ve 270°'yi yazıcı kendisi çizer; diğer açılar resim olarak gider. Eğik barkodlar daha zor okunabilir.
 
@@ -144,6 +145,12 @@ Etiketler `.zebra` uzantılı sıradan dosyalardır (içi JSON). Nerede duracakl
 
 **Aç** başka programların yazdığı `.zpl` dosyalarını da açar. ZPL hangi çözünürlük için yazıldığını söylemez, bu yüzden ZebraApp sorar (ve bir öneri getirir). Metinler, metin blokları, kutular, çizgiler, elipsler, barkodlar, QR kodlar ve resimler düzenlenebilir öğelere dönüşür; tanımadığı komutlar durum çubuğunda listelenir. Sonucu Ctrl+S ile `.zebra` dosyası olarak kaydet; asıl `.zpl` dosyası değişmez.
 
+**Şablonlar.** *Dosya → Yeni* hazır şablonları ve **Şablonlarım**'ı gösterir. **Şablon olarak kaydet** (Dosya menüsünde ya da Yeni sayfasındaki *Açık tasarımı şablon olarak kaydet*) açık tasarımı saklar; **Dosyadan şablon ekle…** `.zebra` dosyalarını, örneğin bir arkadaşının şablonunu, ekler. Alanları `{Ad Soyad}` ya da `{Telefon}` gibi yaz: şablondan etiket açarken bir form bunları sorar (sayaç, tarih, saat ve CSV sütunları sorulmaz). *Boş şablonu düzenle* alanları yerinde bırakarak açar. Her şablon kutucuğunda **Dışa aktar** ve **Sil** vardır.
+
+**ZebraDesigner 3 (`.nlbl`, deneysel).** `pip install ".[nlbl]"` gerekir. **Aç** `.nlbl` dosyalarını okur; ardından **Ctrl+S** aynı dosyaya yazar, **Farklı kaydet** `.zebra` kopyası çıkarır. **Dosya → Dışa aktar → ZebraDesigner için kaydet (.nlbl)…** yeni bir dosya yazar. Yalnızca sabit metin, Code 128, QR, görsel, çizgi, kutu ve elips aktarılır, 300 dpi'da. Gizli öğeler, kelime kelime biçim, italik, altı çizili, karakter aralığı, iki yana yaslama ve kutuya sığdır düşer (ZebraApp önce uyarır). Döndürülmüş görseller resmin kendisinde döndürülür; diğer döndürmeler ve ters baskı desteklenmez.
+
+**Dosya denetimi.** 20 MB'tan büyük, ZebraApp tasarımı olmayan, daha yeni bir sürümle yapılmış ya da görselleri gömülü değil bağlantılı olan dosyalar bir mesajla reddedilir.
+
 **Dosya → Dışa aktar** ZPL'i `.zpl` dosyası olarak kaydeder ya da kodu gösterir; kopyalayabilir, düzenleyip elle gönderebilirsin.
 
 **Dosya → Seçenekler**'den dil değişir. Kaydedilmemiş değişiklik varken kapatmadan ya da başka etiket açmadan önce uygulama sorar.
@@ -165,6 +172,6 @@ Etiketler `.zebra` uzantılı sıradan dosyalardır (içi JSON). Nerede duracakl
 ## 12. Her şey nerede duruyor
 
 - Etiketlerin: kaydettiğin yer.
-- Yazıcı listesi ve dil: README'de yazan klasör (Linux'ta `~/.config/zebraapp/`).
+- Yazıcı listesi, dil ve şablonların: README'de yazan klasör (Linux'ta `~/.config/zebraapp/`).
 
 Bilgisayarından dışarı yalnızca **Gerçek önizleme (Labelary)**'ye bastığında veri gider.
