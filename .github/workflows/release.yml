@@ -69,8 +69,8 @@ jobs:
       - name: Tests
         run: packaging/ci-run.sh python packaging/run-tests.py
 
-      - name: Build
-        run: packaging/ci-run.sh pyinstaller --noconfirm packaging/zebraapp.spec
+      - name: Build and package (packaging/build.py, same as `make package`)
+        run: packaging/ci-run.sh python packaging/build.py package --system-python
 
       - name: Smoke test (Linux, macOS)
         if: runner.os != 'Windows'
@@ -98,34 +98,14 @@ jobs:
           Invoke-RestMethod http://127.0.0.1:8799/api/fonts | Out-Null
           Stop-Process -Id $p.Id
 
-      - name: Package (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          mkdir -p out
-          cp dist/ZebraApp.exe "out/ZebraApp-$VER-${{ matrix.target }}.exe"
-
-      - name: Package (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          mkdir -p out dmg
-          cp -R dist/ZebraApp.app dmg/
-          ln -s /Applications dmg/Applications
-          hdiutil create -volname "ZebraApp $VER" -srcfolder dmg -ov -format UDZO "out/ZebraApp-$VER-${{ matrix.target }}.dmg"
-
-      - name: Package (Linux)
+      - name: Check the AppImage starts (Linux)
         if: runner.os == 'Linux'
-        run: |
-          export ARCH=$(uname -m)
-          packaging/ci-run.sh ./packaging/build-appimage.sh
-          mkdir -p out
-          cp dist/*.AppImage out/
-          chmod +x out/*.AppImage
-          APPIMAGE_EXTRACT_AND_RUN=1 out/*.AppImage --version
+        run: APPIMAGE_EXTRACT_AND_RUN=1 dist/release/*.AppImage --version
 
       - uses: actions/upload-artifact@v4
         with:
           name: ZebraApp-${{ matrix.target }}
-          path: out/*
+          path: dist/release/*
           if-no-files-found: error
 
   publish:
