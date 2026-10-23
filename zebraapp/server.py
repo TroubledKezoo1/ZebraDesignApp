@@ -29,6 +29,8 @@ STATIC = Path(__file__).resolve().parent / "static"
 store: Store = None  # type: ignore[assignment]
 last_ping = 0.0
 PORT = 8765
+FIXED_TYPES = {".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml",
+               ".png": "image/png", ".woff2": "font/woff2", ".xml": "application/xml", ".txt": "text/plain"}
 
 
 class AppError(Exception):
@@ -126,11 +128,8 @@ class Handler(BaseHTTPRequestHandler):
         except OSError:
             self.send_error(404)
             return
-        ctype = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
-        if path.suffix == ".woff2":
-            ctype = "font/woff2"
-        if path.suffix == ".js":
-            ctype = "text/javascript"
+        # fixed types first: the Windows registry sometimes maps these wrongly
+        ctype = FIXED_TYPES.get(path.suffix.lower()) or mimetypes.guess_type(str(path))[0] or "application/octet-stream"
         if ctype.startswith("text/") or ctype.endswith("json") or ctype.endswith("svg+xml"):
             ctype += "; charset=utf-8"
         extra = {}

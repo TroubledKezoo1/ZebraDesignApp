@@ -41,7 +41,7 @@ jobs:
           echo "VER=$(python -c 'import zebraapp; print(zebraapp.__version__)')" >> "$GITHUB_ENV"
 
       - name: Tests
-        run: python -m unittest discover -s tests
+        run: python packaging/run-tests.py
 
       - name: Build
         run: pyinstaller --noconfirm packaging/zebraapp.spec

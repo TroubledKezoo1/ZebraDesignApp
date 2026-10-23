@@ -328,13 +328,20 @@ def _command(p, data: bytes):
     cmd = (p.get("command") or "").strip()
     if not cmd:
         raise TransportError("Enter a command that reads ZPL from standard input, e.g. zebra-print")
-    args = shlex.split(cmd, posix=os.name != "nt")
-    if not shutil.which(args[0]) and not os.path.exists(args[0]):
-        raise TransportError("Command not found: %s", args[0])
+    if os.name == "nt":
+        # Windows: shlex keeps the quotes ("C:\\Program Files\\x.exe"); strip them for the
+        # lookup and hand the original line to CreateProcess, which parses it itself.
+        args = cmd
+        prog = shlex.split(cmd, posix=False)[0].strip('"')
+    else:
+        args = shlex.split(cmd)
+        prog = args[0]
+    if not shutil.which(prog) and not os.path.exists(prog):
+        raise TransportError("Command not found: %s", prog)
     r = subprocess.run(args, input=data, capture_output=True, timeout=120)
     out = (r.stdout + r.stderr).decode("utf-8", "replace").strip()
     if r.returncode != 0:
-        raise TransportError("%s exited with code %d: %s", args[0], r.returncode, out)
+        raise TransportError("%s exited with code %d: %s", prog, r.returncode, out)
     return out
 
 
