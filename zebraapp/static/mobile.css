@@ -1,0 +1,74 @@
+/* Phone layout (also used by narrow desktop windows). The desktop layout is untouched above 760px. */
+.mnav { display: none; }
+@media (max-width: 760px) {
+  :root { --tbH: 48px; }
+  body { grid-template-columns: minmax(0, 1fr); font-size: 14px; grid-template-rows: var(--tbH) auto auto minmax(0, 1fr) auto auto; }
+  .titlebar { grid-row: 1; } .rtabs { grid-row: 2; } .ribbon { grid-row: 3; } .ws { grid-row: 4; } .status { grid-row: 5; } .mnav { grid-row: 6; }
+  #cv { touch-action: none; }
+  .canvasWrap { touch-action: none; }
+
+  /* title bar: save / undo / redo / print + the printer controls only */
+  .titlebar { gap: 4px; padding: 0 6px; }
+  .appmark, .tcenter, #pill, #prSel, .appname, .ver { display: none; }
+  .qat { flex: 1; }
+  .qb { width: 40px; height: 40px; }
+  .qb svg { width: 21px; height: 21px; }
+  .tright { gap: 4px; }
+  .tright .tb { height: 36px; padding: 0 9px; }
+  #printTop { font-size: 0; gap: 0; padding: 0 10px; }
+  #printTop svg { width: 20px; height: 20px; }
+  #prBtn { max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ribbon: a swipeable strip with bigger buttons */
+  .ribbon, .rtabs, .ws, .status { min-width: 0; max-width: 100vw; }
+  .rtabs { overflow-x: auto; height: 40px; scrollbar-width: none; }
+  .rtabs::-webkit-scrollbar { display: none; }
+  .rtab { flex: none; padding: 0 12px; }
+  #ribbonPin { display: none; }
+  .rpanel { min-height: 92px; -webkit-overflow-scrolling: touch; }
+  .rsm, .ric { height: 34px; min-width: 34px; }
+  .rin, .rrow { min-height: 34px; height: auto; }
+  .rin input, .rin select { height: 32px; font-size: 14px; }
+  body.rcollapsed.rpeek .ribbon { top: calc(var(--tbH) + 40px); }
+
+  /* work area: the label gets the whole width; layers and properties are bottom sheets */
+  .ws, .ws.noLayers, .ws.noProps, .ws.noLayers.noProps { grid-template-columns: minmax(0, 1fr); }
+  .left, .right { position: fixed; left: 0; right: 0; bottom: 56px; z-index: 60; max-height: 52vh; overflow: auto; border: 0; border-top: 2px solid var(--accent); box-shadow: 0 -8px 24px rgba(0,0,0,.28); }
+  .layers { padding: 10px 12px 14px; }
+  #layers li { padding: 9px 8px; font-size: 14px; }
+  label { font-size: 13px; }
+  input, select, textarea { font-size: 16px; padding: 8px 9px; }   /* 16px: the phone does not zoom in when a field is focused */
+  .paneHead .qb { width: 36px; height: 36px; }
+
+  /* status bar: zoom only, plus the message */
+  .status { height: 40px; gap: 8px; padding: 0 8px; }
+  #stLabel, #stCount, #stSel, #stPos { display: none; }
+  .zoomctl { gap: 4px; }
+  .zb { width: 34px; height: 34px; }
+  #zSlider { width: 90px; }
+  .zv { height: 34px; min-width: 56px; }
+
+  /* bottom bar */
+  .mnav { display: grid; grid-template-columns: repeat(3, 1fr); position: sticky; bottom: 0; background: var(--chrome); border-top: 1px solid var(--line); z-index: 70; padding-bottom: env(safe-area-inset-bottom); }
+  .mnav button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 7px 0 6px; border: 0; background: transparent; font-weight: 700; font-size: 12px; color: var(--fg); }
+  .mnav button svg { width: 22px; height: 22px; color: var(--accent); }
+  .mnav button.on { background: var(--accent-soft); }
+
+  /* dialogs fill the screen */
+  .modal { padding: 0; place-items: stretch; }
+  .mbox { width: 100%; max-height: none; height: 100%; border-radius: 0; border: 0; }
+  #mBody { padding: 12px; }
+  .prwrap { grid-template-columns: 1fr; min-height: 0; }
+  .findbox { min-width: 0; }
+  .popm { max-width: calc(100vw - 16px); }
+  .popm.grid { grid-template-columns: repeat(6, 40px); }
+
+  /* File screen: the menu becomes a top strip */
+  .bs { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .bsnav { display: flex; overflow-x: auto; }
+  .bsnav span { display: none; }
+  .bsmain { padding: 14px 12px 28px; }
+  .tiles { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .printwrap { grid-template-columns: 1fr; }
+  .optgrid, .customsize { grid-template-columns: 1fr; }
+}

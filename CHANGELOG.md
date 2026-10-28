@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2
+
+- **Android:** real phone layout (the screen was a shrunken desktop window), the printer dialog opens again, one finger edits and two fingers pan and pinch-zoom; a bottom bar opens layers, properties and the ribbon.
+- Narrow desktop windows use the same compact layout.
+
 ## 1.0.1
 
 - **Android app (`.apk`)**: the same editor, no server, prints over Bluetooth LE. It tells you when a newer release is out and opens the download (`android/`).

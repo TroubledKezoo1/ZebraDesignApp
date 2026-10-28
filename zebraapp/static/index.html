@@ -6,6 +6,7 @@
 <title>ZebraApp</title>
 <link rel="icon" href="/static/icon.svg">
 <link rel="stylesheet" href="/static/app.css">
+<link rel="stylesheet" href="/static/mobile.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -470,6 +471,12 @@
   </span>
 </footer>
 
+<nav class="mnav" id="mnav">
+  <button type="button" id="mLayers"><svg><use href="#i-layers"/></svg><span>Katmanlar</span></button>
+  <button type="button" id="mProps"><svg><use href="#i-panel"/></svg><span>Özellikler</span></button>
+  <button type="button" id="mRibbon"><svg><use href="#i-up"/></svg><span>Şerit</span></button>
+</nav>
+
 <!-- DOSYA (backstage) -->
 <div class="bs" id="bs" hidden>
   <nav class="bsnav">
@@ -592,5 +599,6 @@
 <script src="/static/js/zplimport.js"></script>
 <script src="/static/js/render.js"></script>
 <script src="/static/js/editor.js"></script>
+<script src="/static/js/touch.js"></script>
 </body>
 </html>

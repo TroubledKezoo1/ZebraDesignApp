@@ -163,6 +163,7 @@
     "ZebraApp, Zebra ve diğer ZPL yazıcılar için açık kaynak etiket tasarım programıdır (MIT lisansı). Zebra Technologies ile bağı yoktur.": "ZebraApp is an open-source label designer for Zebra and other ZPL printers (MIT license). It is not affiliated with Zebra Technologies.",
     "Hızlı yazdır": "Quick print",
     "Şeridi daralt / genişlet": "Collapse / expand the ribbon",
+    "Şerit": "Ribbon",
     "Yapıştır (Ctrl+V)": "Paste (Ctrl+V)",
     "Kes (Ctrl+X)": "Cut (Ctrl+X)",
     "Kopyala (Ctrl+C)": "Copy (Ctrl+C)",

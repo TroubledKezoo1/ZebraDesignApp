@@ -2407,6 +2407,22 @@
   $("propsClose").addEventListener("click", function () { setPane("noProps", "vProps", false); });
   if (ls("noLayers") === "0") setPane("noLayers", "vLayers", false);
   if (ls("noProps") === "0") setPane("noProps", "vProps", false);
+  /* phone: start with the label alone; the bottom bar opens layers, properties and the ribbon */
+  var NARROW = window.matchMedia && window.matchMedia("(max-width: 760px)").matches;
+  if (NARROW) {
+    if (ls("noLayers") === null) setPane("noLayers", "vLayers", false);
+    if (ls("noProps") === null) setPane("noProps", "vProps", false);
+    if (ls("ribbon") === null) document.body.classList.add("rcollapsed");
+  }
+  function syncMnav() {
+    $("mLayers").classList.toggle("on", !$("ws").classList.contains("noLayers"));
+    $("mProps").classList.toggle("on", !$("ws").classList.contains("noProps"));
+    $("mRibbon").classList.toggle("on", !document.body.classList.contains("rcollapsed"));
+  }
+  $("mLayers").addEventListener("click", function () { if (!$("ws").classList.contains("noProps")) $("vProps").click(); $("vLayers").click(); syncMnav(); });
+  $("mProps").addEventListener("click", function () { if (!$("ws").classList.contains("noLayers")) $("vLayers").click(); $("vProps").click(); syncMnav(); });
+  $("mRibbon").addEventListener("click", function () { $("ribbonPin").click(); syncMnav(); });
+  syncMnav();
 
   $("qPrint").addEventListener("click", function () { printJob(); });
   $("hPrint").addEventListener("click", function () { openBackstage("print"); });

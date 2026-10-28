@@ -9,11 +9,6 @@ import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 
 const VERSION = "__VERSION__";
-/* the editor is a desktop layout: on a phone show it at a fixed wide width (pinch to zoom) */
-(function () {
-  const m = document.querySelector('meta[name="viewport"]');
-  if (m && Math.min(screen.width, screen.height) < 900) m.setAttribute("content", "width=960, user-scalable=yes, maximum-scale=4");
-})();
 const REPO = "TroubledKezoo1/ZebraDesignApp";
 const SERVICE = "38eb4a80-c570-11e3-9507-0002a5d5c51b";
 const WRITE = "38eb4a82-c570-11e3-9507-0002a5d5c51b";
