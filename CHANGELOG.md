@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.6
+
+- Android: **Update** downloads the new APK inside the app (progress shown, always the same file name) and opens the installer; the first time it sends you to the "install apps" permission screen.
+
 ## 1.0.5
 
 - Android: better Bluetooth scan (asks to turn Bluetooth on, explains a missing permission, lists Zebra printers first with a star, nearest first).

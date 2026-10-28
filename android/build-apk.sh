@@ -22,6 +22,19 @@ for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
   for n in ic_launcher ic_launcher_round ic_launcher_foreground; do cp "resources/ic_launcher-$d.png" "android/app/src/main/res/mipmap-$d/$n.png"; done
 done
 rm -rf android/app/src/main/res/mipmap-anydpi-v26
+# in-app updater: a small native plugin that downloads the APK under a fixed name and opens the installer
+PKG_DIR=android/app/src/main/java/io/github/troubledkezoo1/zebraapp
+mkdir -p "$PKG_DIR"
+cp native/ApkInstallerPlugin.java native/MainActivity.java "$PKG_DIR/"
+cp native/file_paths.xml android/app/src/main/res/xml/file_paths.xml
+python3 - <<'PY'
+p = "android/app/src/main/AndroidManifest.xml"
+s = open(p, encoding="utf-8").read()
+perm = '<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />'
+if perm not in s:
+    s = s.replace("</manifest>", "    " + perm + "\n</manifest>")
+open(p, "w", encoding="utf-8").write(s)
+PY
 npx cap sync android
 
 cd android

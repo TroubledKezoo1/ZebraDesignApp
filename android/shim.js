@@ -2,7 +2,7 @@
    The editor talks to "/api/..." — this file answers those calls inside the app:
    settings and labels live in localStorage, printing goes over Bluetooth LE,
    Labelary is called directly, and a small updater looks for new releases on GitHub. */
-import { Capacitor } from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 import { BleClient } from "@capacitor-community/bluetooth-le";
 import { Browser } from "@capacitor/browser";
 import { Filesystem, Directory } from "@capacitor/filesystem";
@@ -14,6 +14,7 @@ const SERVICE = "38eb4a80-c570-11e3-9507-0002a5d5c51b";
 const WRITE = "38eb4a82-c570-11e3-9507-0002a5d5c51b";
 const READ = "38eb4a81-c570-11e3-9507-0002a5d5c51b";
 const realFetch = window.fetch.bind(window);
+const ApkInstaller = registerPlugin("ApkInstaller");
 
 /* ---------- storage ---------- */
 const store = {
@@ -256,11 +257,35 @@ function banner(version, apkUrl, pageUrl) {
   bar.style.cssText = "position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:#1F3A5F;color:#fff;padding:10px 12px;border-radius:10px;" +
     "font:14px/1.3 system-ui,sans-serif;display:flex;gap:8px;align-items:center;flex-wrap:wrap;box-shadow:0 4px 18px rgba(0,0,0,.35)";
   const t = document.createElement("span"); t.style.flex = "1 1 160px";
-  t.textContent = en ? "New version " + version + " is available (you have " + VERSION + ")." : "Yeni sürüm " + version + " yayınlandı (sizde " + VERSION + ").";
+  const say = (txt) => { t.textContent = txt; };
+  say(en ? "New version " + version + " is available (you have " + VERSION + ")." : "Yeni sürüm " + version + " yayınlandı (sizde " + VERSION + ").");
   const mk = (label, fn, primary) => { const b = document.createElement("button"); b.textContent = label; b.onclick = fn;
     b.style.cssText = "border:0;border-radius:8px;padding:8px 12px;font:inherit;" + (primary ? "background:#fff;color:#1F3A5F;font-weight:700" : "background:rgba(255,255,255,.18);color:#fff"); return b; };
-  bar.append(t,
-    mk(en ? "Update" : "Güncelle", () => Browser.open({ url: apkUrl }), true),
+  const row = [];
+  let busy = false;
+  const update = async () => {
+    if (busy) return;
+    if (!Capacitor.isNativePlatform()) { Browser.open({ url: apkUrl }); return; }
+    try {
+      if (!(await ApkInstaller.canInstall()).allowed) {
+        say(en ? "Allow ZebraApp to install apps in the screen that opens, come back and press Update again."
+               : "Açılan ekranda ZebraApp'e uygulama kurma izni verin, geri dönüp tekrar Güncelle'ye basın.");
+        await ApkInstaller.openInstallSettings();
+        return;
+      }
+      busy = true; upd.disabled = true;
+      say(en ? "Downloading… 0%" : "İndiriliyor… %0");
+      const h = await ApkInstaller.addListener("progress", (p) => {
+        if (p.total > 0) say((en ? "Downloading… " : "İndiriliyor… %") + Math.round(100 * p.done / p.total) + (en ? "%" : ""));
+      });
+      try { await ApkInstaller.downloadAndInstall({ url: apkUrl }); } finally { h.remove(); }
+      say(en ? "Installer opened. Tap Install, then open ZebraApp again." : "Kurulum ekranı açıldı. Kur'a dokunun, sonra ZebraApp'i yeniden açın.");
+    } catch (e) {
+      say((en ? "Could not update: " : "Güncellenemedi: ") + (e && e.message || e));
+    } finally { busy = false; upd.disabled = false; }
+  };
+  const upd = mk(en ? "Update" : "Güncelle", update, true);
+  bar.append(t, upd,
     mk(en ? "What's new" : "Neler yeni", () => Browser.open({ url: pageUrl })),
     mk(en ? "Later" : "Sonra", () => { bar.remove(); }),
     mk(en ? "Skip" : "Atla", () => { store.set("skipVersion", "v" + version); bar.remove(); }));

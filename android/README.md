@@ -14,7 +14,7 @@ Not in the Android app: NLBL import/export, network/USB/serial printing (use the
 ## Updates
 
 The app compares its own version with the latest GitHub release. If the release has a newer `ZebraApp-<version>-android.apk`,
-a bar offers **Update** (opens the download; tap the file to install). Android only installs an update when it is
+a bar offers **Update**: the app downloads the APK itself (always as `ZebraApp-update.apk` in its own cache, with a progress percentage) and opens Android's installer. The first time, Android asks you to allow ZebraApp to install apps (`native/ApkInstallerPlugin.java` does this; `build-apk.sh` copies it into the generated project). Android only installs an update when it is
 signed with the **same key** as the installed app, so releases must always use the same keystore:
 
 ```sh
