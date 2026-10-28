@@ -4,7 +4,7 @@ PYTHON ?= $(if $(filter Windows_NT,$(OS)),python,python3)
 BUILD   = $(PYTHON) packaging/build.py
 
 .DEFAULT_GOAL := help
-.PHONY: help run test deps build package clean install-linux
+.PHONY: help run test deps build package apk clean install-linux
 
 help:
 	@echo "ZebraApp"
@@ -14,6 +14,7 @@ help:
 	@echo "  make build          PyInstaller output in dist/ (this system only)"
 	@echo "  make package        the finished download in dist/release/"
 	@echo "                      Windows .exe, macOS .dmg, Linux .AppImage (this system and CPU)"
+	@echo "  make apk            the Android app (needs Node, JDK 17, Android SDK; see android/README.md)"
 	@echo "  make install-linux  add ZebraApp to the application menu (from source)"
 	@echo "  make clean          remove build/ and dist/"
 	@echo "Needs Python 3.9+; Linux packaging also needs curl."
@@ -32,6 +33,9 @@ build:
 
 package:
 	$(BUILD) package
+
+apk:
+	android/build-apk.sh
 
 clean:
 	$(BUILD) clean

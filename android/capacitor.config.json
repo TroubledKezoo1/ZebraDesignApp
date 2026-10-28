@@ -1,0 +1,7 @@
+{
+  "appId": "io.github.troubledkezoo1.zebraapp",
+  "appName": "ZebraApp",
+  "webDir": "www",
+  "android": { "allowMixedContent": false },
+  "plugins": {}
+}

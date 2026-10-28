@@ -1747,7 +1747,7 @@
         }),
         sel2("dpi", __("Çözünürlük"), model.dpis.map(function (d2) { return [String(d2), d2 + __(" dpi (") + Math.round(d2 / 25.4) + " " + __("nokta/mm") + ")"]; }))
       ]));
-      form.appendChild(sel2("transport", __("Bağlantı"), Object.keys(TRANSPORT_NAMES).filter(function (k) { return k !== "device" || av.platform === "linux"; })
+      form.appendChild(sel2("transport", __("Bağlantı"), Object.keys(TRANSPORT_NAMES).filter(function (k) { return av.android ? k === "ble" : (k !== "device" || av.platform === "linux"); })
         .map(function (k) { return [k, __(TRANSPORT_NAMES[k])]; }), renderForm));
       var tr = cur.transport, note = "";
       if (tr === "ble") {

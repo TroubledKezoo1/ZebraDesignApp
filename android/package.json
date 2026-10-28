@@ -1,0 +1,21 @@
+{
+  "name": "zebraapp-android",
+  "private": true,
+  "version": "1.0.1",
+  "description": "Android build of ZebraApp (Capacitor)",
+  "scripts": {
+    "prepare-web": "node prepare.mjs"
+  },
+  "dependencies": {
+    "@capacitor-community/bluetooth-le": "^6.1.0",
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/browser": "^6.0.0",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/filesystem": "^6.0.4",
+    "@capacitor/share": "^6.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0",
+    "esbuild": "^0.24.0"
+  }
+}

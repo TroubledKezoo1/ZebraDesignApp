@@ -113,8 +113,57 @@ jobs:
           path: dist/release/*
           if-no-files-found: error
 
+  android:
+    name: build (android)
+    # not signed -> test only; a missing Android SDK must never block the desktop downloads
+    continue-on-error: true
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Tests (web part)
+        run: node tests/js/test_zpl.js
+      - name: Build the APK (android/build-apk.sh, same as `make apk`)
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/zebraapp.jks"
+            export ANDROID_KEYSTORE="$RUNNER_TEMP/zebraapp.jks"
+          else
+            echo "::notice title=android::No ANDROID_KEYSTORE_B64 secret: building a debug-signed test APK that will not be published."
+          fi
+          packaging/ci-run.sh android/build-apk.sh
+      - name: Check the APK
+        run: |
+          APK=$(ls dist/release/*.apk)
+          "$ANDROID_HOME"/build-tools/$(ls "$ANDROID_HOME"/build-tools | sort -V | tail -1)/aapt dump badging "$APK" | sed -n '1p;/uses-permission/p' | head -20
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('dist/release/*-android.apk') != '' }}
+        with:
+          name: ZebraApp-android
+          path: dist/release/*-android.apk
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('dist/release/*-android-debug.apk') != '' }}
+        with:
+          name: test-android-debug
+          path: dist/release/*-android-debug.apk
+          if-no-files-found: error
+
   publish:
-    needs: build
+    needs: [build, android]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
@@ -122,6 +171,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: out
+          pattern: ZebraApp-*
           merge-multiple: true
       - name: Release notes
         run: |

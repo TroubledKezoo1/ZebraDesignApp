@@ -10,3 +10,8 @@ labels.json
 config.json
 *.migrated
 *.zpl
+
+# Android build (generated)
+android/node_modules/
+android/www/
+android/android/

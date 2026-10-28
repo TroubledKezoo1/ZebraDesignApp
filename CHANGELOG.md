@@ -2,6 +2,7 @@
 
 ## 1.0.1
 
+- **Android app (`.apk`)**: the same editor, no server, prints over Bluetooth LE. It tells you when a newer release is out and opens the download (`android/`).
 - Debian/Ubuntu package (`.deb`, amd64 and arm64) and a signed apt repository.
 - PyPI package, Homebrew cask and an npm launcher (`npx zebraapp`); every download is listed in `SHA256SUMS.txt`.
 - Maintainer notes in `docs/DISTRIBUTION.md`.
