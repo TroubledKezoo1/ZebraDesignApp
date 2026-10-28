@@ -42,6 +42,7 @@ const T = { // the few messages the shim produces itself (Turkish first, English
   btOff: ["Bluetooth kapalı. Açıp tekrar deneyin.", "Bluetooth is off. Turn it on and try again."],
   btPerm: ["Bluetooth izni verilmedi. Ayarlar > Uygulamalar > ZebraApp > İzinler > Yakındaki cihazlar'ı açın.", "Bluetooth permission was not granted. Settings > Apps > ZebraApp > Permissions > Nearby devices."],
   btFail: ["Tarama başarısız:", "Scan failed:"],
+  sendFail: ["Gönderilemedi:", "Could not send:"],
   noStatus: ["Yazıcı durum isteğine yanıt vermedi.", "The printer did not answer the status request."],
 };
 function tr(key, ...a) {
@@ -133,11 +134,18 @@ async function bleWrite(data) {
 async function bleSend(p, text) {
   if (!text.trim()) throw new AppErr(tr("nothing"));
   if (p.transport !== "ble") throw new AppErr(tr("onlyBle"));
-  await bleConnect(p);
   const bytes = new TextEncoder().encode(text);
-  try { await bleWrite(bytes); }
-  catch (e) { await bleDisconnect(); await bleConnect(p); await bleWrite(bytes); }   // one reconnect attempt
-  return { bytes: bytes.length, name: ble.name };
+  let last;
+  for (let attempt = 0; attempt < 3; attempt++) {      // link dropped or printer asleep: reconnect and try again
+    try {
+      await bleConnect(p);
+      await bleWrite(bytes);
+      return { bytes: bytes.length, name: ble.name };
+    } catch (e) {
+      last = e; await bleDisconnect(); await sleep(800);
+    }
+  }
+  throw last instanceof AppErr ? last : new AppErr(tr("sendFail") + " " + (last && last.message || last));
 }
 async function bleStatus(p) {
   await bleConnect(p);
@@ -227,6 +235,30 @@ HTMLAnchorElement.prototype.click = function () {
   }
   return origClick.call(this);
 };
+
+/* ---------- connect by itself, open files handed over by Android ---------- */
+let autoBusy = false;
+async function autoConnect() {
+  const p = printerOf();
+  if (autoBusy || ble.id || !p || p.transport !== "ble" || !(p.address || p.name_prefix)) return;
+  autoBusy = true;
+  try {
+    if (await BleClient.isEnabled().catch(() => false)) {
+      await bleConnect(p);
+      if (window.ZebraHooks) window.ZebraHooks.refresh();
+    }
+  } catch (e) { /* printer is off or away: Connect / Print will try again */ }
+  finally { autoBusy = false; }
+}
+async function takeOpenedFile() {
+  try {
+    const f = await ApkInstaller.takeOpenedFile();
+    if (f && f.text && window.ZebraHooks) window.ZebraHooks.openText(f.name || "label.zpl", f.text);
+  } catch (e) { /* nothing was handed over */ }
+}
+function onForeground() { autoConnect(); takeOpenedFile(); }
+window.addEventListener("load", () => setTimeout(onForeground, 1800));
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") setTimeout(onForeground, 400); });
 
 /* ---------- updater ---------- */
 const num = (v) => String(v).replace(/^v/, "").split(".").map((x) => parseInt(x, 10) || 0);

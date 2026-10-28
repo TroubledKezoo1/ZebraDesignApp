@@ -1,0 +1,20 @@
+{
+  "1.0.7": {
+    "tr": [
+      "Renk teması: Seçenekler'den yeşil, mavi, turuncu, mor ya da kırmızı seç.",
+      "Android: Kaydet etiketi uygulamanın içinde saklar; Aç sayfasında \"Kayıtlı etiketlerim\" çıkar. Farklı kaydet dosya olarak paylaşır.",
+      "Yedek: Seçenekler'den etiketlerini ve şablonlarını tek dosyaya yedekle, başka cihaza yükle.",
+      "ZD421 seçilince çözünürlük 300 dpi olarak gelir.",
+      "Android: uygulama açılınca ve yazdırırken yazıcıya kendisi bağlanır; bağlantı koparsa yeniden dener.",
+      "Android: .zpl ve .zebra dosyalarına dokununca ZebraApp'te açılır."
+    ],
+    "en": [
+      "Colour theme: pick green, blue, orange, purple or red in Options.",
+      "Android: Save keeps the label inside the app; the Open page lists \"My saved labels\". Save as shares a file.",
+      "Backup: save your labels and templates in one file from Options and restore it on another device.",
+      "Choosing a ZD421 now sets 300 dpi.",
+      "Android: the app connects to the printer by itself on start and when printing, and retries if the link drops.",
+      "Android: tapping a .zpl or .zebra file opens it in ZebraApp."
+    ]
+  }
+}

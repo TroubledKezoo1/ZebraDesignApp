@@ -93,6 +93,41 @@ jobs:
           git -C tap commit -m "zebraapp $VERSION" || echo "nothing changed"
           git -C tap push
 
+  scoop:
+    needs: context
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ needs.context.outputs.tag }}
+      VERSION: ${{ needs.context.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+      TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+    steps:
+      - id: chk
+        run: |
+          if [ -z "$TAP_TOKEN" ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; echo "::notice title=scoop::secret TAP_TOKEN is not set, skipping"; fi
+      - uses: actions/checkout@v4
+        if: steps.chk.outputs.skip != 'true'
+      - name: Update the Scoop bucket (and keep the winget files as a build artifact)
+        if: steps.chk.outputs.skip != 'true'
+        run: |
+          gh release download "$TAG" --pattern '*windows*.exe' --dir exe
+          python3 packaging/make-scoop.py "$VERSION" exe/*windows-x64.exe exe/*windows-arm64.exe > zebraapp.json
+          python3 packaging/make-winget.py "$VERSION" exe/*windows-x64.exe exe/*windows-arm64.exe winget
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/${GITHUB_REPOSITORY_OWNER}/scoop-zebraapp.git" bucket || { echo "::warning title=scoop::repository scoop-zebraapp does not exist yet"; exit 0; }
+          mkdir -p bucket/bucket
+          cp zebraapp.json bucket/bucket/zebraapp.json
+          git -C bucket config user.name "github-actions"
+          git -C bucket config user.email "github-actions@users.noreply.github.com"
+          git -C bucket add -A
+          git -C bucket commit -m "zebraapp $VERSION" || echo "nothing changed"
+          git -C bucket push
+      - uses: actions/upload-artifact@v4
+        if: steps.chk.outputs.skip != 'true'
+        with:
+          name: winget-manifests
+          path: winget/*
+          if-no-files-found: ignore
+
   npm:
     needs: context
     runs-on: ubuntu-latest

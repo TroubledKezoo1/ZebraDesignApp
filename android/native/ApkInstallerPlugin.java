@@ -18,10 +18,25 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-/** Downloads the new APK from this project's GitHub releases under a fixed name and opens Android's installer. */
+/** Two small jobs for the shell: install updates, and hand over a file that Android opened with this app.
+ *  Downloads the new APK from this project's GitHub releases under a fixed name and opens Android's installer. */
 @CapacitorPlugin(name = "ApkInstaller")
 public class ApkInstallerPlugin extends Plugin {
     private static final String ALLOWED = "https://github.com/TroubledKezoo1/ZebraDesignApp/releases/download/";
+
+    @PluginMethod
+    public void takeOpenedFile(PluginCall call) {
+        JSObject r = new JSObject();
+        synchronized (MainActivity.class) {
+            if (MainActivity.pendingText != null) {
+                r.put("name", MainActivity.pendingName);
+                r.put("text", MainActivity.pendingText);
+                MainActivity.pendingText = null;
+                MainActivity.pendingName = null;
+            }
+        }
+        call.resolve(r);
+    }
 
     @PluginMethod
     public void canInstall(PluginCall call) {

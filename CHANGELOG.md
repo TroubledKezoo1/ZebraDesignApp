@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.7
+
+- Colour theme (green, blue, orange, purple, red) in Options.
+- "What's new" window after an update (and a button in Options).
+- Backup and restore of stored labels and templates (Options).
+- Choosing a ZD421 sets 300 dpi.
+- Android: Save keeps the label inside the app ("My saved labels"), Save as shares a file; connects to the printer by itself on start and when printing, retrying up to three times; `.zpl` / `.zebra` files open with ZebraApp.
+
 ## 1.0.6
 
 - Android: **Update** downloads the new APK inside the app (progress shown, always the same file name) and opens the installer; the first time it sends you to the "install apps" permission screen.

@@ -1,6 +1,6 @@
-/* Yazici modelleri: cozunurluk ve yaklasik en genis baski alani (mm). */
+/* Yazici modelleri: cozunurluk (def: yeni yazicida onerilen) ve yaklasik en genis baski alani (mm). */
 window.MODELS = [
-  { id: "zd421", name: "ZD421 (d / t / c)", dpis: [203, 300], width: 104 },
+  { id: "zd421", name: "ZD421 (d / t / c)", dpis: [203, 300], def: 300, width: 104 },
   { id: "zd621", name: "ZD621 (d / t)", dpis: [203, 300], width: 104 },
   { id: "zd411", name: "ZD411 (d / t)", dpis: [203, 300], width: 56 },
   { id: "zd420", name: "ZD420", dpis: [203, 300], width: 104 },

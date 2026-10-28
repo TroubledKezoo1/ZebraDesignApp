@@ -33,6 +33,22 @@ s = open(p, encoding="utf-8").read()
 perm = '<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />'
 if perm not in s:
     s = s.replace("</manifest>", "    " + perm + "\n</manifest>")
+filt = """
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\\\.zpl" />
+                <data android:pathPattern=".*\\\\.zebra" />
+                <data android:pathPattern=".*\\\\.prn" />
+            </intent-filter>
+"""
+if "pathPattern" not in s:
+    s = s.replace("</activity>", filt + "        </activity>", 1)
 open(p, "w", encoding="utf-8").write(s)
 PY
 npx cap sync android

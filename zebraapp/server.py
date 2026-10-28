@@ -30,7 +30,7 @@ store: Store = None  # type: ignore[assignment]
 last_ping = 0.0
 PORT = 8765
 FIXED_TYPES = {".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml",
-               ".png": "image/png", ".woff2": "font/woff2", ".xml": "application/xml", ".txt": "text/plain"}
+               ".png": "image/png", ".woff2": "font/woff2", ".xml": "application/xml", ".json": "application/json", ".txt": "text/plain"}
 
 
 class AppError(Exception):

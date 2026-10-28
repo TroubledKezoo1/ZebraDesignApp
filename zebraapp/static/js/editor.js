@@ -1217,6 +1217,7 @@
   /* ================= dosya islemleri (dosya tabanli) ================= */
   var fileHandle = null, EXT = ".zebra";
   var haveFS = !!(window.showSaveFilePicker && window.showOpenFilePicker);
+  var inApp = !haveFS && !!window.ZebraAndroid;   /* Android app: no file system access, labels live in the app */
   function persist() { return api("/api/labels", docs); }   // yalniz eski kutuphane + ornekler
   function renderOpen() { $("docTitle").value = doc ? doc.name : ""; }
   function nameFromFile(n) { return String(n || "").replace(/\.(zebra|json|zpl|prn|txt|nlbl)$/i, ""); }
@@ -1328,6 +1329,12 @@
   }
   function saveDoc(asNew, kind) {
     var nl = kind === "nlbl";
+    if (inApp && !asNew && !nl) {   /* phone app: Save keeps the label inside the app; Save as shares a file */
+      var copy = clone(doc); copy.id = copy.id || uid(); doc.id = copy.id;
+      docs = docs.filter(function (x) { return x.id !== copy.id; }); docs.push(copy);
+      dirty = false; updateTitle();
+      return persist().then(function () { status(__("Uygulamaya kaydedildi: ") + (doc.name || __("Adsız etiket"))); });
+    }
     if (!haveFS) {
       var fn = safeName() + (nl ? ".nlbl" : EXT);
       return encodeFor(fn).then(function (data) {
@@ -1460,7 +1467,7 @@
     function section(title) { box.appendChild(h("div", { class: "openHead", text: title })); }
     function render(recent) {
       box.innerHTML = "";
-      box.appendChild(h("button", { class: "tb primary", text: __("Bilgisayardan aç…"), onclick: function () { if (confirmDiscard()) pickAndOpen(); } }));
+      box.appendChild(h("button", { class: "tb primary", text: inApp ? __("Dosyadan aç…") : __("Bilgisayardan aç…"), onclick: function () { if (confirmDiscard()) pickAndOpen(); } }));
       if (haveFS) {
         section(__("Son kullanılanlar"));
         if (!recent.length) box.appendChild(h("div", { class: "openEmpty", text: __("Henüz son kullanılan dosya yok.") }));
@@ -1474,7 +1481,7 @@
         });
       }
       if (docs.length) {
-        section(__("Uygulama içinde kayıtlı etiketler (eski sürüm)"));
+        section(inApp ? __("Kayıtlı etiketlerim") : __("Uygulama içinde kayıtlı etiketler (eski sürüm)"));
         docs.slice().reverse().forEach(function (dd) {
           var row = h("div", { class: "openRow" }, [
             h("div", { class: "on" }, [h("b", { text: dd.name || __("Adsız etiket") }),
@@ -1485,7 +1492,7 @@
               docs = docs.filter(function (x) { return x.id !== dd.id; }); persist(); render(recent);
             } })
           ]);
-          row.addEventListener("click", function () { if (!confirmDiscard()) return; loadDoc(dd); dirty = true; updateTitle(); status(__("Kopya açıldı. Dosya olarak kaydetmek için Ctrl+S.")); });
+          row.addEventListener("click", function () { if (!confirmDiscard()) return; loadDoc(dd); if (inApp) { status(__("Açıldı: ") + (dd.name || __("Adsız etiket"))); return; } dirty = true; updateTitle(); status(__("Kopya açıldı. Dosya olarak kaydetmek için Ctrl+S.")); });
           box.appendChild(row);
         });
       }
@@ -1688,7 +1695,7 @@
       h("button", { type: "button", class: "tb", text: __("+ Yeni yazıcı"), onclick: function () { pick("new"); } })]), form]);
     function blankPrinter() {
       var ble = !!settings.available.ble;
-      return { id: uid(), name: __("Yeni yazıcı"), model: "zd421", dpi: 203, transport: ble ? "ble" : "tcp", host: "", port: 9100, address: "", name_prefix: "", queue: "", path: "", baud: 9600, command: "" };
+      return { id: uid(), name: __("Yeni yazıcı"), model: "zd421", dpi: 300, transport: ble ? "ble" : "tcp", host: "", port: 9100, address: "", name_prefix: "", queue: "", path: "", baud: 9600, command: "" };
     }
     function pick(id) {
       if (id === "new") { cur = blankPrinter(); isNew = true; }
@@ -1743,7 +1750,7 @@
       form.appendChild(inp("name", __("Ad")));
       form.appendChild(h("div", { class: "r2" }, [
         sel2("model", __("Model"), window.MODELS.map(function (m) { return [m.id, m.id === "other" ? __(m.name) : m.name]; }), function () {
-          var m = window.modelById(cur.model); if (m.dpis.indexOf(+cur.dpi) < 0) cur.dpi = m.dpis[0]; renderForm();
+          var m = window.modelById(cur.model); cur.dpi = m.def && m.dpis.indexOf(m.def) >= 0 ? m.def : (m.dpis.indexOf(+cur.dpi) < 0 ? m.dpis[0] : +cur.dpi); renderForm();
         }),
         sel2("dpi", __("Çözünürlük"), model.dpis.map(function (d2) { return [String(d2), d2 + __(" dpi (") + Math.round(d2 / 25.4) + " " + __("nokta/mm") + ")"]; }))
       ]));
@@ -2645,6 +2652,12 @@
   var fontsReady = document.fonts && document.fonts.load ? Promise.all([
     document.fonts.load("700 20px ZFont", "AaŞşİıĞğÜüÖöÇç"), document.fonts.load("400 20px ZFont", "AaŞş")
   ]).catch(function () {}) : Promise.resolve();
+  /* small hooks for extras.js and the Android shell */
+  window.ZebraHooks = {
+    openText: function (name, text) { if (!confirmDiscard()) return false; return loadFromText(String(text), null, name); },
+    refresh: function () { return refreshState(); },
+    status: status
+  };
   api("/api/settings").catch(function () { return {}; }).then(function (st) {
     settings = Object.assign(settings, st || {});
     settings.printers = settings.printers || [];

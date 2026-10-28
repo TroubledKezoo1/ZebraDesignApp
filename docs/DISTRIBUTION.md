@@ -33,3 +33,19 @@ The npm package is only a launcher: on first run it downloads the app from the G
 
 ## Checking by hand
 `distribute.yml` can be started for an existing tag from the Actions tab (*Run workflow*, tag `v1.0.1`).
+
+
+## Scoop and winget (Windows)
+
+`packaging/make-scoop.py` and `packaging/make-winget.py` write the manifests for a release.
+
+**Scoop.** Create an empty public repository `scoop-zebraapp` (same owner). The `scoop` job in `distribute.yml` then writes `bucket/zebraapp.json` after every release, using the same `TAP_TOKEN` secret as Homebrew (the token must also have access to this repository). Users run:
+
+```
+scoop bucket add zebraapp https://github.com/TroubledKezoo1/scoop-zebraapp
+scoop install zebraapp
+```
+
+**winget.** The job also leaves the three manifest files as the `winget-manifests` build artifact. The first version has to be submitted by hand as a pull request to `microsoft/winget-pkgs` (for example `wingetcreate submit` or `komac`, with a token of your own); Microsoft's bot validates it and a moderator approves it, usually within a few days. Later versions: `wingetcreate update TroubledKezoo1.ZebraApp --version X --urls <x64 url> <arm64 url> --submit`. Users then run `winget install TroubledKezoo1.ZebraApp`.
+
+Both are untested against real Scoop and winget (no Windows machine in the build environment): check the first install yourself.
