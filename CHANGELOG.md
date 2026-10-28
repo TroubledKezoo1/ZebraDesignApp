@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3
+
+- **Android:** the update notice now appears every time you open the app or come back to it (not only every 6 hours), and Options has a "Check for updates" button.
+
 ## 1.0.2
 
 - **Android:** real phone layout (the screen was a shrunken desktop window), the printer dialog opens again, one finger edits and two fingers pan and pinch-zoom; a bottom bar opens layers, properties and the ribbon.

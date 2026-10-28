@@ -1,7 +1,7 @@
 {
   "name": "zebraapp-android",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Android build of ZebraApp (Capacitor)",
   "scripts": {
     "prepare-web": "node prepare.mjs"

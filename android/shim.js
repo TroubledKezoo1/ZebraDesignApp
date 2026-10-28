@@ -211,24 +211,28 @@ HTMLAnchorElement.prototype.click = function () {
 /* ---------- updater ---------- */
 const num = (v) => String(v).replace(/^v/, "").split(".").map((x) => parseInt(x, 10) || 0);
 function newer(a, b) { const x = num(a), y = num(b); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; }
-async function checkUpdate() {
+let lastCheck = 0, checking = false;
+async function checkUpdate(manual) {
+  if (checking || (!manual && Date.now() - lastCheck < 30000)) return null;   // at most every 30 s (GitHub's anonymous limit is 60/hour)
+  checking = true; lastCheck = Date.now();
   try {
-    const last = store.get("updateCheck", 0);
-    if (Date.now() - last < 6 * 3600 * 1000 && !window.__zebraForceUpdate) return;
-    const r = await realFetch("https://api.github.com/repos/" + REPO + "/releases/latest", { headers: { Accept: "application/vnd.github+json" } });
-    if (!r.ok) return;
-    store.set("updateCheck", Date.now());
+    const r = await realFetch("https://api.github.com/repos/" + REPO + "/releases/latest", { headers: { Accept: "application/vnd.github+json" }, cache: "no-store" });
+    if (!r.ok) return manual ? { state: "error" } : null;
     const rel = await r.json();
-    if (!newer(rel.tag_name, VERSION)) return;
+    if (!newer(rel.tag_name, VERSION)) return { state: "current" };
     const apk = (rel.assets || []).find((a) => /\.apk$/i.test(a.name));
-    if (!apk) return;
-    if (store.get("skipVersion", "") === rel.tag_name) return;
+    if (!apk) return { state: "pending", version: rel.tag_name.replace(/^v/, "") };   // release exists, the APK is still being built
+    if (!manual && store.get("skipVersion", "") === rel.tag_name) return { state: "skipped" };
     banner(rel.tag_name.replace(/^v/, ""), apk.browser_download_url, rel.html_url);
-  } catch (e) { /* offline: no problem */ }
+    return { state: "available", version: rel.tag_name.replace(/^v/, "") };
+  } catch (e) { return manual ? { state: "error" } : null; }     // offline: no problem
+  finally { checking = false; }
 }
 function banner(version, apkUrl, pageUrl) {
   const en = (config().language || "tr") === "en";
+  const old = document.getElementById("zebra-update"); if (old) old.remove();
   const bar = document.createElement("div");
+  bar.id = "zebra-update";
   bar.setAttribute("role", "status");
   bar.style.cssText = "position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:#1F3A5F;color:#fff;padding:10px 12px;border-radius:10px;" +
     "font:14px/1.3 system-ui,sans-serif;display:flex;gap:8px;align-items:center;flex-wrap:wrap;box-shadow:0 4px 18px rgba(0,0,0,.35)";
@@ -243,7 +247,35 @@ function banner(version, apkUrl, pageUrl) {
     mk(en ? "Skip" : "Atla", () => { store.set("skipVersion", "v" + version); bar.remove(); }));
   document.body.appendChild(bar);
 }
-window.addEventListener("load", () => setTimeout(checkUpdate, 2500));
-document.addEventListener("resume", () => setTimeout(checkUpdate, 1000));
-window.ZebraAndroid = { version: VERSION, checkUpdate: () => { window.__zebraForceUpdate = true; return checkUpdate(); } };
+window.addEventListener("load", () => setTimeout(() => checkUpdate(false), 1500));
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") checkUpdate(false); });
+
+/* Options > "Check for updates" button (added here, the desktop page does not have it) */
+function addUpdateButton() {
+  const page = document.querySelector('.bspage[data-bp="options"]');
+  if (!page || document.getElementById("zebra-upd-box")) return;
+  const en = () => (config().language || "tr") === "en";
+  const box = document.createElement("div"); box.id = "zebra-upd-box"; box.style.cssText = "margin-top:18px;display:grid;gap:6px;justify-items:start";
+  const h = document.createElement("h3"); h.textContent = en() ? "App updates" : "Uygulama güncellemeleri";
+  const ver = document.createElement("div"); ver.className = "note";
+  const btn = document.createElement("button"); btn.type = "button"; btn.className = "tb";
+  const msg = document.createElement("div"); msg.className = "note";
+  const paint = () => { ver.textContent = (en() ? "Installed version: " : "Kurulu sürüm: ") + VERSION; btn.textContent = en() ? "Check for updates" : "Güncellemeleri denetle"; };
+  paint();
+  btn.onclick = async () => {
+    btn.disabled = true; msg.textContent = en() ? "Checking…" : "Denetleniyor…";
+    const r = await checkUpdate(true) || { state: "error" };
+    const t = {
+      current: en() ? "You have the latest version." : "En son sürümü kullanıyorsunuz.",
+      error: en() ? "Could not reach GitHub (is the internet on?)." : "GitHub'a ulaşılamadı (internet açık mı?).",
+      pending: en() ? "Version " + r.version + " is being built. Try again in a few minutes." : "Sürüm " + r.version + " hazırlanıyor, birkaç dakika sonra tekrar deneyin.",
+      available: en() ? "Version " + r.version + " is available (see the bar at the bottom)." : "Sürüm " + r.version + " var (alttaki çubuğa bakın).",
+      skipped: "",
+    }[r.state] || "";
+    msg.textContent = t; btn.disabled = false;
+  };
+  box.append(h, ver, btn, msg); page.appendChild(box);
+}
+window.addEventListener("load", addUpdateButton);
+window.ZebraAndroid = { version: VERSION, checkUpdate: () => checkUpdate(true) };
 if (Capacitor.isNativePlatform()) document.documentElement.classList.add("android");

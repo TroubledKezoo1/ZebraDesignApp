@@ -1,3 +1,3 @@
 """ZebraApp: a ZPL label designer for Zebra printers."""
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"

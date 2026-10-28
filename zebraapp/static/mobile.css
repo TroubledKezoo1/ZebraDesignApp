@@ -65,8 +65,11 @@
 
   /* File screen: the menu becomes a top strip */
   .bs { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
-  .bsnav { display: flex; overflow-x: auto; }
-  .bsnav span { display: none; }
+  .bsnav { display: flex; flex-direction: row; align-items: center; overflow-x: auto; overflow-y: hidden; }
+  .bsnav { gap: 2px; padding: 4px; }
+  .bsnav button, .bsnav a { flex: none; white-space: nowrap; }
+  .bsnav hr, .bsnav .grow { display: none; }
+  .bsnav span { display: inline; font-size: 13px; }
   .bsmain { padding: 14px 12px 28px; }
   .tiles { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
   .printwrap { grid-template-columns: 1fr; }
