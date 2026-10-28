@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5
+
+- Android: better Bluetooth scan (asks to turn Bluetooth on, explains a missing permission, lists Zebra printers first with a star, nearest first).
+
 ## 1.0.4
 
 - Android: the bottom bar (Layers, Properties, Ribbon) is hidden on the File screen, where it did nothing.

@@ -38,6 +38,9 @@ const T = { // the few messages the shim produces itself (Turkish first, English
   sent: ["%d bayt gönderildi: %s.", "Sent %d bytes to %s."],
   connected: ["Bağlandı: %s", "Connected: %s"],
   disconnected: ["Bağlantı kesildi.", "Disconnected."],
+  btOff: ["Bluetooth kapalı. Açıp tekrar deneyin.", "Bluetooth is off. Turn it on and try again."],
+  btPerm: ["Bluetooth izni verilmedi. Ayarlar > Uygulamalar > ZebraApp > İzinler > Yakındaki cihazlar'ı açın.", "Bluetooth permission was not granted. Settings > Apps > ZebraApp > Permissions > Nearby devices."],
+  btFail: ["Tarama başarısız:", "Scan failed:"],
   noStatus: ["Yazıcı durum isteğine yanıt vermedi.", "The printer did not answer the status request."],
 };
 function tr(key, ...a) {
@@ -53,18 +56,34 @@ async function bleInit() {
   if (!ble.ready) ble.ready = BleClient.initialize({ androidNeverForLocation: true });
   return ble.ready;
 }
-async function scan(seconds, onFound) {
-  await bleInit();
+const isZebra = (n) => /^(zebra|zd\d|zq\d|zt\d|gk\d|gx\d|zm\d)/i.test(n || "") || /zebra/i.test(n || "");
+async function scan(seconds) {
+  try {
+    await bleInit();
+    if (!(await BleClient.isEnabled())) {
+      try { await BleClient.requestEnable(); } catch (e) { throw new AppErr(tr("btOff")); }
+    }
+  } catch (e) {
+    if (e instanceof AppErr) throw e;
+    throw new AppErr(tr("btPerm"));
+  }
   const seen = new Map();
-  await BleClient.requestLEScan({ allowDuplicates: false }, (r) => {
-    const id = r.device.deviceId;
-    const name = r.localName || r.device.name || "";
-    if (!seen.has(id) || (name && !seen.get(id).name)) seen.set(id, { value: id, name, label: (name || "?") + "  (" + id + ")" });
-    if (onFound) onFound(seen.get(id));
-  });
-  await sleep(seconds * 1000);
-  await BleClient.stopLEScan();
-  return [...seen.values()].sort((a, b) => (!a.name - !b.name) || a.name.localeCompare(b.name));
+  try {
+    await BleClient.requestLEScan({ allowDuplicates: false }, (r) => {
+      const id = r.device.deviceId;
+      const name = r.localName || r.device.name || "";
+      const prev = seen.get(id);
+      if (!prev || (name && !prev.name)) seen.set(id, { value: id, name, rssi: r.rssi });
+    });
+    await sleep(seconds * 1000);
+  } catch (e) {
+    throw new AppErr(/permission|denied|unauthor/i.test(String(e && e.message || e)) ? tr("btPerm") : tr("btFail") + " " + (e && e.message || e));
+  } finally {
+    try { await BleClient.stopLEScan(); } catch (e) { /* not scanning */ }
+  }
+  // Zebra printers first, then the other named devices (nearest first); nameless ones are left out
+  const list = [...seen.values()].filter((d) => d.name).sort((a, b) => (isZebra(b.name) - isZebra(a.name)) || ((b.rssi || -999) - (a.rssi || -999)));
+  return list.map((d) => ({ value: d.value, name: d.name, label: (isZebra(d.name) ? "★ " : "") + d.name + "  (" + d.value + ")" }));
 }
 async function bleConnect(p) {
   await bleInit();
