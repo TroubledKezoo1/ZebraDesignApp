@@ -74,6 +74,8 @@ Get the app for your system from the [latest release](https://github.com/Trouble
 | macOS, Intel | `ZebraApp-…-macos-x64.dmg` |
 | Linux, Intel/AMD | `ZebraApp-…-x86_64.AppImage` |
 | Linux, ARM64 (Raspberry Pi 4/5 with 64-bit OS, ARM laptops) | `ZebraApp-…-aarch64.AppImage` |
+| Debian / Ubuntu (amd64, arm64) | `zebraapp_…_amd64.deb`, `zebraapp_…_arm64.deb` |
+| Android 6+ (phone, tablet) | `ZebraApp-…-android.apk` |
 
 Nothing else needs to be installed. The apps are not signed, so the first start asks once:
 - **Windows:** "Windows protected your PC" → *More info* → *Run anyway*.
@@ -81,6 +83,8 @@ Nothing else needs to be installed. The apps are not signed, so the first start 
 - **Linux:** allow executing (`chmod +x ZebraApp-*.AppImage`) and double-click. If it does not start: `sudo apt install libfuse2` (`libfuse2t64` on Ubuntu 24.04).
 
 The editor opens as a window in Chrome or Edge, or in your default browser.
+
+**Android:** download the `.apk` in your phone's browser and tap it to install (Android asks once to allow installing from that browser). The app prints over Bluetooth LE and keeps your labels on the phone. It checks GitHub every time you open it and shows an **Update** bar when a newer release is out (Options → *Check for updates* does it by hand). Network, USB and serial printing and `.nlbl` files are desktop-only.
 
 ## Documentation
 
@@ -207,6 +211,8 @@ python packaging\build.py package    # Windows without make
 ```
 
 The finished file lands in `dist/release/`: a `.exe` on Windows, a `.dmg` on macOS, an `.AppImage` on Linux. `make help` lists the other targets (`run`, `test`, `build`, `clean`). Each system has to build its own app; the release workflow does exactly this on GitHub for every download in the table above.
+
+The Android app is built with `make apk` (needs Node, JDK 17 and the Android SDK, see [android/README.md](android/README.md)).
 
 ## Development
 

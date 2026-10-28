@@ -74,6 +74,8 @@ Sistemine uygun dosyayı [son sürüm](https://github.com/TroubledKezoo1/ZebraDe
 | macOS, Intel | `ZebraApp-…-macos-x64.dmg` |
 | Linux, Intel/AMD | `ZebraApp-…-x86_64.AppImage` |
 | Linux, ARM64 (64 bit işletim sistemli Raspberry Pi 4/5, ARM dizüstü) | `ZebraApp-…-aarch64.AppImage` |
+| Debian / Ubuntu (amd64, arm64) | `zebraapp_…_amd64.deb`, `zebraapp_…_arm64.deb` |
+| Android 6+ (telefon, tablet) | `ZebraApp-…-android.apk` |
 
 Başka bir şey kurman gerekmez. Uygulamalar imzasız olduğu için ilk açılışta sistem bir kez sorar:
 - **Windows:** "Windows bilgisayarınızı korudu" → *Ek bilgi* → *Yine de çalıştır*.
@@ -81,6 +83,8 @@ Başka bir şey kurman gerekmez. Uygulamalar imzasız olduğu için ilk açılı
 - **Linux:** çalıştırma izni ver (`chmod +x ZebraApp-*.AppImage`) ve çift tıkla. Açılmazsa: `sudo apt install libfuse2` (Ubuntu 24.04'te `libfuse2t64`).
 
 Editör Chrome ya da Edge'de pencere olarak, yoksa varsayılan tarayıcıda açılır.
+
+**Android:** `.apk` dosyasını telefonun tarayıcısında indir ve dokunarak kur (Android, o tarayıcıdan kuruluma bir kere izin ister). Uygulama Bluetooth LE ile yazdırır, etiketlerin telefonda kalır. Her açılışta GitHub'a bakar, yeni sürüm varsa **Güncelle** çubuğu çıkar (Seçenekler → *Güncellemeleri denetle* elle yapar). Ağ, USB ve seri port yazdırma ile `.nlbl` dosyaları yalnızca masaüstünde var.
 
 ## Belgeler
 
@@ -188,6 +192,8 @@ python packaging\build.py package    # make olmayan Windows
 ```
 
 Bitmiş dosya `dist/release/` içine çıkar: Windows'ta `.exe`, macOS'ta `.dmg`, Linux'ta `.AppImage`. Diğer hedefleri `make help` listeler (`run`, `test`, `build`, `clean`). Her sistem kendi uygulamasını derlemek zorundadır; sürüm iş akışı yukarıdaki tablodaki her indirme için GitHub'da tam olarak bunu yapar.
+
+Android uygulaması `make apk` ile derlenir (Node, JDK 17 ve Android SDK gerekir, bkz. [android/README.md](android/README.md)).
 
 ## Geliştirme
 

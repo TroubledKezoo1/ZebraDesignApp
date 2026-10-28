@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.4
+
+- Android: the bottom bar (Layers, Properties, Ribbon) is hidden on the File screen, where it did nothing.
+- README and release notes list the Android app and the `.deb` packages.
+
 ## 1.0.3
 
 - **Android:** the update notice now appears every time you open the app or come back to it (not only every 6 hours), and Options has a "Check for updates" button.
