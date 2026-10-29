@@ -24,5 +24,13 @@
     "en": [
       "Android: Update now explains the install permission and asks first; after you allow it and come back, the download starts by itself."
     ]
+  },
+  "1.0.9": {
+    "tr": [
+      "Yeni renk teması: Gri (Seçenekler > Renk teması)."
+    ],
+    "en": [
+      "New colour theme: Slate (Options > Colour theme)."
+    ]
   }
 }

@@ -11,6 +11,8 @@
       l: "--accent:#b4540a;--accent-fg:#fff;--accent-soft:#f8e3d2;--accent-dk:#8f4208", d: "--accent:#ffa24d;--accent-fg:#331a02;--accent-soft:#43301a;--accent-dk:#d9822b" },
     purple: { tr: "Mor", en: "Purple", dot: "#6b3fb0",
       l: "--accent:#6b3fb0;--accent-fg:#fff;--accent-soft:#e8def6;--accent-dk:#54308c", d: "--accent:#b995f0;--accent-fg:#1c0b36;--accent-soft:#35294f;--accent-dk:#946ad6" },
+    slate:  { tr: "Gri", en: "Slate", dot: "#455a64",
+      l: "--accent:#455a64;--accent-fg:#fff;--accent-soft:#dde3e6;--accent-dk:#34454c", d: "--accent:#90a4ae;--accent-fg:#10181c;--accent-soft:#2a353a;--accent-dk:#7a919c" },
     red:    { tr: "Kırmızı", en: "Red", dot: "#b3261e",
       l: "--accent:#b3261e;--accent-fg:#fff;--accent-soft:#f8dcd9;--accent-dk:#8c1d17", d: "--accent:#ff8a80;--accent-fg:#3a0a07;--accent-soft:#4a2523;--accent-dk:#e0655a" }
   };

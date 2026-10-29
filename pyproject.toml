@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zebraapp"
-version = "1.0.8"
+version = "1.0.9"
 description = "Label designer for Zebra / ZPL printers: design in the browser, print over Bluetooth LE, network, USB or serial."
 readme = "README.md"
 license = { text = "MIT" }
