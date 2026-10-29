@@ -295,16 +295,23 @@ function banner(version, apkUrl, pageUrl) {
     b.style.cssText = "border:0;border-radius:8px;padding:8px 12px;font:inherit;" + (primary ? "background:#fff;color:#1F3A5F;font-weight:700" : "background:rgba(255,255,255,.18);color:#fff"); return b; };
   const row = [];
   let busy = false;
+  let needPerm = false;
   const update = async () => {
     if (busy) return;
     if (!Capacitor.isNativePlatform()) { Browser.open({ url: apkUrl }); return; }
     try {
       if (!(await ApkInstaller.canInstall()).allowed) {
-        say(en ? "Allow ZebraApp to install apps in the screen that opens, come back and press Update again."
-               : "Açılan ekranda ZebraApp'e uygulama kurma izni verin, geri dönüp tekrar Güncelle'ye basın.");
+        if (!needPerm) {          // first press: explain, ask, and only then go to the settings
+          needPerm = true;
+          say(en ? "To install updates Android needs your permission: allow \"Install unknown apps\" for ZebraApp. Open the settings?"
+                 : "Güncellemeyi kurmak için Android'in izni gerekiyor: ZebraApp için \"Bilinmeyen uygulamaları yükle\" iznini açın. Ayarlar açılsın mı?");
+          upd.textContent = en ? "Open settings" : "Ayarları aç";
+          return;
+        }
         await ApkInstaller.openInstallSettings();
         return;
       }
+      needPerm = false; upd.textContent = en ? "Update" : "Güncelle";
       busy = true; upd.disabled = true;
       say(en ? "Downloading… 0%" : "İndiriliyor… %0");
       const h = await ApkInstaller.addListener("progress", (p) => {
@@ -316,6 +323,12 @@ function banner(version, apkUrl, pageUrl) {
       say((en ? "Could not update: " : "Güncellenemedi: ") + (e && e.message || e));
     } finally { busy = false; upd.disabled = false; }
   };
+  // coming back from the settings screen with the permission given: carry on by itself
+  document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState === "visible" && needPerm && !busy && document.getElementById("zebra-update") === bar) {
+      try { if ((await ApkInstaller.canInstall()).allowed) update(); } catch (e) { /* ignore */ }
+    }
+  });
   const upd = mk(en ? "Update" : "Güncelle", update, true);
   bar.append(t, upd,
     mk(en ? "What's new" : "Neler yeni", () => Browser.open({ url: pageUrl })),

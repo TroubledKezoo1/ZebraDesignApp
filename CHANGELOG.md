@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.8
+
+- Android: before sending you to the settings, Update explains the "install unknown apps" permission and asks first; after you allow it and come back, the download starts by itself.
+
 ## 1.0.7
 
 - Colour theme (green, blue, orange, purple, red) in Options.

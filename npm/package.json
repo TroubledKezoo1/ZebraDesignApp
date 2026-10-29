@@ -1,6 +1,6 @@
 {
   "name": "zebraapp",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Label designer for Zebra / ZPL printers. Downloads the ZebraApp desktop app for your system on first run.",
   "bin": { "zebraapp": "bin/zebraapp.js" },
   "files": ["bin", "README.md"],

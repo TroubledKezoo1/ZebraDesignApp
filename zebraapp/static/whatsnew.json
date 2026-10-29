@@ -16,5 +16,13 @@
       "Android: the app connects to the printer by itself on start and when printing, and retries if the link drops.",
       "Android: tapping a .zpl or .zebra file opens it in ZebraApp."
     ]
+  },
+  "1.0.8": {
+    "tr": [
+      "Android: Güncelle'ye basınca önce izni anlatır ve sorar; izni verip geri dönünce indirme kendiliğinden başlar."
+    ],
+    "en": [
+      "Android: Update now explains the install permission and asks first; after you allow it and come back, the download starts by itself."
+    ]
   }
 }
