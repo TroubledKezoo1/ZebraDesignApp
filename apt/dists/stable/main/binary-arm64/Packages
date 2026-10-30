@@ -19,3 +19,24 @@ Description: Label designer for Zebra / ZPL printers
  Bluetooth LE, network, USB or serial port. The editor opens in its own
  browser window.
 
+Package: zebraapp
+Architecture: arm64
+Version: 1.0.14
+Priority: optional
+Section: graphics
+Maintainer: Yunus Emre Saraç <TroubledKezoo1@users.noreply.github.com>
+Installed-Size: 91566
+Depends: libc6 (>= 2.35)
+Recommends: chromium | chromium-browser | google-chrome-stable | microsoft-edge-stable
+Filename: pool/main/zebraapp_1.0.14_arm64.deb
+Size: 29711910
+MD5sum: 9596cc8e20b7f3ae7e76461e7843b569
+SHA1: c9a11791fbdb23bd8e29aa3cd8722d5b8f3fd654
+SHA256: 529822adf6c52fa08d98e3955f3a933745820caeee58940d590633b9e410a8e2
+SHA512: 095aa6d64375634833318c311c4e05962465c8e335510201aeb73c019b86f20a86dc2dea22a7dabe7b7c952a875a331780e07266fa755d5aac4f7ec9dd7d3c71
+Homepage: https://github.com/TroubledKezoo1/ZebraDesignApp
+Description: Label designer for Zebra / ZPL printers
+ Design labels in a word-processor-like editor and print them over
+ Bluetooth LE, network, USB or serial port. The editor opens in its own
+ browser window.
+
