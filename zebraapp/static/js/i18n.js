@@ -586,6 +586,7 @@
     "Sorun var: önce yukarıdaki uyarıları giderin.": "Problem: fix the warnings above first.",
     "Yenile": "Refresh",
     "Son basılanlar": "Recently printed",
+    "Güncellemeleri denetle": "Check for updates",
     "etiket": "labels",
     "Henüz yazdırma yok. Bastığın etiketler burada görünür; tek tıkla yeniden basılır.": "Nothing printed yet. Labels you print appear here and can be printed again with one click.",
     "Tekrar bas": "Print again",

@@ -242,7 +242,36 @@
     if (anchor && anchor.nextSibling) page.insertBefore(box, anchor.nextSibling); else page.appendChild(box);
   }
 
+  /* File screen: "Check for updates" (desktop: our check; Android: the shell's own updater) */
+  function toast(text) {
+    var old = document.getElementById("zToast"); if (old) old.remove();
+    var t = document.createElement("div"); t.id = "zToast"; t.setAttribute("role", "status"); t.textContent = text;
+    t.style.cssText = "position:fixed;left:50%;bottom:48px;transform:translateX(-50%);z-index:100002;max-width:min(520px,calc(100vw - 24px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font:13px/1.35 var(--ui);box-shadow:0 6px 24px rgba(0,0,0,.35)";
+    document.body.appendChild(t); setTimeout(function () { t.remove(); }, 4500);
+  }
+  function wireUpdateButton() {
+    var b = document.getElementById("bsUpdate"); if (!b) return;
+    b.addEventListener("click", function () {
+      toast(L("Denetleniyor…", "Checking…"));
+      if (isAndroid()) {
+        Promise.resolve(window.ZebraAndroid.checkUpdate()).then(function (r) {
+          var st = r && r.state;
+          toast(st === "available" ? L("Yeni sürüm var, alttaki çubuğa bakın.", "A new version is available; see the bar at the bottom.")
+            : st === "pending" ? L("Yeni sürüm hazırlanıyor, birkaç dakika sonra tekrar deneyin.", "A new version is being built; try again in a few minutes.")
+            : st === "error" ? L("GitHub'a ulaşılamadı (internet açık mı?).", "Could not reach GitHub (is the internet on?).")
+            : L("En son sürümü kullanıyorsunuz.", "You have the latest version."));
+        });
+        return;
+      }
+      checkUpdate(true).then(function (r) {
+        if (r.state === "available") { toast(L("Sürüm " + r.latest + " var.", "Version " + r.latest + " is available.")); updateBar(r); }
+        else toast(r.state === "error" ? L("GitHub'a ulaşılamadı (internet açık mı?).", "Could not reach GitHub (is the internet on?).") : L("En son sürümü kullanıyorsunuz.", "You have the latest version."));
+      });
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
+    wireUpdateButton();
     build();
     var sel = document.getElementById("langSel");
     if (sel) sel.addEventListener("change", function () { setTimeout(build, 50); });
