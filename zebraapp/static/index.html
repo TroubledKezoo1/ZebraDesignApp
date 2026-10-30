@@ -68,6 +68,7 @@
   <symbol id="i-gear" viewBox="0 0 24 24"><path d="M10.5 2h3l.5 2.6 1.8.8 2.2-1.5 2.1 2.1-1.5 2.2.8 1.8 2.6.5v3l-2.6.5-.8 1.8 1.5 2.2-2.1 2.1-2.2-1.5-1.8.8-.5 2.6h-3l-.5-2.6-1.8-.8-2.2 1.5-2.1-2.1 1.5-2.2-.8-1.8L2 13.5v-3l2.6-.5.8-1.8-1.5-2.2 2.1-2.1 2.2 1.5 1.8-.8zM12 8.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7z" fill="currentColor"/></symbol>
   <symbol id="i-printer" viewBox="0 0 24 24"><path d="M3 8h18v9h-3v-3H6v3H3zm3 8h12v5H6zM7 3h10v4H7z" fill="currentColor"/></symbol>
   <symbol id="i-cal" viewBox="0 0 24 24"><path d="M4 4h16v4H4zm0 6h16v4H4zm0 6h16v4H4zm2-11v2h2V5zm0 6v2h2v-2zm0 6v2h2v-2z" fill="currentColor"/></symbol>
+  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 2h12v2h-1v3.5c0 1.9-1.2 3.5-3 4.3v.4c1.8.8 3 2.4 3 4.3V20h1v2H6v-2h1v-3.5c0-1.9 1.2-3.5 3-4.3v-.4C8.2 11 7 9.4 7 7.5V4H6zm2 2v3.5c0 1.3.8 2.5 2 3.1l2 1.1 2-1.1c1.2-.6 2-1.8 2-3.1V4H8z" fill="currentColor"/></symbol>
   <symbol id="i-feed" viewBox="0 0 24 24"><path d="M5 3h14v8H5zm2 2v4h10V5zm4 8h2v5h3l-4 4-4-4h3z" fill="currentColor"/></symbol>
   <symbol id="i-info" viewBox="0 0 24 24"><path d="M12 2a10 10 0 110 20 10 10 0 010-20zm-1 8v7h2v-7zm0-4v2h2V6z" fill="currentColor"/></symbol>
   <symbol id="i-code" viewBox="0 0 24 24"><path d="M8.6 6L10 7.4 5.4 12l4.6 4.6L8.6 18l-6-6zm6.8 0l6 6-6 6-1.4-1.4 4.6-4.6L14 7.4z" fill="currentColor"/></symbol>
@@ -242,6 +243,7 @@
       </div>
       <div class="rgl">Resim</div>
     </div>
+    <!-- Field tokens -->
     <div class="rg">
       <div class="rgb">
         <div class="rcol">
@@ -251,6 +253,14 @@
         </div>
       </div>
       <div class="rgl">Alan</div>
+    </div>
+
+    <!-- Son Kullanma: bugün + N gün -->
+    <div class="rg">
+      <div class="rgb">
+        <button class="rbig" id="rDateAdd" title="Son Kullanma"><svg><use href="#i-hourglass"/></svg><span>Son Kullanma</span></button>
+      </div>
+      <div class="rgl">Son Kullanma</div>
     </div>
     <div class="rg">
       <div class="rgb">
@@ -576,7 +586,13 @@
     <div class="bspage" data-bp="options" hidden>
       <h1>Seçenekler</h1>
       <div class="optgrid">
-        <label>Dil / Language<select id="langSel" aria-label="Dil / Language"><option value="tr">Türkçe</option><option value="en">English</option></select></label>
+        <label>Dil / Language
+          <select id="langSel" aria-label="Dil / Language">
+            <option value="tr">Türkçe</option>
+            <option value="en">English</option>
+            <option value="pt">Português (Brasil)</option>
+          </select>
+        </label>
       </div>
       <h2>Hakkında</h2>
       <p class="note" id="aboutVer"></p>

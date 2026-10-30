@@ -35,6 +35,7 @@ ZebraDesigner yalnızca Windows'ta çalışıyor, açık kaynak etiket programla
 
 **Baskı**
 - Numaralı etiketler için `{SAYAC}`, `{TARIH}` ve `{SAAT}` değişkenleri
+- Son kullanma tarihleri: bugünden N gün sonrasını `{TARIH+N}` olarak ekler (örneğin 30 günlük son kullanma için `{TARIH+30}`)
 - CSV ile toplu baskı: herhangi bir alana `{sütun}` yazarsın, her satır için bir etiket basılır
 - Etiket başına yazıcı ayarları: ortam türü (boşluklu, sürekli, siyah işaretli), koyuluk, hız, 180° çevirme, kaydırma
 - Model ve çözünürlüğüyle birden çok yazıcı; etiket yazıcıya uymazsa uyarı
