@@ -17,7 +17,7 @@ Pushing a tag such as `v1.0.1` does everything. Downloads (`.exe`, `.dmg`, `.App
 No token is stored anywhere (trusted publishing).
 
 ## apt
-1. Make a signing key without passphrase: `gpg --batch --quick-generate-key "ZebraApp apt <TroubledKezoo1@users.noreply.github.com>" rsa3072 sign never --passphrase ''`
+1. Make a signing key without passphrase: `gpg --batch --pinentry-mode loopback --passphrase '' --quick-generate-key "ZebraApp apt <TroubledKezoo1@users.noreply.github.com>" rsa3072 sign never`
 2. Export it: `gpg --armor --export-secret-keys "ZebraApp apt" ` and store the output as the secret `APT_GPG_PRIVATE_KEY`.
 3. After the first run create *Settings > Pages > Deploy from a branch > gh-pages / (root)*.
 4. Test on a clean Ubuntu: `sudo apt install zebraapp` after adding the repository (commands on the Pages site).
