@@ -242,6 +242,7 @@
       </div>
       <div class="rgl">Resim</div>
     </div>
+    <!-- Field tokens -->
     <div class="rg">
       <div class="rgb">
         <div class="rcol">
@@ -251,6 +252,28 @@
         </div>
       </div>
       <div class="rgl">Alan</div>
+    </div>
+
+    <!-- Son Kullanma: bugün + N gün -->
+    <div class="rg">
+      <div class="rgb">
+        <div class="rcol">
+          <button class="rsm" data-token="{TARIH+7}"   title="Son kullanma: bugün + 7 gün (1 hafta) — {TARIH+7}"><svg><use href="#i-cal"/></svg><span>7 gün</span></button>
+          <button class="rsm" data-token="{TARIH+10}"  title="Son kullanma: bugün + 10 gün — {TARIH+10}"><svg><use href="#i-cal"/></svg><span>10 gün</span></button>
+          <button class="rsm" data-token="{TARIH+14}"  title="Son kullanma: bugün + 14 gün (2 hafta) — {TARIH+14}"><svg><use href="#i-cal"/></svg><span>14 gün</span></button>
+        </div>
+        <div class="rcol">
+          <button class="rsm" data-token="{TARIH+28}"  title="Son kullanma: bugün + 28 gün (3 hafta) — {TARIH+28}"><svg><use href="#i-cal"/></svg><span>28 gün</span></button>
+          <button class="rsm" data-token="{TARIH+30}"  title="Son kullanma: bugün + 30 gün (~1 ay) — {TARIH+30}"><svg><use href="#i-cal"/></svg><span>30 gün</span></button>
+          <button class="rsm" data-token="{TARIH+60}"  title="Son kullanma: bugün + 60 gün (~2 ay) — {TARIH+60}"><svg><use href="#i-cal"/></svg><span>60 gün</span></button>
+        </div>
+        <div class="rcol">
+          <button class="rsm" data-token="{TARIH+90}"  title="Son kullanma: bugün + 90 gün (~3 ay) — {TARIH+90}"><svg><use href="#i-cal"/></svg><span>90 gün</span></button>
+          <button class="rsm" data-token="{TARIH+180}" title="Son kullanma: bugün + 180 gün (~6 ay) — {TARIH+180}"><svg><use href="#i-cal"/></svg><span>180 gün</span></button>
+          <button class="rsm" data-token="{TARIH+365}" title="Son kullanma: bugün + 365 gün (1 yıl) — {TARIH+365}"><svg><use href="#i-cal"/></svg><span>365 gün</span></button>
+        </div>
+      </div>
+      <div class="rgl">Son Kullanma</div>
     </div>
     <div class="rg">
       <div class="rgb">
@@ -576,7 +599,13 @@
     <div class="bspage" data-bp="options" hidden>
       <h1>Seçenekler</h1>
       <div class="optgrid">
-        <label>Dil / Language<select id="langSel" aria-label="Dil / Language"><option value="tr">Türkçe</option><option value="en">English</option></select></label>
+        <label>Dil / Language
+          <select id="langSel" aria-label="Dil / Language">
+            <option value="tr">Türkçe</option>
+            <option value="en">English</option>
+            <option value="pt">Português (Brasil)</option>
+          </select>
+        </label>
       </div>
       <h2>Hakkında</h2>
       <p class="note" id="aboutVer"></p>
