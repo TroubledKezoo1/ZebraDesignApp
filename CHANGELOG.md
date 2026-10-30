@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.0.10
 
-- Desktop: open PDF label pages at their original size, choosing a page and printer resolution. Contents are imported as an embedded image; save as `.zebra` or export to `.nlbl` without overwriting the source PDF.
+- Desktop: open PDF label pages at their original size, choosing a page and printer resolution. Contents are imported as an embedded image; save as `.zebra` or export to `.nlbl` without overwriting the source PDF. Thanks to @buraktuzgen (#1).
 
 ## 1.0.9
 

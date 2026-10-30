@@ -32,5 +32,13 @@
     "en": [
       "New colour theme: Slate (Options > Colour theme)."
     ]
+  },
+  "1.0.10": {
+    "tr": [
+      "Masaüstü: PDF etiketler Dosya > Aç ile açılır; sayfa ve çözünürlük seçilir (katkı: buraktuzgen)."
+    ],
+    "en": [
+      "Desktop: open PDF labels with File > Open; choose the page and resolution (contributed by buraktuzgen)."
+    ]
   }
 }
