@@ -112,7 +112,7 @@
       "As atualizações do desktop agora verificam a assinatura da versão."
     ]
   },
-  "1.0.14": {
+    "1.0.14": {
     "tr": [
       "Masaüstünden dosya sürükleyip pencereye bırakabilirsin: .zebra, .zpl, .nlbl, .pdf açılır; resimler etikete eklenir; .csv toplu liste olur.",
       "PDF açma her yerde çalışır: uygulama içine PDF okuyucu eklendi (Android dahil)."
@@ -120,6 +120,10 @@
     "en": [
       "Drag a file from your desktop onto the window: .zebra, .zpl, .nlbl and .pdf open; images are added to the label; .csv becomes the batch list.",
       "Opening PDFs now works everywhere: a PDF reader is built into the app (Android included)."
+    ],
+    "pt": [
+      "Arraste um arquivo do desktop para a janela: .zebra, .zpl, .nlbl e .pdf abrem; imagens são adicionadas à etiqueta; .csv se torna a lista em lote.",
+      "Abrir PDFs agora funciona em todos os lugares: um leitor de PDF foi integrado ao aplicativo (incluindo Android)."
     ]
   }
 }

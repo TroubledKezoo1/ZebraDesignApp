@@ -131,7 +131,7 @@
     e2.job.csv = __("Raf;Ürün Adı\nA-01-01;Vida M6\nA-01-02;Somun M6\nA-01-03;Pul M6");
     var e3 = blankDoc(); e3.name = __("Fiyat etiketi"); e3.w = 50; e3.h = 30;
     e3.elements = [tx(2, 2, 3.5, "{" + __("Ürün Adı") + "}", 46, true), T("line", { x: 2, y: 9, len: 46, t: 0.25 }),
-      tx(2, 11, 8, "{" + __("Fiyat") + "} TL", 46, true),
+      tx(2, 11, 8, "{" + __("Fiyat") + "} " + __("TL"), 46, true),
       T("barcode", { x: 2, y: 22, h: 5, module: e3.dpi >= 300 ? 2 : 1, data: "{" + __("Barkod") + "}", human: false })];
     e3.job.csv = __("Ürün Adı;Fiyat;Barkod\nZeytinyağı 1 L;249,90;8690000000011\nBal 450 g;189,50;8690000000028");
     var e4 = blankDoc(); e4.name = __("Koli / palet etiketi"); e4.w = 100; e4.h = 100;

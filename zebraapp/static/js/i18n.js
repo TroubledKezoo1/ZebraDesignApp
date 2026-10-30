@@ -1399,6 +1399,15 @@
     "Bir sayfa seç. Sayfa ölçüsü ve görünümü korunur; yazdırmadan önce takılı etiketle eşleştiğini kontrol et.": "Escolha uma página. O tamanho e a aparência são preservados; verifique se correspondem às etiquetas instaladas antes de imprimir.",
     "PDF içeriği tek görsel olarak aktarılır. Orijinal PDF değiştirilmez.": "O conteúdo do PDF é importado como uma única imagem. O PDF original não é alterado.",
     "Etiket dosyaları (.zebra, .zpl, .nlbl, .pdf)": "Arquivos de etiqueta (.zebra, .zpl, .nlbl, .pdf)",
+    "PDF okuyucu yüklenemedi.": "Não foi possível carregar o leitor de PDF.",
+    "PDF parolalı; önce parolayı kaldır.": "O PDF está protegido por senha; remova a senha primeiro.",
+    "PDF açılamadı. Dosyanın geçerli ve parolasız olduğundan emin ol.": "Não foi possível abrir o PDF. Verifique se é válido e não está protegido por senha.",
+    "PDF 1 ile 500 arasında sayfa içermeli.": "O PDF deve ter entre 1 e 500 páginas.",
+    "PDF sayfa boyutları 1 ile 2000 mm arasında olmalı.": "O tamanho da página do PDF deve estar entre 1 e 2000 mm.",
+    "Bu PDF sayfası seçilen çözünürlükte çok büyük. Daha düşük dpi seç (en fazla 4 milyon piksel).": "Esta página do PDF é muito grande nesta resolução. Escolha um dpi menor (máximo de 4 milhões de pixels).",
+    "Geçerli bir PDF sayfa numarası seç.": "Escolha um número de página de PDF válido.",
+    "Açmak için dosyayı buraya bırak": "Solte o arquivo aqui para abri-lo",
+    "Bu dosya türü desteklenmiyor: ": "Este tipo de arquivo não é suportado: ",
 
     /* ---- Câmera / recentemente impressos ---- */
     "Kamerayla tara": "Escanear com a câmera",
