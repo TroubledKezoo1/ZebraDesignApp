@@ -60,6 +60,7 @@ Yeni rulo taktıktan sonra yazdırma ekranından bir kez **Kalibre et**'e bas; y
 
 - Yeni metin kutusu hemen yazmaya hazır gelir.
 - **Alan** grubu `{SAYAC}` (sayaç), `{TARIH}` (tarih) ya da `{SAAT}` (saat) değişkenini yazdığın yere, ya da seçili QR koda veya barkoda ekler.
+- **Son Kullanma** bir gün listesi açar (7, 10, 14, 28, 30, 60, 90, 180, 365); her biri `{TARIH+N}` ekler — bugünden N gün sonrası, örneğin 30 günlük son kullanma için `{TARIH+30}`. Bu değişken `{TARIH}` ile aynı yerlerde çalışır: bir metne, QR koda ya da barkoda yaz, her etiket hesaplanmış tarihi alır.
 - Görsel yazıcı için siyah beyaza çevrilir; **eşik**, **noktalama** ve **ters çevir** ayarları Özellikler'de.
 
 ## 6. Yaz ve biçimlendir (Giriş sekmesi)
@@ -112,6 +113,11 @@ Fareyle: sürükleyerek taşı, sekiz tutamaçla boyutlandır, **Shift** ile tı
 ## 8. Numaralı etiketler ve listeler (Veri sekmesi)
 
 **Sayaç:** herhangi bir metin, QR ya da barkoda `{SAYAC}` yaz. **Başlangıç**, **Artış** ve **Basamak**'ı ayarla (1'den başlayıp 3 basamak: 001, 002 …). Kaç tane basılacağını yazdırma ekranındaki *Farklı etiket sayısı* belirler.
+
+
+**Tarih:** `{TARIH}` bugünü `gg.aa.yyyy` olarak basar. `{TARIH+N}` (ya da `{TARIH-N}`) bugünden N gün sonrasını (ya da öncesini); Ekle sekmesindeki **Son Kullanma** menüsü 7, 10, 14, 28, 30, 60, 90, 180 ve 365 günlük hazır seçenekler sunar.
+
+**SAAT:** `{SAAT}` saati `ss:dd` olarak basar.
 
 **Liste (CSV):** CSV dosyası seçmek için **Liste yükle**'ye, yapıştırmak için **Listeyi düzenle…**'ye bas. İlk satır sütun adlarıdır; `;`, `,` ya da sekme ile ayrılır. Sütunlar **Alan ekle** altında çıkar; birine tıklayınca `{sütun}` seçili metne eklenir. Her satır için bir etiket basılır.
 
