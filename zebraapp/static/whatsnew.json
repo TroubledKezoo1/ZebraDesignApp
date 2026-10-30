@@ -40,5 +40,13 @@
     "en": [
       "Desktop: open PDF labels with File > Open; choose the page and resolution (contributed by buraktuzgen)."
     ]
+  },
+  "1.0.11": {
+    "tr": [
+      "Masaüstü: yeni sürüm çıkınca uygulama haber verir; Seçenekler > Güncellemeler'de elle denetleme ve kapatma seçeneği var."
+    ],
+    "en": [
+      "Desktop: the app now tells you when a new version is out; Options > Updates lets you check by hand or turn it off."
+    ]
   }
 }

@@ -175,6 +175,9 @@ class Handler(BaseHTTPRequestHandler):
             self._json(store.templates())
         elif path == "/api/fonts":
             self._json({"families": fonts.families()})
+        elif path == "/api/update":
+            from . import updates
+            self._json(updates.check(force="force=1" in self.path))
         elif path == "/api/ping":
             global last_ping
             last_ping = time.time()

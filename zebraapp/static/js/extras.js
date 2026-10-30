@@ -55,6 +55,58 @@
     });
   }
 
+
+  /* ---------- desktop updates (the Android app has its own updater in the shell) ---------- */
+  var AUTO = "zebraapp.autoUpdate", SKIP = "zebraapp.skipUpdate";
+  function isAndroid() { return !!window.ZebraAndroid; }
+  function checkUpdate(force) {
+    return fetch("/api/update" + (force ? "?force=1" : "")).then(function (r) { return r.json(); }).catch(function () { return { state: "error" }; });
+  }
+  function updateBar(r) {
+    var old = document.getElementById("zUpdate"); if (old) old.remove();
+    var bar = document.createElement("div"); bar.id = "zUpdate"; bar.setAttribute("role", "status");
+    bar.style.cssText = "position:fixed;left:12px;bottom:36px;z-index:99990;max-width:min(560px,calc(100vw - 24px));background:var(--accent);color:var(--accent-fg);padding:10px 12px;border-radius:10px;font:13px/1.35 var(--ui);display:flex;gap:8px;align-items:center;flex-wrap:wrap;box-shadow:0 6px 24px rgba(0,0,0,.3)";
+    var t = document.createElement("span"); t.style.flex = "1 1 200px";
+    t.textContent = L("Yeni sürüm " + r.latest + " yayınlandı (sizde " + r.current + ").", "Version " + r.latest + " is available (you have " + r.current + ").");
+    function btn(label, fn, primary) {
+      var b = document.createElement("button"); b.type = "button"; b.textContent = label; b.onclick = fn;
+      b.style.cssText = "border:0;border-radius:7px;padding:6px 11px;font:inherit;cursor:pointer;" + (primary ? "background:var(--accent-fg);color:var(--accent);font-weight:700" : "background:rgba(255,255,255,.2);color:inherit");
+      return b;
+    }
+    var go = r.url || r.page;
+    bar.append(t,
+      btn(r.url ? L("İndir", "Download") : L("Sürüm sayfası", "Release page"), function () { window.open(go, "_blank", "noopener"); }, true),
+      btn(L("Sonra", "Later"), function () { bar.remove(); }),
+      btn(L("Atla", "Skip"), function () { set(SKIP, r.latest); bar.remove(); }));
+    if (!r.frozen) { var hint = document.createElement("small"); hint.style.cssText = "flex:1 0 100%;opacity:.9"; hint.textContent = L("Kaynaktan ya da pip ile kurduysan: pip install -U zebraapp", "Installed from source or pip? Run: pip install -U zebraapp"); bar.appendChild(hint); }
+    document.body.appendChild(bar);
+  }
+  function autoCheckUpdate() {
+    if (isAndroid() || get(AUTO) === "0") return;
+    checkUpdate(false).then(function (r) { if (r.state === "available" && get(SKIP) !== r.latest) updateBar(r); });
+  }
+  function updateSection(box) {
+    var h = document.createElement("h2"); h.textContent = L("Güncellemeler", "Updates");
+    var ver = document.createElement("p"); ver.className = "note"; ver.style.margin = "0";
+    currentVersion().then(function (v) { ver.textContent = L("Kurulu sürüm: ", "Installed version: ") + (v || "?"); });
+    var msg = document.createElement("p"); msg.className = "note"; msg.style.margin = "0";
+    var b = document.createElement("button"); b.type = "button"; b.className = "tb"; b.textContent = L("Güncellemeleri denetle", "Check for updates");
+    b.onclick = function () {
+      b.disabled = true; msg.textContent = L("Denetleniyor…", "Checking…");
+      checkUpdate(true).then(function (r) {
+        b.disabled = false;
+        if (r.state === "error") msg.textContent = L("GitHub'a ulaşılamadı (internet açık mı?).", "Could not reach GitHub (is the internet on?).");
+        else if (r.state === "current") msg.textContent = L("En son sürümü kullanıyorsunuz.", "You have the latest version.");
+        else { msg.textContent = L("Sürüm " + r.latest + " var.", "Version " + r.latest + " is available."); updateBar(r); }
+      });
+    };
+    var lab = document.createElement("label"); lab.style.cssText = "display:flex;gap:8px;align-items:center;font-weight:400";
+    var cb = document.createElement("input"); cb.type = "checkbox"; cb.style.width = "auto"; cb.checked = get(AUTO) !== "0";
+    cb.onchange = function () { set(AUTO, cb.checked ? "1" : "0"); };
+    lab.append(cb, document.createTextNode(L("Açılışta yeni sürüm var mı diye bak (yalnızca GitHub'a tek bir istek gider)", "Look for a new version on start (one request to GitHub, nothing else is sent)")));
+    box.append(h, ver, b, msg, lab);
+  }
+
   /* ---------- backup / restore ---------- */
   function jget(url) { return fetch(url).then(function (r) { return r.json(); }); }
   function jpost(url, body) {
@@ -127,6 +179,7 @@
     b3.onclick = function () { currentVersion().then(function (v) { notesFor(v).then(function (n) { if (n) showNews(v, n); }); }); };
 
     box.append(h1, chips, h2, note, row, msg, h3, b3);
+    if (!isAndroid()) updateSection(box);
     var anchor = page.querySelector(".optgrid");
     if (anchor && anchor.nextSibling) page.insertBefore(box, anchor.nextSibling); else page.appendChild(box);
   }
@@ -136,5 +189,6 @@
     var sel = document.getElementById("langSel");
     if (sel) sel.addEventListener("change", function () { setTimeout(build, 50); });
     setTimeout(maybeShowNews, 1200);
+    setTimeout(autoCheckUpdate, 3000);
   });
 })();

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.11
+
+- Desktop: the app tells you when a newer release exists (a bar with a download link for your system) and Options has a "Check for updates" button and an off switch. One anonymous request to GitHub; nothing is sent about you.
+
 ## 1.0.10
 
 - Desktop: open PDF label pages at their original size, choosing a page and printer resolution. Contents are imported as an embedded image; save as `.zebra` or export to `.nlbl` without overwriting the source PDF. Thanks to @buraktuzgen (#1).
