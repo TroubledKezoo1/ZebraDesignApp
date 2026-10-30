@@ -43,6 +43,7 @@ ZebraDesigner yalnızca Windows'ta çalışıyor, açık kaynak etiket programla
 - Hazır `.zpl` dosyalarını açıp düzenleme: metin, `^FB` blokları, kutu, çizgi (çapraz dahil), elips, Code 128 / Code 39 / EAN-13 / UPC-A, QR kod ve `^GFA` resimleri düzenlenebilir öğelere dönüşür; diğer komutlar atlandı diye listelenir
 - Etiketler düz dosyadır (`.zebra`, içi JSON): Kaydet, Farklı kaydet ve Aç sistemin dosya penceresini kullanır, son kullanılanlar listelenir; ZPL `.zpl` dosyası olarak dışa aktarılır
 - Şablon kitaplığı: hazır şablonlar (adres, gönderici ve alıcı, ürün, raf etiketi) ve kendi şablonların. Her tasarım şablon olarak kaydedilebilir; `{Ad Soyad}` gibi alanlar şablondan etiket açılırken bir formda sorulur
+- PDF etiketlerini özgün ölçüsünde aç (masaüstü): sayfa ve 203/300/600 dpi seç. Tek görsel olarak aktarılır; Kaydet yeni bir `.zebra` dosyası oluşturur, PDF korunur. `pip install ".[pdf]"` gerekir (`.[all]` içinde var).
 - ZebraDesigner 3 dosyaları (`.nlbl`, deneysel): aç ve ZebraDesigner için kaydet. Sabit metin, Code 128, QR, görsel, çizgi, kutu ve elips; yalnızca 300 dpi. `pip install ".[nlbl]"` gerekir
 - Açılan dosyalar denetlenir (boyut, biçim, gömülü görseller); bozuk ya da yabancı bir dosya açık bir mesaj verir
 - Türkçe ve İngilizce arayüz

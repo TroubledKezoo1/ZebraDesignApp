@@ -43,6 +43,7 @@ ZebraDesigner only runs on Windows, and most open-source label tools do not spea
 - Open existing `.zpl` files and edit them: text, `^FB` blocks, boxes, lines (also diagonal), ellipses, Code 128 / Code 39 / EAN-13 / UPC-A, QR codes and `^GFA` images become editable items; other commands are listed as skipped
 - Labels are plain files (`.zebra`, JSON inside): Save, Save as and Open use your system's file dialog, with a recent-files list; export the ZPL as a `.zpl` file
 - Template library: built-in templates (address, sender and recipient, product, shelf label) and your own. Save any design as a template; `{Name}`-style fields are asked for in a form when you start a label from it
+- Open PDF label pages at their original size (desktop): select a page and 203/300/600 dpi. Imported as a single image; Save writes a new `.zebra` file, preserving the PDF. Install with `pip install ".[pdf]"` (included in `.[all]`).
 - ZebraDesigner 3 files (`.nlbl`, experimental): open them and save for ZebraDesigner. Fixed text, Code 128, QR, image, line, box and ellipse; 300 dpi only. Needs `pip install ".[nlbl]"`
 - Files are checked when opened (size, format, embedded images), so a broken or foreign file gives a clear message
 - English and Turkish interface

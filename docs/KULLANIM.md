@@ -147,6 +147,10 @@ Etiketler `.zebra` uzantılı sıradan dosyalardır (içi JSON). Nerede duracakl
 
 **Aç** başka programların yazdığı `.zpl` dosyalarını da açar. ZPL hangi çözünürlük için yazıldığını söylemez, bu yüzden ZebraApp sorar (ve bir öneri getirir). Metinler, metin blokları, kutular, çizgiler, elipsler, barkodlar, QR kodlar ve resimler düzenlenebilir öğelere dönüşür; tanımadığı komutlar durum çubuğunda listelenir. Sonucu Ctrl+S ile `.zebra` dosyası olarak kaydet; asıl `.zpl` dosyası değişmez.
 
+**PDF etiketleri (masaüstü).** **Dosya → Aç → Bilgisayardan aç…** ya da **Ctrl+O** ile `.pdf` seç. Sayfa numarası ve yazıcının çözünürlüğünü seçip **Aç** de. Döndürme ve sayfa kırpma alanı dikkate alınır; örneğin 80 × 40 mm bir PDF aynı ölçüde açılır. Tasarım gömülü tek görseldir: QR, logo ve yazılar korunur, metinler ayrı ayrı düzenlenemez. Kaynak PDF değiştirilmez; **Kaydet** yeni `.zebra` dosyası ister, **ZebraDesigner için kaydet** 300 dpi'da `.nlbl` kopyası oluşturabilir. Açmak otomatik baskı başlatmaz.
+
+`pip install ".[pdf]"` gerekir (`.[all]` içinde var). En fazla 20 MB, 500 sayfa ve seçilen sayfa için 4 milyon piksel desteklenir. Büyük sayfalarda daha düşük dpi seç; boyut otomatik olarak takılı etikete küçültülmez. Parolalı PDF'ler açılmaz. Android'de PDF açma henüz yok; masaüstünden `.zebra` dosyasına dönüştür.
+
 **Şablonlar.** *Dosya → Yeni* hazır şablonları ve **Şablonlarım**'ı gösterir. **Şablon olarak kaydet** (Dosya menüsünde ya da Yeni sayfasındaki *Açık tasarımı şablon olarak kaydet*) açık tasarımı saklar; **Dosyadan şablon ekle…** `.zebra` dosyalarını, örneğin bir arkadaşının şablonunu, ekler. Alanları `{Ad Soyad}` ya da `{Telefon}` gibi yaz: şablondan etiket açarken bir form bunları sorar (sayaç, tarih, saat ve CSV sütunları sorulmaz). *Boş şablonu düzenle* alanları yerinde bırakarak açar. Her şablon kutucuğunda **Dışa aktar** ve **Sil** vardır.
 
 ![Şablonlar](templates-tr.png)

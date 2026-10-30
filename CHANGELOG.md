@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Desktop: open PDF label pages at their original size, choosing a page and printer resolution. Contents are imported as an embedded image; save as `.zebra` or export to `.nlbl` without overwriting the source PDF.
+
 ## 1.0.9
 
 - New colour theme: Slate.

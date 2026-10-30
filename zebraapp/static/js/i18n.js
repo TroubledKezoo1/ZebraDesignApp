@@ -5,6 +5,15 @@
   "use strict";
   var KEY = "zebraapp.lang";
   var EN = {
+    "PDF açmak için masaüstü ZebraApp kullan. Android'de önce .zebra dosyasına dönüştür.": "Open PDFs in desktop ZebraApp. On Android, first convert them to .zebra files.",
+    "PDF açılıyor…": "Opening PDF…",
+    "PDF dosyasını aç": "Open PDF file",
+    "Sayfa": "Page",
+    "PDF görsel olarak açıldı. Metinler ayrı ayrı düzenlenemez; Kaydet yeni bir .zebra dosyası oluşturur.": "PDF opened as an image. Text cannot be edited separately; Save creates a new .zebra file.",
+    "Bir sayfa seç. Sayfa ölçüsü ve görünümü korunur; yazdırmadan önce takılı etiketle eşleştiğini kontrol et.": "Choose a page. Its size and appearance are preserved; check that they match the loaded labels before printing.",
+    "PDF içeriği tek görsel olarak aktarılır. Orijinal PDF değiştirilmez.": "The PDF is imported as a single image. The original PDF is not modified.",
+    "Etiket dosyaları (.zebra, .zpl, .nlbl, .pdf)": "Label files (.zebra, .zpl, .nlbl, .pdf)",
+
     "Kelime kelime biçimli metin: içeriği etiketin üstünde düzenle (çift tıkla).": "Text with word formatting: edit it on the label (double-click).",
     "Kelime biçimlerini kaldır": "Remove word formatting",
     "Karakter aralığı": "Character spacing",

@@ -2,14 +2,14 @@
 # Build from the repository root:  pyinstaller packaging/zebraapp.spec
 import sys
 from pathlib import Path
-from PyInstaller.utils.hooks import collect_submodules, collect_data_files
+from PyInstaller.utils.hooks import collect_submodules, collect_data_files, collect_dynamic_libs
 
 ROOT = Path(SPECPATH).parent
 sys.path.insert(0, str(ROOT))
 from zebraapp import __version__  # noqa: E402
 
-hidden = ["zebraapp.nlbl", "zebraapp.fonts"]
-for mod in ("bleak", "serial", "pyzipper", "PIL"):
+hidden = ["zebraapp.nlbl", "zebraapp.fonts", "zebraapp.pdfimport"]
+for mod in ("bleak", "serial", "pyzipper", "PIL", "pypdfium2", "pypdfium2_raw"):
     try:
         hidden += collect_submodules(mod)
     except Exception:
@@ -23,11 +23,13 @@ if sys.platform == "win32":
             pass
 
 datas = [(str(ROOT / "zebraapp" / "static"), "zebraapp/static")]
+datas += collect_data_files("pypdfium2") + collect_data_files("pypdfium2_raw")
 
 a = Analysis(
     [str(ROOT / "packaging" / "launcher.py")],
     pathex=[str(ROOT)],
     datas=datas,
+    binaries=collect_dynamic_libs("pypdfium2_raw"),
     hiddenimports=hidden,
     excludes=["tkinter", "test", "unittest", "pydoc_data", "numpy"],
     noarchive=False,

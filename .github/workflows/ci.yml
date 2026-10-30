@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - run: python -m pip install ".[nlbl]"
+      - run: python -m pip install ".[nlbl,pdf]"
       - run: python packaging/run-tests.py
       - run: zebraapp --version
 
@@ -29,3 +29,4 @@ jobs:
           node-version: "20"
       - run: for f in zebraapp/static/js/*.js; do node --check "$f"; done
       - run: node tests/js/test_zpl.js
+      - run: node tests/js/test_pdfimport.js
