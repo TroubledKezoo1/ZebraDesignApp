@@ -122,7 +122,29 @@
       T("barcode", { x: 3, y: 17, h: 10, module: 2, data: "{" + __("Ürün Kodu") + "}", human: true }), tx(53, 31, 4, "{" + __("Fiyat") + "} TL", 24, true)];
     var d4 = blankDoc(); d4.name = __("Dosya ve raf etiketi"); d4.w = 80; d4.h = 30;
     d4.elements = [tx(3, 3, 5, "{" + __("Başlık") + "}", 74, true), T("line", { x: 3, y: 10, len: 74, t: 0.3 }), tx(3, 13, 3.5, "{" + __("Açıklama") + "}", 74), tx(3, 23, 3, "{" + __("Referans") + "}", 74)];
-    return [a, b, c, d1, d2, d3, d4];
+    var e1 = blankDoc(); e1.name = __("Kablo etiketi"); e1.w = 60; e1.h = 15;
+    e1.elements = [tx(2, 2, 4.5, "{" + __("Kablo No") + "}", 56, true), tx(2, 8.5, 3, __("Nereden: ") + "{" + __("Nereden") + "}  →  " + __("Nereye: ") + "{" + __("Nereye") + "}", 56)];
+    e1.job.csv = __("Kablo No;Nereden;Nereye\nK-001;Pano A;Motor 1\nK-002;Pano A;Motor 2\nK-003;Pano B;Sensör 4");
+    var e2 = blankDoc(); e2.name = __("Raf etiketi (büyük yazı + barkod)"); e2.w = 60; e2.h = 40;
+    e2.elements = [tx(3, 3, 11, "{" + __("Raf") + "}", 54, true), tx(3, 17, 3.5, "{" + __("Ürün Adı") + "}", 54),
+      T("barcode", { x: 3, y: 25, h: 10, module: e2.dpi >= 300 ? 3 : 2, data: "{" + __("Raf") + "}", human: true })];
+    e2.job.csv = __("Raf;Ürün Adı\nA-01-01;Vida M6\nA-01-02;Somun M6\nA-01-03;Pul M6");
+    var e3 = blankDoc(); e3.name = __("Fiyat etiketi"); e3.w = 50; e3.h = 30;
+    e3.elements = [tx(2, 2, 3.5, "{" + __("Ürün Adı") + "}", 46, true), T("line", { x: 2, y: 9, len: 46, t: 0.25 }),
+      tx(2, 11, 8, "{" + __("Fiyat") + "} TL", 46, true),
+      T("barcode", { x: 2, y: 22, h: 5, module: e3.dpi >= 300 ? 2 : 1, data: "{" + __("Barkod") + "}", human: false })];
+    e3.job.csv = __("Ürün Adı;Fiyat;Barkod\nZeytinyağı 1 L;249,90;8690000000011\nBal 450 g;189,50;8690000000028");
+    var e4 = blankDoc(); e4.name = __("Koli / palet etiketi"); e4.w = 100; e4.h = 100;
+    e4.elements = [T("box", { x: 0, y: 0, w: 100, h: 16, filled: true, name: __("Üst bant") }), T("text", { x: 4, y: 4, size: 8, bold: true, reverse: true, text: "{" + __("Ürün Adı") + "}" }),
+      tx(4, 22, 3.5, __("Parti No"), 60), tx(4, 27, 7, "{" + __("Parti") + "}", 60, true), tx(4, 40, 3.5, __("Adet"), 60), tx(4, 45, 7, "{" + __("Adet") + "}", 60, true),
+      T("qr", { x: 66, y: 22, mag: e4.dpi >= 300 ? 8 : 6, data: "{" + __("Parti") + "}" }),
+      T("barcode", { x: 8, y: 70, h: 18, module: e4.dpi >= 300 ? 4 : 3, data: "{" + __("Parti") + "}", human: true })];
+    e4.job.csv = __("Ürün Adı;Parti;Adet\nÖrnek Ürün;P-2026-0001;48\nÖrnek Ürün;P-2026-0002;36");
+    var e5 = blankDoc(); e5.name = __("Gıda / kavanoz etiketi"); e5.w = 60; e5.h = 40;
+    e5.elements = [T("box", { x: 1.5, y: 1.5, w: 57, h: 37, t: 0.4, round: 3, name: __("Çerçeve") }), tx(5, 4, 6, "{" + __("Ürün Adı") + "}", 50, true),
+      T("line", { x: 5, y: 13, len: 50, t: 0.25 }), tx(5, 16, 3.2, __("Üretim: ") + "{TARIH}", 50), tx(5, 21, 3.2, __("Son kullanma: ") + "{" + __("SKT") + "}", 50),
+      tx(5, 30, 3, __("Net: ") + "{" + __("Net Miktar") + "}", 50)];
+    return [a, b, c, d1, d2, d3, d4, e1, e2, e3, e4, e5];
   }
 
   /* ================= geri al ================= */
@@ -809,6 +831,24 @@
     if (content) { inp.addEventListener("focus", function () { lastContentField = { el: el, key: key, inp: inp }; }); inp.classList.add("content"); }
     return h("label", {}, [document.createTextNode(label), inp]);
   }
+  /* Kamerayla tara: okunan metin QR / barkod icerigine yazilir (barkod turu uygunsa ayarlanir) */
+  var SCAN_KIND = { EAN_13: "ean13", CODE_39: "code39" };
+  function scanButton(el) {
+    return h("button", { type: "button", class: "tb", text: __("Kamerayla tara"), onclick: function () {
+      if (!window.ZebraScan) return;
+      window.ZebraScan.open(function (res) {
+        var text = String(res.text || "");
+        if (el.type === "barcode") {
+          var kind = SCAN_KIND[res.format] || "code128";
+          if (kind === "ean13" && /^\d{13}$/.test(text)) text = text.slice(0, 12);
+          else if (kind === "ean13") kind = "code128";
+          setVal(el, "kind", kind);
+        }
+        setVal(el, "data", text); renderInspector(); schedule();
+        status(__("Okundu: ") + text + " (" + String(res.format).replace(/_/g, " ") + ")");
+      });
+    } });
+  }
   function fCheck(el, key, label, after) {
     var inp = h("input", { type: "checkbox" }); inp.checked = !!el[key]; inp.dataset.key = key;
     inp.addEventListener("change", function () { setVal(el, key, inp.checked); if (after) after(); });
@@ -961,6 +1001,7 @@
       });
     } else if (el.type === "qr") {
       add(fText(el, "data", __("QR içeriği"), true, true));
+      add(scanButton(el));
       add(varChips());
       var L = layouts[idx(el.id)];
       add(r("r2", [fNum(el, "mag", __("Modül boyutu"), "1", 1, 10, "1–10"), fSelect(el, "ec", __("Hata düzeltme"), [["L", __("L (%7)")], ["M", __("M (%15)")], ["Q", __("Q (%25)")], ["H", __("H (%30)")]])]));
@@ -968,6 +1009,7 @@
     } else if (el.type === "barcode") {
       add(fSelect(el, "kind", __("Barkod türü"), [["code128", __("Code 128 (harf + rakam)")], ["code39", "Code 39"], ["ean13", __("EAN-13 (12 rakam)")]], function () { renderInspector(); }));
       add(fText(el, "data", el.kind === "ean13" ? __("12 haneli numara (kontrol hanesi otomatik)") : __("Barkod içeriği"), false, true));
+      add(scanButton(el));
       add(varChips());
       add(r("r2", [fNum(el, "h", __("Çubuk yüksekliği"), "0.5", 1, 200, "mm"), fNum(el, "module", __("Çubuk kalınlığı"), "1", 1, 10, "nokta")]));
       if (el.kind === "code39") add(fNum(el, "ratio", __("Kalın/ince oranı"), "0.1", 2, 3));
@@ -1102,11 +1144,19 @@
     if (curBs === "print") drawPrintPreview();
   }
   $("pCsvFile").addEventListener("click", function () { $("fileCsv").click(); });
+  /* Excel'in "CSV" kaydi Turkce Windows'ta UTF-8 degil Windows-1254'tur: once UTF-8 dene, olmazsa 1254 */
+  function decodeCsv(buf) {
+    var bytes = new Uint8Array(buf), text;
+    try { text = new TextDecoder("utf-8", { fatal: true }).decode(bytes); }
+    catch (e) { try { text = new TextDecoder("windows-1254").decode(bytes); } catch (e2) { text = new TextDecoder("utf-8").decode(bytes); } }
+    return text.replace(/^\uFEFF/, "");
+  }
+  window.ZebraDecodeCsv = decodeCsv;
   $("fileCsv").addEventListener("change", function () {
     var f = this.files[0]; if (!f) return;
     var rd = new FileReader();
-    rd.onload = function () { checkpoint(true); doc.job.csv = String(rd.result); syncPrintTab(); schedule(); status(__("CSV yüklendi: ") + f.name); };
-    rd.readAsText(f, "utf-8"); this.value = "";
+    rd.onload = function () { checkpoint(true); doc.job.csv = decodeCsv(rd.result); syncPrintTab(); schedule(); status(__("CSV yüklendi: ") + f.name); };
+    rd.readAsArrayBuffer(f); this.value = "";
   });
   $("pCsvClear").addEventListener("click", function () { checkpoint(true); doc.job.csv = ""; syncPrintTab(); schedule(); });
 
@@ -1587,21 +1637,80 @@
   }
 
   function busy(btns, on) { btns.forEach(function (b) { if ($(b)) $(b).disabled = on; }); }
-  function send(zpl, what) {
+  /* son basilanlar: etiket isleri tarayicida (localStorage) tutulur; tek tikla yeniden basilir */
+  var PrintLog = (function () {
+    var KEY = "zebraapp.printlog", MAX = 20, MAXZPL = 200000, MAXALL = 2500000;
+    function read() { try { var l = JSON.parse(localStorage.getItem(KEY) || "[]"); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+    function write(l) {
+      while (l.length > 1 && JSON.stringify(l).length > MAXALL) l.pop();
+      try { localStorage.setItem(KEY, JSON.stringify(l)); } catch (e) { try { localStorage.setItem(KEY, JSON.stringify(l.slice(0, 3))); } catch (e2) { /* dolu ya da kapali */ } }
+    }
+    return {
+      list: read,
+      add: function (name, n, printer, zpl) {
+        var l = read().filter(function (x) { return !(x.zpl && x.zpl === zpl); });
+        l.unshift({ t: Date.now(), name: name || "", n: n, printer: printer || "", zpl: zpl.length <= MAXZPL ? zpl : "" });
+        write(l.slice(0, MAX));
+      },
+      clear: function () { try { localStorage.removeItem(KEY); } catch (e) { /* yok say */ } }
+    };
+  })();
+  function activePrinterName() { var p = (settings.printers || []).filter(function (x) { return x.id === settings.active; })[0]; return p ? p.name : ""; }
+  function send(zpl, what, log) {
     busy(["pPrint", "printTop"], true);
     status((what || __("Gönderiliyor")) + "…");
     return api("/api/print_raw", { data: zpl })
-      .then(function (j) { status(j.message || (j.ok ? __("Gönderildi.") : __("Hata")), !j.ok); refreshState(); return j; })
+      .then(function (j) {
+        status(j.message || (j.ok ? __("Gönderildi.") : __("Hata")), !j.ok);
+        if (j.ok && log) { PrintLog.add(log.name, log.n, activePrinterName(), zpl); if (curBs === "home") renderPrinted(); }
+        refreshState(); return j;
+      })
       .catch(function (e) { status(__("Uygulama sunucusuna ulaşılamadı: ") + e, true); })
       .then(function (j) { busy(["pPrint", "printTop"], false); return j; });
   }
   function printJob() {
     var j = jobForRecords(), n = Z.records(j).length * Math.max(1, +doc.job.copies || 1);
     if (n > 50 && !confirm(n + __(" etiket basılacak. Emin misin?"))) return;
-    buildJobZPL().then(function (z) { send(z, n + __(" etiket gönderiliyor")); });
+    buildJobZPL().then(function (z) { send(z, n + __(" etiket gönderiliyor"), { name: doc.name, n: n }); });
   }
   $("pPrint").addEventListener("click", printJob);
   $("printTop").addEventListener("click", printJob);
+  /* yazici durum paneli: ~HS cevabini renkli satirlara cevirir, acikken 6 sn'de bir yeniler */
+  function openStatusPanel() {
+    var list = h("ul", { class: "stlist", role: "status" }), note = h("p", { class: "note" }), timer = null, busyNow = false, alive = true;
+    var rows = [
+      ["paper_out", __("Kâğıt / etiket"), __("Bitti — rulo takın ya da kâğıdı yeniden yerleştirin")],
+      ["ribbon_out", __("Ribon"), __("Bitti — yeni ribon takın (ısıl baskıda gerekmez)")],
+      ["head_open", __("Kafa kapağı"), __("Açık — kapağı kapatın")],
+      ["paused", __("Yazıcı"), __("Duraklatılmış — duraklat/devam tuşuna basın")],
+      ["buffer_full", __("Tampon"), __("Dolu — birazdan tekrar deneyin")],
+      ["temp", __("Kafa sıcaklığı"), ""]
+    ];
+    function draw(f) {
+      list.innerHTML = ""; var bad = 0;
+      f = Object.assign({}, f, { temp: !!(f.over_temp || f.under_temp) });
+      rows[rows.length - 1][2] = f.over_temp ? __("Çok sıcak — soğumasını bekleyin") : __("Çok soğuk — ortam ısınsın");
+      rows.forEach(function (r) {
+        var on = !!f[r[0]]; if (on) bad++;
+        list.appendChild(h("li", { class: on ? "bad" : "ok" }, [h("b", { text: on ? "⚠" : "✓" }), h("span", { text: r[1] }), h("small", { text: on ? r[2] : __("Tamam") })]));
+      });
+      note.className = "note"; note.textContent = bad ? __("Sorun var: önce yukarıdaki uyarıları giderin.") : __("Yazıcı hazır.");
+    }
+    function load() {
+      if (busyNow || !alive || $("modal").hidden) { if ($("modal").hidden) stop(); return; }
+      busyNow = true; note.textContent = __("Soruluyor…");
+      api("/api/status", {}).then(function (j) {
+        if (j.ok) draw(j.flags); else { list.innerHTML = ""; note.className = "note err"; note.textContent = j.message; }
+      }).catch(function (e) { note.className = "note err"; note.textContent = String(e); }).then(function () { busyNow = false; });
+    }
+    function stop() { alive = false; if (timer) clearInterval(timer); }
+    openModal(__("Yazıcı durumu"), [list, note, h("div", { class: "row wrap" }, [
+      h("button", { type: "button", class: "tb primary", text: __("Yenile"), onclick: load }),
+      h("button", { type: "button", class: "tb", text: __("Yazıcı ayarları"), onclick: function () { stop(); closeModal(); openPrinters(); } })])]);
+    load(); timer = setInterval(load, 6000);
+    $("mClose").addEventListener("click", stop, { once: true });
+  }
+  $("pStatus").addEventListener("click", openStatusPanel);
   $("pCal").addEventListener("click", function () { send("~JC", __("Kalibrasyon")); });
   $("pFeed").addEventListener("click", function () { send("^XA^XZ", __("Boş etiket")); });
   $("pCfg").addEventListener("click", function () { send("~WC", __("Ayar etiketi")); });
@@ -2623,6 +2732,21 @@
       .then(function () { inp.value = ""; });
   });
   var PRESETS = [[80, 40], [100, 50], [100, 150], [100, 100], [58, 40], [50, 30], [40, 30], [50, 25]];
+  function renderPrinted() {
+    var box = $("homePrinted"); if (!box) return; box.innerHTML = "";
+    var items = PrintLog.list();
+    if (!items.length) { box.appendChild(h("div", { class: "empty", text: __("Henüz yazdırma yok. Bastığın etiketler burada görünür; tek tıkla yeniden basılır.") })); return; }
+    items.slice(0, 8).forEach(function (it) {
+      var meta = new Date(it.t).toLocaleString() + " · " + it.n + " " + __("etiket") + (it.printer ? " · " + it.printer : "");
+      var row = h("div", { class: "rrowi plog", html: '<svg><use href="#i-print"/></svg>' }, [h("b", { text: it.name || __("Adsız") }), h("small", { text: meta })]);
+      row.appendChild(it.zpl ? h("button", { type: "button", class: "tb", text: __("Tekrar bas"), onclick: function () {
+        if (!confirm(it.n + " " + __("etiket yeniden basılsın mı?"))) return;
+        send(it.zpl, it.n + __(" etiket gönderiliyor"), { name: it.name, n: it.n });
+      } }) : h("span", { class: "note", text: __("çok büyük, saklanmadı") }));
+      box.appendChild(row);
+    });
+    box.appendChild(h("button", { type: "button", class: "tb", text: __("Listeyi temizle"), onclick: function () { PrintLog.clear(); renderPrinted(); } }));
+  }
   function renderHome() {
     var hr = new Date().getHours();
     $("bsGreet").textContent = hr < 5 ? __("İyi geceler") : hr < 12 ? __("Günaydın") : hr < 18 ? __("İyi günler") : __("İyi akşamlar");
@@ -2631,6 +2755,7 @@
     samples().slice(0, 3).forEach(function (t) { box.appendChild(tile(t.name, t.w + " × " + t.h + " mm", paintDoc(t, 120, 104), function () { newFromTemplate(t); })); });
     myTemplates.slice(-3).forEach(function (t) { box.appendChild(tile(t.name, __("Şablonlarım"), thumb(t), function () { useTemplate(t); })); });
     box.appendChild(tile(__("Diğer şablonlar…"), __("Hazır boyutlar, şablonlar, şablonlarım"), paper(60, 60, true), function () { showBs("new"); }));
+    renderPrinted();
     var rb = $("homeRecent"); rb.innerHTML = "";
     if (!haveFS) { rb.appendChild(h("div", { class: "empty", text: __("Bu tarayıcı son kullanılan dosyaları hatırlayamıyor. Chrome ya da Edge kullan.") })); return; }
     Recent.list().then(function (items) {

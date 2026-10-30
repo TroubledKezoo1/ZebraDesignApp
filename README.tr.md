@@ -39,14 +39,16 @@ ZebraDesigner yalnızca Windows'ta çalışıyor, açık kaynak etiket programla
 - Etiket başına yazıcı ayarları: ortam türü (boşluklu, sürekli, siyah işaretli), koyuluk, hız, 180° çevirme, kaydırma
 - Model ve çözünürlüğüyle birden çok yazıcı; etiket yazıcıya uymazsa uyarı
 - [Labelary](https://labelary.com) ile yazıcı önizlemesi (internet gerekir), elle düzenlenip gönderilebilen ZPL görünümü
-- Kalibrasyon, boş etiket ilerletme, ayar etiketi basma, yazıcı durumunu okuma (kâğıt bitti, kapak açık, duraklatıldı…)
+- Kalibrasyon, boş etiket ilerletme, ayar etiketi basma ve yazıcı durum paneli (kâğıt, ribon, kapak, duraklatma, sıcaklık)
+- Giriş ekranında son basılanlar; tek tıkla yeniden bas
+- Barkod ya da QR kodu kamerayla (ya da fotoğraftan) okuyup doğrudan etiket alanına yaz
 - Hazır `.zpl` dosyalarını açıp düzenleme: metin, `^FB` blokları, kutu, çizgi (çapraz dahil), elips, Code 128 / Code 39 / EAN-13 / UPC-A, QR kod ve `^GFA` resimleri düzenlenebilir öğelere dönüşür; diğer komutlar atlandı diye listelenir
 - Etiketler düz dosyadır (`.zebra`, içi JSON): Kaydet, Farklı kaydet ve Aç sistemin dosya penceresini kullanır, son kullanılanlar listelenir; ZPL `.zpl` dosyası olarak dışa aktarılır
-- Şablon kitaplığı: hazır şablonlar (adres, gönderici ve alıcı, ürün, raf etiketi) ve kendi şablonların. Her tasarım şablon olarak kaydedilebilir; `{Ad Soyad}` gibi alanlar şablondan etiket açılırken bir formda sorulur
+- Şablon kitaplığı: hazır şablonlar (adres, gönderici ve alıcı, ürün, raf, fiyat, kablo, koli/palet, gıda/kavanoz etiketi) ve kendi şablonların. Her tasarım şablon olarak kaydedilebilir; `{Ad Soyad}` gibi alanlar şablondan etiket açılırken bir formda sorulur
 - PDF etiketlerini özgün ölçüsünde aç (masaüstü): sayfa ve 203/300/600 dpi seç. Tek görsel olarak aktarılır; Kaydet yeni bir `.zebra` dosyası oluşturur, PDF korunur. `pip install ".[pdf]"` gerekir (`.[all]` içinde var).
 - ZebraDesigner 3 dosyaları (`.nlbl`, deneysel): aç ve ZebraDesigner için kaydet. Sabit metin, Code 128, QR, görsel, çizgi, kutu ve elips; yalnızca 300 dpi. `pip install ".[nlbl]"` gerekir
 - Açılan dosyalar denetlenir (boyut, biçim, gömülü görseller); bozuk ya da yabancı bir dosya açık bir mesaj verir
-- Türkçe ve İngilizce arayüz
+- Otomatik, açık ya da koyu görünüm ve altı vurgu rengi; Türkçe ve İngilizce arayüz
 
 ## Desteklenen bağlantılar
 
@@ -83,7 +85,7 @@ Başka bir şey kurman gerekmez. Uygulamalar imzasız olduğu için ilk açılı
 - **macOS:** ZebraApp'i Uygulamalar'a sürükle, ilk açılışta sağ tık → *Aç* (ya da Sistem Ayarları → Gizlilik ve Güvenlik → *Yine de Aç*).
 - **Linux:** çalıştırma izni ver (`chmod +x ZebraApp-*.AppImage`) ve çift tıkla. Açılmazsa: `sudo apt install libfuse2` (Ubuntu 24.04'te `libfuse2t64`).
 
-Editör Chrome ya da Edge'de pencere olarak, yoksa varsayılan tarayıcıda açılır.
+Editör Chrome ya da Edge'de pencere olarak, yoksa varsayılan tarayıcıda açılır. Linux AppImage ve Windows `.exe` kendini güncelleyebilir: yeni sürüm çıkınca çubukta **Şimdi güncelle** yazar, indirir, SHA-256'yı doğrular ve yeniden başlatır (eski dosya yanında `.old` olarak kalır). macOS ve `.deb`/pip kurulumlarında indirme bağlantısı gösterilir.
 
 **Android:** `.apk` dosyasını telefonun tarayıcısında indir ve dokunarak kur (Android, o tarayıcıdan kuruluma bir kere izin ister). Uygulama Bluetooth LE ile yazdırır, etiketlerin telefonda kalır. Her açılışta GitHub'a bakar, yeni sürüm varsa **Güncelle** çubuğu çıkar (Seçenekler → *Güncellemeleri denetle* elle yapar). Ağ, USB ve seri port yazdırma ile `.nlbl` dosyaları yalnızca masaüstünde var.
 

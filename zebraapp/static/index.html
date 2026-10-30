@@ -361,7 +361,7 @@
           <button class="rsm" id="pCsvClear" title="Listeyi temizle"><svg><use href="#i-clear"/></svg><span>Temizle</span></button>
           <span class="rnote" id="pCsvInfo"></span>
         </div>
-        <input type="file" id="fileCsv" accept=".csv,.txt,text/csv" hidden>
+        <input type="file" id="fileCsv" accept=".csv,.tsv,.txt,text/csv,text/plain,text/comma-separated-values,text/tab-separated-values,application/vnd.ms-excel" hidden>
       </div>
       <div class="rgl">Veri listesi (CSV)</div>
     </div>
@@ -500,6 +500,8 @@
       <h1 id="bsGreet">Merhaba</h1>
       <h2>Yeni</h2>
       <div class="tiles" id="homeTiles"></div>
+      <h2>Son basılanlar</h2>
+      <div class="recent" id="homePrinted"></div>
       <h2>Son kullanılanlar</h2>
       <div class="recent" id="homeRecent"></div>
     </div>
@@ -545,6 +547,7 @@
           <p class="note">Sayaç ve CSV listesi şeritteki Veri sekmesinde.</p>
           <h2>Yazıcı araçları</h2>
           <div class="row wrap">
+            <button class="tb" id="pStatus"><svg><use href="#i-info"/></svg> Yazıcı durumu</button>
             <button class="tb" id="pCal"><svg><use href="#i-cal"/></svg> Kalibre et</button>
             <button class="tb" id="pFeed"><svg><use href="#i-feed"/></svg> Boş etiket ilerlet</button>
             <button class="tb" id="pCfg"><svg><use href="#i-info"/></svg> Ayar etiketi bas</button>
@@ -595,6 +598,8 @@
 <script src="/static/js/models.js"></script>
 <script src="/static/vendor/qrcode.js"></script>
 <script src="/static/vendor/qrcode_UTF8.js"></script>
+<script src="/static/vendor/zxing.min.js"></script>
+<script src="/static/js/scan.js"></script>
 <script src="/static/js/barcodes.js"></script>
 <script src="/static/js/zpl.js"></script>
 <script src="/static/js/zplimport.js"></script>

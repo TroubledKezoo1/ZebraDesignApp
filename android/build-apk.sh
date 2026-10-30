@@ -33,6 +33,9 @@ s = open(p, encoding="utf-8").read()
 perm = '<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />'
 if perm not in s:
     s = s.replace("</manifest>", "    " + perm + "\n</manifest>")
+cam = '<uses-permission android:name="android.permission.CAMERA" />'
+if cam not in s:   # barcode / QR scanning; the camera is optional (the feature has a photo fallback)
+    s = s.replace("</manifest>", "    " + cam + '\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n</manifest>')
 filt = """
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

@@ -25,9 +25,17 @@
     var t = THEMES[name], el = document.getElementById("zTheme");
     if (!t || !t.l) { if (el) el.remove(); return; }
     if (!el) { el = document.createElement("style"); el.id = "zTheme"; (document.head || document.documentElement).appendChild(el); }
-    el.textContent = ":root{" + t.l + "}@media (prefers-color-scheme: dark){:root{" + t.d + "}}";
+    el.textContent = ":root{" + t.l + "}@media (prefers-color-scheme: dark){:root:not([data-theme=\"light\"]){" + t.d + "}}:root[data-theme=\"dark\"]{" + t.d + "}";
   }
   applyTheme(get(KEY) || "green");
+
+  /* light / dark / follow the system */
+  var MODE = "zebraapp.mode";
+  function applyMode(m) {
+    var root = document.documentElement;
+    if (m === "light" || m === "dark") root.setAttribute("data-theme", m); else root.removeAttribute("data-theme");
+  }
+  applyMode(get(MODE));
 
   /* ---------- what's new ---------- */
   function notesFor(version) {
@@ -74,12 +82,52 @@
       return b;
     }
     var go = r.url || r.page;
-    bar.append(t,
-      btn(r.url ? L("İndir", "Download") : L("Sürüm sayfası", "Release page"), function () { window.open(go, "_blank", "noopener"); }, true),
+    if (r.self_update) bar.append(t, btn(L("Şimdi güncelle", "Update now"), function () { installUpdate(bar, t, r); }, true));
+    else bar.append(t);
+    bar.append(
+      btn(r.url ? L("İndir", "Download") : L("Sürüm sayfası", "Release page"), function () { window.open(go, "_blank", "noopener"); }, !r.self_update),
       btn(L("Sonra", "Later"), function () { bar.remove(); }),
       btn(L("Atla", "Skip"), function () { set(SKIP, r.latest); bar.remove(); }));
     if (!r.frozen) { var hint = document.createElement("small"); hint.style.cssText = "flex:1 0 100%;opacity:.9"; hint.textContent = L("Kaynaktan ya da pip ile kurduysan: pip install -U zebraapp", "Installed from source or pip? Run: pip install -U zebraapp"); bar.appendChild(hint); }
     document.body.appendChild(bar);
+  }
+  var UPD_ERR = {
+    busy: ["Bir güncelleme zaten sürüyor.", "An update is already running."],
+    unsupported: ["Bu kurulumda otomatik güncelleme yok.", "Automatic update is not available for this install."],
+    source: ["İndirme adresi güvenilir değil, durduruldu.", "The download address is not trusted; stopped."],
+    nosum: ["Sürümün doğrulama dosyası bulunamadı, kurulmadı.", "The release has no checksum for this file; not installed."],
+    sha: ["İndirilen dosya doğrulanamadı (SHA-256), kurulmadı.", "The downloaded file failed its SHA-256 check; not installed."],
+    net: ["İndirme sırasında bağlantı koptu.", "The connection dropped while downloading."],
+    write: ["Dosya yazılamadı (klasör izni?).", "Could not write the file (folder permission?)."],
+    restart: ["Yeni sürüm kendiliğinden açılmadı; uygulamayı elle başlat.", "The new version did not open by itself; start the app again."]
+  };
+  function installUpdate(bar, t, r) {
+    var btns = bar.querySelectorAll("button");
+    function lock(on) { for (var i = 0; i < btns.length; i++) btns[i].disabled = on; }
+    function fail(code) {
+      lock(false); var m = UPD_ERR[code] || ["Güncellenemedi.", "The update failed."];
+      t.textContent = L(m[0], m[1]) + " " + L("İndirme düğmesini kullanabilirsin.", "You can use the download button instead.");
+    }
+    function waitForNew() {
+      t.textContent = L("Yeniden başlatılıyor…", "Restarting…");
+      var n = 0;
+      (function tick() {
+        fetch("/api/settings").then(function (x) { return x.json(); }).then(function (s) { if (s.version === r.latest) location.reload(); else again(); }).catch(again);
+        function again() { if (++n > 90) fail("restart"); else setTimeout(tick, 1000); }
+      })();
+    }
+    function poll() {
+      fetch("/api/update/progress").then(function (x) { return x.json(); }).then(function (p) {
+        if (p.state === "error") return fail(p.code);
+        if (p.state === "restarting") return waitForNew();
+        if (p.state === "downloading") t.textContent = L("İndiriliyor… ", "Downloading… ") + (p.total ? Math.round(p.done * 100 / p.total) + " %" : Math.round(p.done / 1048576) + " MB");
+        else if (p.state === "verifying") t.textContent = L("Doğrulanıyor (SHA-256)…", "Verifying (SHA-256)…");
+        else if (p.state === "installing") t.textContent = L("Kuruluyor…", "Installing…");
+        setTimeout(poll, 500);
+      }).catch(waitForNew);
+    }
+    lock(true); t.textContent = L("Güncelleme başlıyor…", "Starting the update…");
+    jpost("/api/update/install", {}).then(function (j) { if (j && j.ok) poll(); else fail(j && j.code); }).catch(function () { fail("net"); });
   }
   function autoCheckUpdate() {
     if (isAndroid() || get(AUTO) === "0") return;
@@ -162,6 +210,16 @@
       chips.appendChild(b);
     });
 
+    var hm = document.createElement("h2"); hm.textContent = L("Görünüm", "Appearance");
+    var modes = document.createElement("div"); modes.style.cssText = "display:flex;gap:8px;flex-wrap:wrap";
+    var curMode = get(MODE) === "light" || get(MODE) === "dark" ? get(MODE) : "auto";
+    [["auto", "Otomatik (sistem)", "Automatic (system)"], ["light", "Açık", "Light"], ["dark", "Koyu", "Dark"]].forEach(function (m) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "tb" + (m[0] === curMode ? " primary" : "");
+      b.textContent = L(m[1], m[2]); b.setAttribute("aria-pressed", String(m[0] === curMode));
+      b.onclick = function () { set(MODE, m[0]); applyMode(m[0]); build(); };
+      modes.appendChild(b);
+    });
+
     var h2 = document.createElement("h2"); h2.textContent = L("Yedek", "Backup");
     var note = document.createElement("p"); note.className = "note"; note.style.margin = "0";
     note.textContent = L("Kayıtlı etiketlerini ve şablonlarını tek dosyaya yedekle; başka bir telefona ya da bilgisayara yükle.", "Save your stored labels and templates in one file; restore it on another phone or computer.");
@@ -178,7 +236,7 @@
     var b3 = document.createElement("button"); b3.type = "button"; b3.className = "tb"; b3.textContent = L("Bu sürümde neler var?", "What's in this version?");
     b3.onclick = function () { currentVersion().then(function (v) { notesFor(v).then(function (n) { if (n) showNews(v, n); }); }); };
 
-    box.append(h1, chips, h2, note, row, msg, h3, b3);
+    box.append(hm, modes, h1, chips, h2, note, row, msg, h3, b3);
     if (!isAndroid()) updateSection(box);
     var anchor = page.querySelector(".optgrid");
     if (anchor && anchor.nextSibling) page.insertBefore(box, anchor.nextSibling); else page.appendChild(box);

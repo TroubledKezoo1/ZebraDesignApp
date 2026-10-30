@@ -39,14 +39,16 @@ ZebraDesigner only runs on Windows, and most open-source label tools do not spea
 - Printer settings per label: media type (gap, continuous, black mark), darkness, speed, 180° rotation, offsets
 - Several printers with models and resolutions; warnings when the label does not match the printer
 - Printer preview through [Labelary](https://labelary.com) (needs internet), and a ZPL view where you can edit and send code by hand
-- Calibrate, feed one label, print the configuration label, read printer status (paper out, head open, paused…)
+- Calibrate, feed one label, print the configuration label, and a printer status panel (paper, ribbon, cover, pause, temperature)
+- Recently printed jobs on the Home screen, printed again with one click
+- Scan a barcode or QR code with the camera (or from a photo) straight into a label field
 - Open existing `.zpl` files and edit them: text, `^FB` blocks, boxes, lines (also diagonal), ellipses, Code 128 / Code 39 / EAN-13 / UPC-A, QR codes and `^GFA` images become editable items; other commands are listed as skipped
 - Labels are plain files (`.zebra`, JSON inside): Save, Save as and Open use your system's file dialog, with a recent-files list; export the ZPL as a `.zpl` file
-- Template library: built-in templates (address, sender and recipient, product, shelf label) and your own. Save any design as a template; `{Name}`-style fields are asked for in a form when you start a label from it
+- Template library: built-in templates (address, sender and recipient, product, shelf, price, cable, carton/pallet, food/jar label) and your own. Save any design as a template; `{Name}`-style fields are asked for in a form when you start a label from it
 - Open PDF label pages at their original size (desktop): select a page and 203/300/600 dpi. Imported as a single image; Save writes a new `.zebra` file, preserving the PDF. Install with `pip install ".[pdf]"` (included in `.[all]`).
 - ZebraDesigner 3 files (`.nlbl`, experimental): open them and save for ZebraDesigner. Fixed text, Code 128, QR, image, line, box and ellipse; 300 dpi only. Needs `pip install ".[nlbl]"`
 - Files are checked when opened (size, format, embedded images), so a broken or foreign file gives a clear message
-- English and Turkish interface
+- Automatic, light or dark appearance and six accent colours; English and Turkish interface
 
 ## Supported connections
 
@@ -83,7 +85,7 @@ Nothing else needs to be installed. The apps are not signed, so the first start 
 - **macOS:** drag ZebraApp to Applications, then right-click → *Open* the first time (or System Settings → Privacy & Security → *Open Anyway*).
 - **Linux:** allow executing (`chmod +x ZebraApp-*.AppImage`) and double-click. If it does not start: `sudo apt install libfuse2` (`libfuse2t64` on Ubuntu 24.04).
 
-The editor opens as a window in Chrome or Edge, or in your default browser.
+The editor opens as a window in Chrome or Edge, or in your default browser. The Linux AppImage and the Windows `.exe` can update themselves: when a new release is out, the bar says **Update now**, downloads it, checks the SHA-256 and restarts (the old file stays next to it as `.old`). macOS and the `.deb`/pip installs show a download link instead.
 
 **Android:** download the `.apk` in your phone's browser and tap it to install (Android asks once to allow installing from that browser). The app prints over Bluetooth LE and keeps your labels on the phone. It checks GitHub every time you open it and shows an **Update** bar when a newer release is out (Options → *Check for updates* does it by hand). Network, USB and serial printing and `.nlbl` files are desktop-only.
 

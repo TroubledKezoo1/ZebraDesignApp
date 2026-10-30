@@ -48,5 +48,25 @@
     "en": [
       "Desktop: the app now tells you when a new version is out; Options > Updates lets you check by hand or turn it off."
     ]
+  },
+  "1.0.12": {
+    "tr": [
+      "Masaüstü: güncelleme çubuğundaki “Şimdi güncelle” yeni sürümü indirir, SHA-256 ile doğrular, değiştirir ve uygulamayı yeniden açar (Linux AppImage ve Windows .exe; macOS'ta indirme bağlantısı).",
+      "Seçenekler > Görünüm: otomatik, açık ya da koyu tema.",
+      "Beş yeni hazır şablon: kablo, raf, fiyat, koli/palet, gıda/kavanoz.",
+      "Giriş ekranında “Son basılanlar”: bastığın etiketi tek tıkla yeniden bas.",
+      "QR ve barkod için “Kamerayla tara”: okunan metin etikete yazılır (kamera yoksa fotoğraftan).",
+      "Yazıcı durumu paneli: kâğıt, ribon, kapak, duraklatma ve sıcaklık tek bakışta.",
+      "CSV listesi artık Türkçe Excel'in Windows-1254 kaydını da doğru okuyor."
+    ],
+    "en": [
+      "Desktop: “Update now” in the update bar downloads the new version, checks its SHA-256, replaces the app and reopens it (Linux AppImage and Windows .exe; macOS keeps the download link).",
+      "Options > Appearance: automatic, light or dark theme.",
+      "Five new ready-made templates: cable, shelf, price, carton/pallet, food/jar.",
+      "“Recently printed” on the Home screen: print a label again with one click.",
+      "“Scan with camera” for QR codes and barcodes: the text is written into the label (from a photo if there is no camera).",
+      "Printer status panel: paper, ribbon, cover, pause and temperature at a glance.",
+      "CSV lists now also read the Windows-1254 files saved by Turkish Excel."
+    ]
   }
 }

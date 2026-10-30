@@ -78,3 +78,12 @@
   .printwrap { grid-template-columns: 1fr; }
   .optgrid, .customsize { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 760px) { .stlist li { grid-template-columns: 22px minmax(0, 1fr); } .stlist li small { grid-column: 2; } }
+@media (max-width: 760px) {
+  .recent .rrowi.plog { grid-template-columns: 26px minmax(0, 1fr) auto; row-gap: 2px; }
+  .recent .rrowi.plog svg { grid-row: 1 / span 2; }
+  .recent .rrowi.plog b { grid-column: 2; grid-row: 1; }
+  .recent .rrowi.plog small { grid-column: 2; grid-row: 2; }
+  .recent .rrowi.plog > .tb, .recent .rrowi.plog > .note { grid-column: 3; grid-row: 1 / span 2; }
+}

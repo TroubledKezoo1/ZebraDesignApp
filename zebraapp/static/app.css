@@ -16,12 +16,18 @@
   --tbH: 40px;
   color-scheme: light;
 }
+/* Appearance: follows the system, or is forced with data-theme="light" / "dark" on <html> (Options > Appearance). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #121615; --chrome: #1a201e; --panel: #1f2624; --fg: #e4eae7; --muted: #94a19c; --line: #323c39;
     --accent: #45bfa6; --accent-fg: #06201a; --accent-soft: #1d3a34; --accent-dk: #2f8f7b; --danger: #ff8a80; --sel: #5aa2ff; --guide: #ff5fa8;
     --desk: #0d100f; --hover: #263030; color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+    --bg: #121615; --chrome: #1a201e; --panel: #1f2624; --fg: #e4eae7; --muted: #94a19c; --line: #323c39;
+    --accent: #45bfa6; --accent-fg: #06201a; --accent-soft: #1d3a34; --accent-dk: #2f8f7b; --danger: #ff8a80; --sel: #5aa2ff; --guide: #ff5fa8;
+    --desk: #0d100f; --hover: #263030; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
@@ -241,6 +247,8 @@ code { font-family: var(--mono); font-size: 11.5px; background: var(--accent-sof
 .recent .rrowi svg { color: var(--accent); }
 .recent .rrowi b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .recent .rrowi small { color: var(--muted); }
+.recent .rrowi.plog { cursor: default; }
+.recent .rrowi.plog:hover { background: transparent; }
 .recent .empty { color: var(--muted); padding: 8px 10px; }
 .customsize { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
 .customsize label { width: 130px; }
@@ -306,3 +314,11 @@ code { font-family: var(--mono); font-size: 11.5px; background: var(--accent-sof
 .tplbar { margin-bottom: 12px; }
 .tplform { display: grid; gap: 12px; min-width: min(460px, 80vw); }
 #mBody .tplform textarea { min-height: 70px; height: 76px; font-family: inherit; font-size: inherit; white-space: pre-wrap; }
+
+/* printer status panel */
+.stlist { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
+.stlist li { display: grid; grid-template-columns: 24px 120px minmax(0, 1fr); gap: 8px; align-items: center; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); }
+.stlist li.ok b { color: var(--accent); }
+.stlist li.bad { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, var(--panel)); }
+.stlist li.bad b, .stlist li.bad small { color: var(--danger); }
+.stlist small { color: var(--muted); }

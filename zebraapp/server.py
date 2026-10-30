@@ -178,6 +178,9 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/update":
             from . import updates
             self._json(updates.check(force="force=1" in self.path))
+        elif path == "/api/update/progress":
+            from . import updates
+            self._json(dict(updates.progress))
         elif path == "/api/ping":
             global last_ping
             last_ping = time.time()
@@ -219,6 +222,9 @@ class Handler(BaseHTTPRequestHandler):
                 from .nlbl import export_label
                 raw, warnings = export_label(data.get("label") or {})
                 self._json({"ok": True, "data": base64.b64encode(raw).decode("ascii"), "warnings": warnings})
+            elif path == "/api/update/install":
+                from . import updates
+                self._json(updates.start_install())
             elif path == "/api/templates":
                 store.save_templates(data)
                 self._json({"ok": True})
@@ -317,11 +323,12 @@ def _already_running(port):
 
 
 def main(argv=None):
-    global store, PORT
+    global store, PORT, last_ping
     ap = argparse.ArgumentParser(prog="zebraapp", description="ZPL label designer for Zebra printers")
     ap.add_argument("--port", type=int, default=int(os.environ.get("ZEBRAAPP_PORT", "8765")))
     ap.add_argument("--data-dir", help="folder for settings and saved labels")
     ap.add_argument("--no-browser", action="store_true", help="do not open a window; keep running until Ctrl+C")
+    ap.add_argument("--reuse-window", action="store_true", help=argparse.SUPPRESS)   # restart after an update
     ap.add_argument("--version", action="version", version="%(prog)s " + __version__)
     args = ap.parse_args(argv)
     if args.data_dir:
@@ -329,6 +336,11 @@ def main(argv=None):
     store = Store()
     PORT = args.port
     url = "http://localhost:%d" % PORT
+    if args.reuse_window:                       # the old copy is still shutting down: wait for its port
+        for _ in range(40):
+            if not _already_running(PORT):
+                break
+            time.sleep(0.5)
     if _already_running(PORT):
         print("ZebraApp is already running:", url)
         if not args.no_browser:
@@ -347,7 +359,10 @@ def main(argv=None):
     url = "http://localhost:%d" % PORT
     print("ZebraApp %s  %s   (data: %s)" % (__version__, url, store.base))
     if not args.no_browser:
-        threading.Timer(0.5, lambda: open_window(url)).start()
+        if args.reuse_window:                   # the window from before the update reloads itself; no second one
+            last_ping = time.time()
+        else:
+            threading.Timer(0.5, lambda: open_window(url)).start()
         threading.Thread(target=watchdog, daemon=True).start()
     try:
         srv.serve_forever()

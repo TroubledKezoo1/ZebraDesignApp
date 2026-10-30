@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.12
+
+- Desktop: "Update now" in the update bar downloads the release, checks it against `SHA256SUMS.txt`, replaces the app (the old file stays next to it as `.old`) and restarts. Works for the Linux AppImage and the Windows `.exe` when the folder is writable; macOS, `.deb`, pip and source installs keep the download link. Only `github.com/TroubledKezoo1/ZebraDesignApp/releases/download/` is accepted as a source.
+- New: Options > Appearance (automatic, light, dark).
+- New: five templates (cable, shelf, price, carton/pallet, food/jar).
+- New: "Recently printed" on Home, with one-click reprint (kept in the browser, 20 jobs).
+- New: "Scan with camera" for QR and barcode fields (ZXing, offline; photo fallback). Android asks for the camera permission.
+- New: printer status panel (`~HS`): paper, ribbon, cover, pause, buffer, temperature.
+- Fix: CSV files saved by Turkish Excel (Windows-1254) are read correctly; UTF-8 with BOM too.
+
 ## 1.0.11
 
 - Desktop: the app tells you when a newer release exists (a bar with a download link for your system) and Options has a "Check for updates" button and an off switch. One anonymous request to GitHub; nothing is sent about you.
