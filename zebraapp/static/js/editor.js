@@ -1152,17 +1152,21 @@
     return text.replace(/^\uFEFF/, "");
   }
   window.ZebraDecodeCsv = decodeCsv;
-  $("fileCsv").addEventListener("change", function () {
-    var f = this.files[0]; if (!f) return;
+  function loadCsvFile(f) {
     var rd = new FileReader();
     rd.onload = function () { checkpoint(true); doc.job.csv = decodeCsv(rd.result); syncPrintTab(); schedule(); status(__("CSV yüklendi: ") + f.name); };
-    rd.readAsArrayBuffer(f); this.value = "";
+    rd.readAsArrayBuffer(f);
+  }
+  $("fileCsv").addEventListener("change", function () {
+    var f = this.files[0]; this.value = ""; if (f) loadCsvFile(f);
   });
   $("pCsvClear").addEventListener("click", function () { checkpoint(true); doc.job.csv = ""; syncPrintTab(); schedule(); });
 
   /* ================= gorsel ekleme ================= */
   $("fileImage").addEventListener("change", function () {
-    var f = this.files[0]; this.value = ""; if (!f) return;
+    var f = this.files[0]; this.value = ""; if (f) addImageFile(f);
+  });
+  function addImageFile(f) {
     var rd = new FileReader();
     rd.onload = function () {
       var src = String(rd.result);
@@ -1183,7 +1187,7 @@
       });
     };
     rd.readAsDataURL(f);
-  });
+  }
 
   /* ================= araclar ================= */
   function setTool(t) {
@@ -1348,19 +1352,52 @@
   /* ---------- PDF: one selected page, original dimensions, no PDF overwrite ---------- */
   var pdfOpenId = 0;
   function isPdf(name) { return /\.pdf$/i.test(name || ""); }
+  /* The server (pypdfium2) is used when it has a PDF engine; otherwise (Android, or a desktop build without it) pdf.js renders in the page. */
+  function pdfError(e) {
+    var m = { password: __("PDF parolalı; önce parolayı kaldır."), invalid: __("PDF açılamadı. Dosyanın geçerli ve parolasız olduğundan emin ol."),
+      pages: __("PDF 1 ile 500 arasında sayfa içermeli."), size: __("PDF sayfa boyutları 1 ile 2000 mm arasında olmalı."),
+      big: __("Bu PDF sayfası seçilen çözünürlükte çok büyük. Daha düşük dpi seç (en fazla 4 milyon piksel)."), page: __("Geçerli bir PDF sayfa numarası seç.") };
+    return new Error(m[e && e.code] || (e && e.message) || String(e));
+  }
+  function localPdfLabel(r, name, page, count, dpi) {
+    var title = String(name || "PDF").replace(/\\/g, "/").split("/").pop().replace(/\.pdf$/i, "").slice(0, 120) || "PDF";
+    if (count > 1) title += " (" + page + "/" + count + ")";
+    return { id: uid(), name: title, w: r.w, h: r.h, dpi: dpi,
+      settings: { media: "gap", darkness: "", speed: "", shiftX: 0, shiftY: 0, rotate180: false },
+      job: { copies: 1, count: 1, start: 1, step: 1, digits: 0, csv: "" },
+      elements: [{ id: uid(), type: "image", name: title, x: 0, y: 0, w: r.w, h: r.h, src: r.dataUrl, threshold: 128, dither: false, invert: false,
+        keepAspect: true, rot: 0, hidden: false, locked: false }] };
+  }
   function importPdf(file, hd) {
-    if (inApp) return Promise.reject(new Error(__("PDF açmak için masaüstü ZebraApp kullan. Android'de önce .zebra dosyasına dönüştür.")));
     if (file.size > MAX_FILE) return Promise.reject(new Error(__("Etiket dosyası en fazla 20 MB olabilir.")));
-    var encoded;
-    function request(action, body) {
-      return api("/api/pdf/" + action, Object.assign({ data: encoded }, body || {})).then(function (j) {
-        if (!j.ok) throw new Error(j.message);
-        return j;
+    function serverEngine(buffer) {
+      var encoded = toB64(buffer);
+      function request(action, body) {
+        return api("/api/pdf/" + action, Object.assign({ data: encoded }, body || {})).then(function (j) {
+          if (!j.ok) throw new Error(j.message);
+          return j;
+        });
+      }
+      return request("info").then(function (info) {
+        return { info: info, render: function (pg, dp) { return request("import", { page: pg, dpi: dp, name: file.name }).then(function (r) { return r.label; }); } };
       });
     }
+    function localEngine(buffer) {
+      if (!window.ZebraPdf) return Promise.reject(new Error(__("PDF okuyucu yüklenemedi.")));
+      return window.ZebraPdf.open(buffer).then(function (pdf) {
+        return { info: { pages: pdf.pages }, render: function (pg, dp) {
+          return pdf.render(pg, dp).then(function (r) { return localPdfLabel(r, file.name, pg, pdf.pages.length, dp); }).catch(function (e) { throw pdfError(e); });
+        } };
+      }, function (e) { throw pdfError(e); });
+    }
     return file.arrayBuffer().then(function (buffer) {
-      encoded = toB64(buffer); return request("info");
-    }).then(function (info) {
+      if (inApp) return localEngine(buffer);
+      return serverEngine(buffer).catch(function (e) {
+        if (/pypdfium2|Pillow|PDF açmak için|PDF import needs/i.test((e && e.message) || "")) return localEngine(buffer);
+        throw e;
+      });
+    }).then(function (eng) {
+      var info = eng.info;
       var page = h("select", {}), dpi = h("select", {}), ticket;
       info.pages.forEach(function (p) {
         page.appendChild(h("option", { value: String(p.page), text: p.page + " / " + info.pages.length + " — " + r2(p.w) + " × " + r2(p.h) + " mm" }));
@@ -1372,10 +1409,10 @@
       var go = h("button", { type: "button", class: "tb primary", text: __("Aç"), onclick: function () {
         if (go.disabled) return;
         go.disabled = true; error.textContent = __("PDF açılıyor…");
-        request("import", { page: +page.value, dpi: +dpi.value, name: file.name }).then(function (result) {
+        eng.render(+page.value, +dpi.value).then(function (label) {
           if (ticket !== pdfOpenId) return;
-          checkDoc(result.label);
-          closeModal(); loadDoc(result.label); dirty = true; updateTitle();
+          checkDoc(label);
+          closeModal(); loadDoc(label); dirty = true; updateTitle();
           if (hd) Recent.add(hd);
           status(__("PDF görsel olarak açıldı. Metinler ayrı ayrı düzenlenemez; Kaydet yeni bir .zebra dosyası oluşturur."));
         }).catch(function (e) { if (ticket === pdfOpenId) error.textContent = e.message; })
@@ -1549,14 +1586,47 @@
       .catch(function (e) { if (!e || e.name !== "AbortError") status(__("Açılamadı: ") + ((e && e.message) || e), true); });
   }
   $("fileImport").addEventListener("change", function () {
-    var f = this.files[0]; this.value = ""; if (!f) return;
+    var f = this.files[0]; this.value = ""; if (f) openPlainFile(f);
+  });
+  function openPlainFile(f) {
     if (f.size > MAX_FILE) { status(__("Etiket dosyası en fazla 20 MB olabilir."), true); return; }
     if (isPdf(f.name)) { importPdf(f, null).catch(function (e) { status(__("Açılamadı: ") + e.message, true); }); return; }
     if (isNlbl(f.name)) { readNlbl(f).then(function (label) { loadLabelObject(label, null); }).catch(function (e) { if (e.name !== "AbortError") status(__("Açılamadı: ") + e.message, true); }); return; }
     var rd = new FileReader();
     rd.onload = function () { loadFromText(String(rd.result), null, f.name); };
     rd.readAsText(f, "utf-8");
-  });
+  }
+
+  /* ================= masaustunden surukle-birak ================= */
+  (function () {
+    var veil = h("div", { id: "dropVeil", class: "dropveil", hidden: true }, [h("div", { text: __("Açmak için dosyayı buraya bırak") })]);
+    document.body.appendChild(veil);
+    var depth = 0;
+    function hasFiles(e) { var t = e.dataTransfer && e.dataTransfer.types; return !!t && Array.prototype.indexOf.call(t, "Files") >= 0; }
+    function show(on) { veil.hidden = !on; if (!on) depth = 0; }
+    document.addEventListener("dragenter", function (e) { if (!hasFiles(e)) return; e.preventDefault(); depth++; show(true); });
+    document.addEventListener("dragover", function (e) { if (!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; });
+    document.addEventListener("dragleave", function (e) { if (!hasFiles(e)) return; if (--depth <= 0) show(false); });
+    document.addEventListener("drop", function (e) {
+      if (!hasFiles(e)) return;
+      e.preventDefault(); show(false);
+      var items = Array.prototype.slice.call(e.dataTransfer.items || []);
+      var files = Array.prototype.slice.call(e.dataTransfer.files || []);
+      if (!files.length) return;
+      var f = files[0], n = f.name || "";
+      if (/\.(png|jpe?g|gif|bmp|webp)$/i.test(n) || /^image\//.test(f.type)) {
+        files.filter(function (x) { return /\.(png|jpe?g|gif|bmp|webp)$/i.test(x.name) || /^image\//.test(x.type); }).slice(0, 10).forEach(function (x) { pendingImagePos = null; addImageFile(x); });
+        return;
+      }
+      if (/\.(csv|tsv)$/i.test(n)) { loadCsvFile(f); return; }
+      if (!/\.(zebra|json|zpl|prn|txt|nlbl|pdf)$/i.test(n)) { status(__("Bu dosya türü desteklenmiyor: ") + n, true); return; }
+      if (f.size > MAX_FILE) { status(__("Etiket dosyası en fazla 20 MB olabilir."), true); return; }
+      if (!confirmDiscard()) return;
+      var it = items[0], pick = it && it.getAsFileSystemHandle && /\.(zebra|json)$/i.test(n) ? it.getAsFileSystemHandle() : null;
+      if (pick) pick.then(function (hd) { if (hd && hd.kind === "file") return openHandle(hd); openPlainFile(f); }, function () { openPlainFile(f); });
+      else openPlainFile(f);
+    });
+  })();
 
   /* Ac sayfasi (Dosya > Ac) */
   function renderOpenPage() {

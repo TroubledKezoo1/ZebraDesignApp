@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.14
+
+- New: drag a file from the desktop onto the window. `.zebra`, `.zpl`, `.nlbl` and `.pdf` open (asking first if there are unsaved changes), images are added to the label, `.csv`/`.tsv` becomes the batch list.
+- PDF import works everywhere: the app now carries its own PDF reader (pdf.js). It is used on Android, and on the desktop whenever the built-in PDF engine is missing.
+
 ## 1.0.13
 
 - Security (desktop): the local server needs a session cookie, handed out only to the app's own window, so other programs and users on the same computer cannot print or run the "command" printer. `--no-browser` prints an address with a one-time code.
