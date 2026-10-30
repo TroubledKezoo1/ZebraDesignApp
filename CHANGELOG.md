@@ -1,9 +1,13 @@
 # Changelog
 
+## 1.0.13
+
+- Security (desktop): the local server needs a session cookie, handed out only to the app's own window, so other programs and users on the same computer cannot print or run the "command" printer. `--no-browser` prints an address with a one-time code.
+- Security: self-update installs only if `SHA256SUMS.txt` carries a valid Ed25519 signature (`SHA256SUMS.txt.sig`, made by the release workflow). 1.0.12 was published before this existed, so its desktop builds have neither protection.
+
 ## 1.0.12
 
-- Desktop: "Update now" in the update bar downloads the release, checks it against `SHA256SUMS.txt`, replaces the app (the old file stays next to it as `.old`) and restarts. Works for the Linux AppImage and the Windows `.exe` when the folder is writable; macOS, `.deb`, pip and source installs keep the download link. Only `github.com/TroubledKezoo1/ZebraDesignApp/releases/download/` is accepted as a source, and only if `SHA256SUMS.txt` carries a valid Ed25519 signature (`SHA256SUMS.txt.sig`, made in the release workflow from the `RELEASE_SIGNING_KEY` secret).
-- Security: the local server now needs a session cookie, handed out only to the app's own window, so other programs and users on the same computer cannot print or run the "command" printer. `--no-browser` prints an address with a one-time code.
+- Desktop: "Update now" in the update bar downloads the release, checks it against `SHA256SUMS.txt`, replaces the app (the old file stays next to it as `.old`) and restarts. Works for the Linux AppImage and the Windows `.exe` when the folder is writable; macOS, `.deb`, pip and source installs keep the download link. Only `github.com/TroubledKezoo1/ZebraDesignApp/releases/download/` is accepted as a source.
 - New: Options > Appearance (automatic, light, dark).
 - New: five templates (cable, shelf, price, carton/pallet, food/jar).
 - New: "Recently printed" on Home, with one-click reprint (kept in the browser, 20 jobs).

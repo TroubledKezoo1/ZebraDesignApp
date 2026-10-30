@@ -57,8 +57,7 @@
       "Giriş ekranında “Son basılanlar”: bastığın etiketi tek tıkla yeniden bas.",
       "QR ve barkod için “Kamerayla tara”: okunan metin etikete yazılır (kamera yoksa fotoğraftan).",
       "Yazıcı durumu paneli: kâğıt, ribon, kapak, duraklatma ve sıcaklık tek bakışta.",
-      "CSV listesi artık Türkçe Excel'in Windows-1254 kaydını da doğru okuyor.",
-      "Güvenlik: uygulamaya yalnızca kendi penceresi erişebilir (aynı bilgisayardaki başka programlar yazdıramaz); güncellemeler dijital imza doğrulanmadan kurulmaz."
+      "CSV listesi artık Türkçe Excel'in Windows-1254 kaydını da doğru okuyor."
     ],
     "en": [
       "Desktop: “Update now” in the update bar downloads the new version, checks its SHA-256, replaces the app and reopens it (Linux AppImage and Windows .exe; macOS keeps the download link).",
@@ -67,8 +66,17 @@
       "“Recently printed” on the Home screen: print a label again with one click.",
       "“Scan with camera” for QR codes and barcodes: the text is written into the label (from a photo if there is no camera).",
       "Printer status panel: paper, ribbon, cover, pause and temperature at a glance.",
-      "CSV lists now also read the Windows-1254 files saved by Turkish Excel.",
-      "Security: only the app's own window can talk to it (other programs on the computer cannot print); updates are installed only after their digital signature is verified."
+      "CSV lists now also read the Windows-1254 files saved by Turkish Excel."
+    ]
+  },
+  "1.0.13": {
+    "tr": [
+      "Güvenlik: uygulamaya yalnızca kendi penceresi erişebilir (aynı bilgisayardaki başka programlar yazdıramaz); güncellemeler dijital imza doğrulanmadan kurulmaz.",
+      "Masaüstü güncellemesi artık imza doğrulamasıyla çalışır."
+    ],
+    "en": [
+      "Security: only the app's own window can talk to it (other programs on the computer cannot print); updates are installed only after their digital signature is verified.",
+      "Desktop updates now verify the release signature."
     ]
   }
 }
