@@ -1,0 +1,9 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>ZebraApp apt repository</title>
+<body style="font:16px/1.5 system-ui,sans-serif;max-width:46rem;margin:2rem auto;padding:0 1rem">
+<h1>ZebraApp for Debian, Ubuntu and friends</h1>
+<pre>curl -fsSL https://troubledkezoo1.github.io/ZebraDesignApp/apt/key.gpg | sudo tee /usr/share/keyrings/zebraapp.gpg &gt; /dev/null
+echo "deb [signed-by=/usr/share/keyrings/zebraapp.gpg] https://troubledkezoo1.github.io/ZebraDesignApp/apt stable main" | sudo tee /etc/apt/sources.list.d/zebraapp.list
+sudo apt update &amp;&amp; sudo apt install zebraapp</pre>
+<p>amd64 and arm64. Source and other downloads: <a href="https://github.com/TroubledKezoo1/ZebraDesignApp">github.com/TroubledKezoo1/ZebraDesignApp</a></p>

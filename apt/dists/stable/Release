@@ -1,0 +1,27 @@
+Architectures: amd64 arm64
+Codename: stable
+Components: main
+Date: Fri, 30 Oct 2026 14:31:30 +0000
+Label: ZebraApp
+Origin: ZebraApp
+Suite: stable
+MD5Sum:
+ 0e2f990c1c01c263f36f42f91bc6b4e8              925 main/binary-amd64/Packages
+ bbbfac3a96aba6a534f0e333860745d7              659 main/binary-amd64/Packages.gz
+ f62763f78c0757f53a54e7250f5ace40              925 main/binary-arm64/Packages
+ a0fb4a319d375b4a242de67a88425734              660 main/binary-arm64/Packages.gz
+SHA1:
+ 54dbeea90399de59466c6d018a58fbccd7fd8853              925 main/binary-amd64/Packages
+ afa8a7833c50821a4cbec897212112233d05bf56              659 main/binary-amd64/Packages.gz
+ 9f1493709b9d458fd465ef88e1893842a2e1fe27              925 main/binary-arm64/Packages
+ 99a6c0dcefb7dc8f1389d052d007abac1d72fcaf              660 main/binary-arm64/Packages.gz
+SHA256:
+ d906e361167bdf7c1be0407ebc5ff8b626b745849a5d4be833651648ea552fc9              925 main/binary-amd64/Packages
+ 825fde0d87eae9488a0be2822e56b6a5c8489c9bea8389035abaaa0f86c448ec              659 main/binary-amd64/Packages.gz
+ 20d8b19319c07c04a8db50458e437a44973a553d9b25c06273320acf32595a37              925 main/binary-arm64/Packages
+ 746b7435d972d2a9877caaa6620388ef5ae70d9a01a47054828f36b1a9c84c5b              660 main/binary-arm64/Packages.gz
+SHA512:
+ 0cf64da6e8d6503e39dec8842fcbecf5b1d6c4793c1aeafd55e15267d343a4c4f8d9a717cc1e3749fd70f6f4147f3fd012bff3a1cd13d48c004feca5ced2d4b3              925 main/binary-amd64/Packages
+ 179eedb6251fb53eb154450262d0a05c13c555d0b8d2545edef2c0c4710db6f7fb44988d5c09a520e4b339a3578fc859ae76efb3a609f432154526a6fa9c2e01              659 main/binary-amd64/Packages.gz
+ 0183079b5dd9d52eda9148447823bd61499db385ce65078dc115439d883ac97ea94dc82fadfc49c43de94e937422c71764253f7ac6adef267511783fa3e2cfc5              925 main/binary-arm64/Packages
+ 4ceea4f6713fbc65ffba873bc9eb159e9f547bcb219b8cd5e228c74298e8f4566cbaa6562a576fa6269a4fa169b3f4d0c2c1338a14accce9079ae7a6c3000897              660 main/binary-arm64/Packages.gz
