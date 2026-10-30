@@ -8,7 +8,6 @@
 - New: "Recently printed" on Home, with one-click reprint (kept in the browser, 20 jobs).
 - New: "Scan with camera" for QR and barcode fields (ZXing, offline; photo fallback). Android asks for the camera permission.
 - New: printer status panel (`~HS`): paper, ribbon, cover, pause, buffer, temperature.
-- New: "Check for updates" button on the File screen (desktop and Android).
 - Fix: CSV files saved by Turkish Excel (Windows-1254) are read correctly; UTF-8 with BOM too.
 
 ## 1.0.11
