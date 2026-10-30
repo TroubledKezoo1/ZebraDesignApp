@@ -121,7 +121,15 @@ def package():
         run(["cp", "-R", ROOT / "dist" / "ZebraApp.app", stage])
         (stage / "Applications").symlink_to("/Applications")
         dest = out / ("ZebraApp-%s-macos-%s.dmg" % (ver, ARCH))
-        run(["hdiutil", "create", "-volname", "ZebraApp " + ver, "-srcfolder", stage, "-ov", "-format", "UDZO", dest])
+        for attempt in range(1, 4):   # hdiutil sometimes fails with "Resource busy" on the CI runners
+            try:
+                run(["hdiutil", "create", "-volname", "ZebraApp " + ver, "-srcfolder", stage, "-ov", "-format", "UDZO", dest])
+                break
+            except subprocess.CalledProcessError:
+                if attempt == 3:
+                    raise
+                print("hdiutil failed (attempt %d), trying again" % attempt)
+                __import__("time").sleep(10)
     elif SYSTEM == "linux":
         env = dict(__import__("os").environ, ARCH=platform.machine())
         run(["sh", ROOT / "packaging" / "build-appimage.sh"], env=env)
