@@ -1166,23 +1166,23 @@
   $("fileImage").addEventListener("change", function () {
     var f = this.files[0]; this.value = ""; if (f) addImageFile(f);
   });
-  function addImageFile(f) {
-    var rd = new FileReader();
+  function addImageFile(f, at) {
+    var rd = new FileReader(), place = at === undefined ? pendingImagePos : at;
     rd.onload = function () {
       var src = String(rd.result);
       Z.loadImage(src).then(function (img) {
         if (!img) { status(__("Görsel açılamadı."), true); return; }
         var ratio = img.naturalHeight / img.naturalWidth;
-        if (pendingImagePos && pendingImagePos.replace) {
-          var el = byId(pendingImagePos.replace);
+        if (place && place.replace) {
+          var el = byId(place.replace);
           if (el) { checkpoint(true); el.src = src; el.h = r2(el.w * (Z.sideways(el.rot) ? 1 / ratio : ratio)); changed({ inspector: true }); }
         } else {
-          var p = pendingImagePos || { x: d(doc.w / 2 - 12), y: d(Math.max(1, doc.h / 2 - 10)) };
+          var p = place || { x: d(doc.w / 2 - 12), y: d(Math.max(1, doc.h / 2 - 10)) };
           var w = Math.min(30, doc.w - mm(p.x) - 2), hh = w * ratio;
           if (hh > doc.h - 2) { hh = doc.h - 4; w = hh / ratio; }
           addElement(newEl("image", mm(p.x), mm(p.y), { src: src, w: r2(Math.max(5, w)), h: r2(Math.max(3, hh)) }));
         }
-        pendingImagePos = null;
+        if (at === undefined) pendingImagePos = null;
         schedule();
       });
     };
@@ -1614,8 +1614,11 @@
       var files = Array.prototype.slice.call(e.dataTransfer.files || []);
       if (!files.length) return;
       var f = files[0], n = f.name || "";
-      if (/\.(png|jpe?g|gif|bmp|webp)$/i.test(n) || /^image\//.test(f.type)) {
-        files.filter(function (x) { return /\.(png|jpe?g|gif|bmp|webp)$/i.test(x.name) || /^image\//.test(x.type); }).slice(0, 10).forEach(function (x) { pendingImagePos = null; addImageFile(x); });
+      if (/\.(png|jpe?g|gif|bmp|webp|svg|avif)$/i.test(n) || /^image\//.test(f.type)) {
+        files.filter(function (x) { return /\.(png|jpe?g|gif|bmp|webp|svg|avif)$/i.test(x.name) || /^image\//.test(x.type); }).slice(0, 10).forEach(function (x, i) {
+          var q = ptr(e), r = cv.getBoundingClientRect(), inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+          addImageFile(x, inside ? snapPoint({ x: Math.max(0, q.x) + i * d(3), y: Math.max(0, q.y) + i * d(3) }) : null);
+        });
         return;
       }
       if (/\.(csv|tsv)$/i.test(n)) { loadCsvFile(f); return; }

@@ -2,7 +2,7 @@
 
 ## 1.0.14
 
-- New: drag a file from the desktop onto the window. `.zebra`, `.zpl`, `.nlbl` and `.pdf` open (asking first if there are unsaved changes), images are added to the label, `.csv`/`.tsv` becomes the batch list.
+- New: drag a file from the desktop onto the window. `.zebra`, `.zpl`, `.nlbl` and `.pdf` open (asking first if there are unsaved changes), images (PNG, JPG, GIF, BMP, WebP, SVG, AVIF) are added to the label where you drop them, `.csv`/`.tsv` becomes the batch list.
 - PDF import works everywhere: the app now carries its own PDF reader (pdf.js). It is used on Android, and on the desktop whenever the built-in PDF engine is missing.
 
 ## 1.0.13
