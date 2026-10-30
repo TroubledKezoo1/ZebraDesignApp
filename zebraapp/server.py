@@ -193,7 +193,21 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("request too large")
             data = json.loads(self.rfile.read(n) or b"{}")
             path = self.path
-            if path == "/api/nlbl/import":
+            if path in ("/api/pdf/info", "/api/pdf/import"):
+                from .pdfimport import inspect_pdf, import_pdf
+                try:
+                    encoded = data.get("data", "")
+                    if not isinstance(encoded, str) or len(encoded) > 28 * 1024 * 1024:
+                        raise ValueError("PDF files must be non-empty and no larger than 20 MB.")
+                    raw = base64.b64decode(encoded, validate=True)
+                    if path == "/api/pdf/info":
+                        result = inspect_pdf(raw)
+                    else:
+                        result = {"label": import_pdf(raw, page=data.get("page", 1), dpi=data.get("dpi", 300), name=data.get("name", "PDF"))}
+                except ValueError as exc:
+                    raise AppError(str(exc)) from exc
+                self._json(dict(result, ok=True))
+            elif path == "/api/nlbl/import":
                 from .nlbl import import_label
                 raw = base64.b64decode(data.get("data", ""), validate=True)
                 label, warnings = import_label(raw)

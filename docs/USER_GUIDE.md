@@ -149,6 +149,10 @@ Labels are ordinary files with the extension `.zebra` (JSON inside). You decide 
 
 **Open** also opens `.zpl` files written by other programs. ZPL does not say which resolution it was written for, so ZebraApp asks (and suggests one). Text, text blocks, boxes, lines, ellipses, barcodes, QR codes and images become items you can edit; commands it does not know are listed in the status bar. Save the result with Ctrl+S as a `.zebra` file; the original `.zpl` is not changed.
 
+**PDF labels (desktop).** Choose `.pdf` in **File → Open → Open from computer…** (or **Ctrl+O**), select a page and the printer's resolution, then choose **Open**. Page rotation and cropping are respected: an 80 × 40 mm PDF opens as an 80 × 40 mm label. It becomes one embedded image, retaining QR codes, logos and text; individual text objects are not editable. The source PDF is never changed: **Save** asks for a new `.zebra` file. **Save for ZebraDesigner** can create a `.nlbl` copy at 300 dpi. Opening a PDF never starts printing.
+
+Install `pip install ".[pdf]"` (included in `.[all]`). Limits: 20 MB, 500 pages, 4 million pixels for the selected page. Choose a lower dpi for large pages; imports are never automatically scaled to the loaded roll. Password-protected PDFs are rejected. Android PDF import is not available yet; convert to `.zebra` on desktop first.
+
 **Templates.** *File → New* lists the built-in templates and **My templates**. **Save as template** (in the File menu, or *Save the open design as a template* on the New page) keeps the current design; **Add template from file…** brings in `.zebra` files, for example from a colleague. Write fields as `{Full Name}` or `{Phone}`: when you start a label from the template, a form asks for them (counter, date, time and CSV columns are left out). *Edit blank template* opens it with the fields still in place. Each template tile has **Export** and **Delete**.
 
 ![Templates](templates-en.png)

@@ -1295,6 +1295,51 @@
     return file.arrayBuffer().then(function (buf) { return nlblApi("import", { data: toB64(buf) }); })
       .then(function (j) { nlblWarn(j.warnings); return j.label; });
   }
+  /* ---------- PDF: one selected page, original dimensions, no PDF overwrite ---------- */
+  var pdfOpenId = 0;
+  function isPdf(name) { return /\.pdf$/i.test(name || ""); }
+  function importPdf(file, hd) {
+    if (inApp) return Promise.reject(new Error(__("PDF açmak için masaüstü ZebraApp kullan. Android'de önce .zebra dosyasına dönüştür.")));
+    if (file.size > MAX_FILE) return Promise.reject(new Error(__("Etiket dosyası en fazla 20 MB olabilir.")));
+    var encoded;
+    function request(action, body) {
+      return api("/api/pdf/" + action, Object.assign({ data: encoded }, body || {})).then(function (j) {
+        if (!j.ok) throw new Error(j.message);
+        return j;
+      });
+    }
+    return file.arrayBuffer().then(function (buffer) {
+      encoded = toB64(buffer); return request("info");
+    }).then(function (info) {
+      var page = h("select", {}), dpi = h("select", {}), ticket;
+      info.pages.forEach(function (p) {
+        page.appendChild(h("option", { value: String(p.page), text: p.page + " / " + info.pages.length + " — " + r2(p.w) + " × " + r2(p.h) + " mm" }));
+      });
+      page.value = "1";
+      [203, 300, 600].forEach(function (n) { dpi.appendChild(h("option", { value: String(n), text: n + " dpi" })); });
+      var printer = activePrinter(); dpi.value = String(printer && printer.dpi ? printer.dpi : 300);
+      var error = h("p", { class: "note", role: "alert" });
+      var go = h("button", { type: "button", class: "tb primary", text: __("Aç"), onclick: function () {
+        if (go.disabled) return;
+        go.disabled = true; error.textContent = __("PDF açılıyor…");
+        request("import", { page: +page.value, dpi: +dpi.value, name: file.name }).then(function (result) {
+          if (ticket !== pdfOpenId) return;
+          checkDoc(result.label);
+          closeModal(); loadDoc(result.label); dirty = true; updateTitle();
+          if (hd) Recent.add(hd);
+          status(__("PDF görsel olarak açıldı. Metinler ayrı ayrı düzenlenemez; Kaydet yeni bir .zebra dosyası oluşturur."));
+        }).catch(function (e) { if (ticket === pdfOpenId) error.textContent = e.message; })
+          .then(function () { go.disabled = false; });
+      } });
+      openModal(__("PDF dosyasını aç"), [
+        h("p", { class: "note", text: __("Bir sayfa seç. Sayfa ölçüsü ve görünümü korunur; yazdırmadan önce takılı etiketle eşleştiğini kontrol et.") }),
+        h("label", {}, [document.createTextNode(__("Sayfa")), page]),
+        h("label", {}, [document.createTextNode(__("Çözünürlük")), dpi]),
+        h("p", { class: "note", text: __("PDF içeriği tek görsel olarak aktarılır. Orijinal PDF değiştirilmez.") }),
+        error, h("div", { class: "row" }, [go])]);
+      ticket = pdfOpenId;
+    });
+  }
   /* ZebraDesigner'in bilmedigi ZebraApp ayarlarini sadelestir, gorselleri baski gorunumune cevir */
   function prepareNlbl(d) {
     var copy = clone(d), warn = [];
@@ -1425,10 +1470,11 @@
     return true;
   }
   function openHandle(hd, key) {
-    var perm = hd.requestPermission ? hd.requestPermission({ mode: "readwrite" }) : Promise.resolve("granted");
+    var perm = hd.requestPermission ? hd.requestPermission({ mode: isPdf(hd.name) ? "read" : "readwrite" }) : Promise.resolve("granted");
     return perm.then(function (pm) { if (pm !== "granted") throw new Error(__("İzin verilmedi.")); return hd.getFile(); })
       .then(function (f) {
         if (f.size > MAX_FILE) throw new Error(__("Etiket dosyası en fazla 20 MB olabilir."));
+        if (isPdf(f.name)) return importPdf(f, hd);
         if (isNlbl(f.name)) return readNlbl(f).then(function (label) { loadLabelObject(label, hd); });
         return f.text().then(function (t) { loadFromText(t, hd); });
       })
@@ -1448,13 +1494,14 @@
   function pickAndOpen() {
     if (!haveFS) { $("fileImport").click(); return; }
     window.showOpenFilePicker({ multiple: false, startIn: fileHandle || "documents",
-      types: [{ description: __("Etiket dosyaları (.zebra, .zpl, .nlbl)"), accept: { "application/json": [EXT, ".json"], "text/plain": [".zpl", ".prn", ".txt"], "application/octet-stream": [".nlbl"] } }] })
+      types: [{ description: __("Etiket dosyaları (.zebra, .zpl, .nlbl, .pdf)"), accept: { "application/json": [EXT, ".json"], "text/plain": [".zpl", ".prn", ".txt"], "application/octet-stream": [".nlbl"], "application/pdf": [".pdf"] } }] })
       .then(function (a) { return openHandle(a[0]); })
       .catch(function (e) { if (!e || e.name !== "AbortError") status(__("Açılamadı: ") + ((e && e.message) || e), true); });
   }
   $("fileImport").addEventListener("change", function () {
     var f = this.files[0]; this.value = ""; if (!f) return;
     if (f.size > MAX_FILE) { status(__("Etiket dosyası en fazla 20 MB olabilir."), true); return; }
+    if (isPdf(f.name)) { importPdf(f, null).catch(function (e) { status(__("Açılamadı: ") + e.message, true); }); return; }
     if (isNlbl(f.name)) { readNlbl(f).then(function (label) { loadLabelObject(label, null); }).catch(function (e) { if (e.name !== "AbortError") status(__("Açılamadı: ") + e.message, true); }); return; }
     var rd = new FileReader();
     rd.onload = function () { loadFromText(String(rd.result), null, f.name); };
@@ -1561,10 +1608,11 @@
 
   /* modal */
   function openModal(title, nodes) {
+    pdfOpenId++;
     $("mTitle").textContent = title; var b = $("mBody"); b.innerHTML = "";
     nodes.forEach(function (n) { b.appendChild(n); }); $("modal").hidden = false;
   }
-  function closeModal() { $("modal").hidden = true; }
+  function closeModal() { pdfOpenId++; $("modal").hidden = true; }
   $("mClose").addEventListener("click", closeModal);
   $("modal").addEventListener("mousedown", function (e) { if (e.target === this) closeModal(); });
 

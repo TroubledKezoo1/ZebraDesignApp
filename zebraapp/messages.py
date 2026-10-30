@@ -1,6 +1,15 @@
 """Turkish translations for server-side messages (English is the source)."""
 
 TR = {
+    'PDF files must be non-empty and no larger than 20 MB.': 'PDF dosyası boş olamaz ve en fazla 20 MB olabilir.',
+    'PDF import needs pypdfium2 and Pillow: pip install "zebraapp[pdf]"': 'PDF açmak için pypdfium2 ve Pillow gerekli: pip install "zebraapp[pdf]"',
+    'The PDF could not be opened. Check that it is valid and not password-protected.': 'PDF açılamadı. Dosyanın geçerli ve parolasız olduğundan emin ol.',
+    'A PDF must contain between 1 and 500 pages.': 'PDF 1 ile 500 arasında sayfa içermeli.',
+    'PDF page dimensions must be between 1 and 2000 mm.': 'PDF sayfa boyutları 1 ile 2000 mm arasında olmalı.',
+    'Choose a resolution of 203, 300 or 600 dpi.': '203, 300 veya 600 dpi çözünürlük seç.',
+    'Choose a valid PDF page number.': 'Geçerli bir PDF sayfa numarası seç.',
+    'This PDF page is too large at this resolution. Choose a lower dpi (maximum 4 million pixels).': 'Bu PDF sayfası seçilen çözünürlükte çok büyük. Daha düşük dpi seç (en fazla 4 milyon piksel).',
+
     "BLE needs the 'bleak' package:  pip install bleak": "Bluetooth LE için 'bleak' paketi gerekli:  pip install bleak",
     "Printer not found over Bluetooth. It must be on, in range and not connected to another device (e.g. a phone).":
         "Yazıcı Bluetooth ile bulunamadı. Açık, yakında ve başka bir cihaza (ör. telefona) bağlı olmamalı.",
