@@ -111,5 +111,15 @@
       "Segurança: somente a própria janela do aplicativo pode se comunicar com ele (outros programas no computador não podem imprimir); as atualizações só são instaladas depois de verificada a assinatura digital.",
       "As atualizações do desktop agora verificam a assinatura da versão."
     ]
+  },
+  "1.0.14": {
+    "tr": [
+      "Masaüstünden dosya sürükleyip pencereye bırakabilirsin: .zebra, .zpl, .nlbl, .pdf açılır; resimler etikete eklenir; .csv toplu liste olur.",
+      "PDF açma her yerde çalışır: uygulama içine PDF okuyucu eklendi (Android dahil)."
+    ],
+    "en": [
+      "Drag a file from your desktop onto the window: .zebra, .zpl, .nlbl and .pdf open; images are added to the label; .csv becomes the batch list.",
+      "Opening PDFs now works everywhere: a PDF reader is built into the app (Android included)."
+    ]
   }
 }

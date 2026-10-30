@@ -6,6 +6,7 @@ ZebraApp bundles these files so it works offline.
 |---|---|---|
 | [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) 1.4.4 by Kazuhiko Arase | `zebraapp/static/vendor/qrcode.js`, `qrcode_UTF8.js` | MIT |
 | [ZXing (@zxing/library)](https://github.com/zxing-js/library) 0.21.3 | `zebraapp/static/vendor/zxing.min.js` | Apache License 2.0, see `zebraapp/static/vendor/zxing-LICENSE.txt` |
+| [pdf.js (pdfjs-dist)](https://github.com/mozilla/pdf.js) 3.11.174 | `zebraapp/static/vendor/pdf.min.js`, `pdf.worker.min.js` | Apache License 2.0, see `zebraapp/static/vendor/pdfjs-LICENSE.txt` |
 | [Roboto Condensed](https://fonts.google.com/specimen/Roboto+Condensed) via [Fontsource](https://fontsource.org) 5.0.14 | `zebraapp/static/fonts/*.woff2` | SIL Open Font License 1.1, see `zebraapp/static/fonts/OFL.txt` |
 
 ## qrcode-generator — MIT License

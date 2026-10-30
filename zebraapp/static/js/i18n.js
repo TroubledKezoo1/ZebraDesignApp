@@ -6,6 +6,15 @@
   var KEY = "zebraapp.lang";
   var EN = {
     "PDF açmak için masaüstü ZebraApp kullan. Android'de önce .zebra dosyasına dönüştür.": "Open PDFs in desktop ZebraApp. On Android, first convert them to .zebra files.",
+    "PDF okuyucu yüklenemedi.": "The PDF reader could not be loaded.",
+    "PDF parolalı; önce parolayı kaldır.": "The PDF is password-protected; remove the password first.",
+    "PDF açılamadı. Dosyanın geçerli ve parolasız olduğundan emin ol.": "The PDF could not be opened. Make sure it is valid and has no password.",
+    "PDF 1 ile 500 arasında sayfa içermeli.": "The PDF must have between 1 and 500 pages.",
+    "PDF sayfa boyutları 1 ile 2000 mm arasında olmalı.": "PDF page size must be between 1 and 2000 mm.",
+    "Bu PDF sayfası seçilen çözünürlükte çok büyük. Daha düşük dpi seç (en fazla 4 milyon piksel).": "This PDF page is too large at the chosen resolution. Pick a lower dpi (max 4 million pixels).",
+    "Geçerli bir PDF sayfa numarası seç.": "Pick a valid PDF page number.",
+    "Açmak için dosyayı buraya bırak": "Drop the file here to open it",
+    "Bu dosya türü desteklenmiyor: ": "This file type is not supported: ",
     "PDF açılıyor…": "Opening PDF…",
     "PDF dosyasını aç": "Open PDF file",
     "Sayfa": "Page",
