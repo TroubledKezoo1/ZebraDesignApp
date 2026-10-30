@@ -90,10 +90,10 @@
     var b = blankDoc(); b.name = __("Ürün etiketi (QR + barkod)"); b.w = 80; b.h = 40;
     b.elements = [
       T("box", { x: 1.5, y: 1.5, w: 77, h: 37, t: 0.4, round: 3, name: __("Çerçeve") }),
-      T("qr", { x: 4, y: 5, mag: b.dpi >= 300 ? 7 : 5, data: "https://example.com/p/{SAYAC}" }),
+      T("qr", { x: 4, y: 5, mag: b.dpi >= 300 ? 7 : 5, data: __("https://example.com/p/{SAYAC}") }),
       T("text", { x: 32, y: 5, size: 5, bold: true, text: __("ÜRÜN ADI") }),
       T("text", { x: 32, y: 12, size: 3, text: __("Seri no: {SAYAC}\nTarih: {TARIH}") }),
-      T("barcode", { x: 32, y: 22, h: 8, module: 2, data: "ZB{SAYAC}" })
+      T("barcode", { x: 32, y: 22, h: 8, module: 2, data: __("ZB{SAYAC}") })
     ];
     b.job.digits = 5;
     var c = blankDoc(); c.name = __("Kargo etiketi 100x150"); c.w = 100; c.h = 150;
@@ -119,7 +119,7 @@
       tx(4, 77, 4, "{" + __("Posta Kodu") + "} {" + __("İlçe") + "} / {" + __("İl") + "}", 92, true), tx(4, 88, 3.5, __("Tel: ") + "{" + __("Telefon") + "}", 92)];
     var d3 = blankDoc(); d3.name = __("Ürün ve barkod"); d3.w = 80; d3.h = 40;
     d3.elements = [tx(3, 3, 4.5, "{" + __("Ürün Adı") + "}", 74, true), tx(3, 10, 3, __("Kod: ") + "{" + __("Ürün Kodu") + "}", 74),
-      T("barcode", { x: 3, y: 17, h: 10, module: 2, data: "{" + __("Ürün Kodu") + "}", human: true }), tx(53, 31, 4, "{" + __("Fiyat") + "} TL", 24, true)];
+      T("barcode", { x: 3, y: 17, h: 10, module: 2, data: "{" + __("Ürün Kodu") + "}", human: true }), tx(53, 31, 4, "{" + __("Fiyat") + "} " + __("TL"), 24, true)];
     var d4 = blankDoc(); d4.name = __("Dosya ve raf etiketi"); d4.w = 80; d4.h = 30;
     d4.elements = [tx(3, 3, 5, "{" + __("Başlık") + "}", 74, true), T("line", { x: 3, y: 10, len: 74, t: 0.3 }), tx(3, 13, 3.5, "{" + __("Açıklama") + "}", 74), tx(3, 23, 3, "{" + __("Referans") + "}", 74)];
     var e1 = blankDoc(); e1.name = __("Kablo etiketi"); e1.w = 60; e1.h = 15;
@@ -670,7 +670,7 @@
     els.forEach(function (el) { var c = clone(el); c.id = uid(); c.x = r2(c.x + o); c.y = r2(c.y + o); doc.elements.push(c); ids.push(c.id); });
     sel = ids; selectionChanged(); changed({ layers: true });
   }
-  function copySel() { var els = selEls(); if (els.length) { clipboard = clone(els); status(els.length + __(" öğe kopyalandı.")); } }
+  function copySel() { var els = selEls(); if (els.length) { clipboard = clone(els); status(els.length + " " + (els.length === 1 ? __("öğe kopyalandı.") : __(" öğe kopyalandı."))); } }
   function paste() {
     if (!clipboard) return;
     checkpoint(true);
@@ -734,10 +734,12 @@
     renderLayers();
     if (!light) renderInspector();
     var n = sel.length, el = n === 1 ? byId(sel[0]) : null;
-    $("stSel").textContent = n === 0 ? __("Seçim yok") : (n === 1 ? TYPE_NAMES[el.type] + __(" seçili") : n + __(" öğe seçili"));
+    $("stSel").textContent = n === 0 ? __("Seçim yok")
+  : n === 1 ? TYPE_NAMES[el.type] + __(" seçili (tek)")
+  : n + __(" öğe seçili");
     updateRibbon();
   }
-  function updateCount() { if (doc) $("stCount").textContent = doc.elements.length + " " + __("öğe"); }
+  function updateCount() { if (doc) $("stCount").textContent = doc.elements.length + " " + (doc.elements.length === 1 ? __("öğe (tek)") : __("öğe")); }
   function refreshAll() {
     renderLayers(); renderInspector(); syncLabelTab(); syncPrintTab(); updateTitle(); updateUndoBtns(); updateCount();
     selectionChanged();
@@ -822,7 +824,7 @@
     if (min != null) inp.min = min; if (max != null) inp.max = max;
     inp.value = el[key]; inp.dataset.key = key;
     inp.addEventListener("input", function () { var v = parseFloat(inp.value); if (isFinite(v)) setVal(el, key, v); });
-    return h("label", {}, [document.createTextNode(label + (unit ? " (" + unit + ")" : "")), inp]);
+    return h("label", {}, [document.createTextNode(label + (unit ? " (" + __(unit) + ")" : "")), inp]);
   }
   function fText(el, key, label, area, content) {
     var inp = h(area ? "textarea" : "input", area ? { rows: "4" } : { type: "text" });
@@ -890,7 +892,8 @@
     var cols = Z.parseCSV((doc.job || {}).csv).cols;
     var c = h("div", { class: "chips" });
     ["SAYAC", "TARIH", "SAAT"].concat(cols).forEach(function (v) {
-      c.appendChild(h("button", { type: "button", class: "chip", text: "{" + v + "}", title: __("Alana ekle"), onclick: function () { insertVar("{" + v + "}", target); } }));
+      var tk = __("{" + v + "}");
+      c.appendChild(h("button", { type: "button", class: "chip", text: tk, title: __("Alana ekle"), onclick: function () { insertVar(tk, target); } }));
     });
     return c;
   }
@@ -2649,11 +2652,14 @@
   }
   /* {Ad Soyad} gibi doldurulacak alanlar (yazdirma degiskenleri ve sablonun CSV sutunlari haric) */
   function templateFields(t) {
-    var skip = ["SAYAC", "SAYAÇ", "TARIH", "TARİH", "SAAT"].concat(Z.parseCSV((t.job || {}).csv).cols), out = [];
+    var csvCols = Z.parseCSV((t.job || {}).csv).cols, out = [];
+    var probe = { __counter: "0", __date: "0", __time: "0" };
     t.elements.forEach(function (e) {
       [e.text, e.data].forEach(function (v) {
         String(v || "").replace(/\{([^{}]+)\}/g, function (m, k) {
-          if (skip.indexOf(k.trim().toLocaleUpperCase("tr")) < 0 && skip.indexOf(k) < 0 && out.indexOf(k) < 0) out.push(k);
+          if (Z.subst(m, probe) !== m) return;   /* runtime token — zpl.js resolves it */
+          if (csvCols.indexOf(k) >= 0) return;   /* CSV column from the template */
+          if (out.indexOf(k) < 0) out.push(k);
         });
       });
     });

@@ -15,6 +15,14 @@
       "Choosing a ZD421 now sets 300 dpi.",
       "Android: the app connects to the printer by itself on start and when printing, and retries if the link drops.",
       "Android: tapping a .zpl or .zebra file opens it in ZebraApp."
+    ],
+    "pt": [
+      "Tema de cores: escolha verde, azul, laranja, roxo ou vermelho em Opções.",
+      "Android: Salvar mantém a etiqueta dentro do aplicativo; a página Abrir lista \"Minhas etiquetas salvas\". Salvar como compartilha um arquivo.",
+      "Backup: salve suas etiquetas e modelos em um único arquivo em Opções e restaure-o em outro dispositivo.",
+      "Escolher uma ZD421 agora define 300 dpi.",
+      "Android: o aplicativo se conecta à impressora sozinho ao iniciar e ao imprimir, e tenta novamente se a conexão cair.",
+      "Android: tocar em um arquivo .zpl ou .zebra abre-o no ZebraApp."
     ]
   },
   "1.0.8": {
@@ -23,6 +31,9 @@
     ],
     "en": [
       "Android: Update now explains the install permission and asks first; after you allow it and come back, the download starts by itself."
+    ],
+    "pt": [
+      "Android: Atualizar agora explica a permissão de instalação e pergunta primeiro; depois que você permitir e voltar, o download começa sozinho."
     ]
   },
   "1.0.9": {
@@ -31,6 +42,9 @@
     ],
     "en": [
       "New colour theme: Slate (Options > Colour theme)."
+    ],
+    "pt": [
+      "Novo tema de cores: Cinza (Opções > Tema de cores)."
     ]
   },
   "1.0.10": {
@@ -39,6 +53,9 @@
     ],
     "en": [
       "Desktop: open PDF labels with File > Open; choose the page and resolution (contributed by buraktuzgen)."
+    ],
+    "pt": [
+      "Desktop: abra etiquetas PDF com Arquivo > Abrir; escolha a página e a resolução (contribuição de buraktuzgen)."
     ]
   },
   "1.0.11": {
@@ -47,6 +64,9 @@
     ],
     "en": [
       "Desktop: the app now tells you when a new version is out; Options > Updates lets you check by hand or turn it off."
+    ],
+    "pt": [
+      "Desktop: o aplicativo agora avisa quando há uma nova versão; em Opções > Atualizações você pode verificar manualmente ou desativar."
     ]
   },
   "1.0.12": {
@@ -67,6 +87,15 @@
       "“Scan with camera” for QR codes and barcodes: the text is written into the label (from a photo if there is no camera).",
       "Printer status panel: paper, ribbon, cover, pause and temperature at a glance.",
       "CSV lists now also read the Windows-1254 files saved by Turkish Excel."
+    ],
+    "pt": [
+      "Desktop: “Atualizar agora” na barra de atualização baixa a nova versão, verifica o SHA-256, substitui o aplicativo e o reabre (AppImage no Linux e .exe no Windows; no macOS permanece o link de download).",
+      "Opções > Aparência: tema automático, claro ou escuro.",
+      "Cinco novos modelos prontos: cabo, prateleira, preço, caixa/palete, alimento/pote.",
+      "“Impressos recentemente” na tela inicial: reimprima uma etiqueta com um clique.",
+      "“Escanear com a câmera” para QR codes e códigos de barras: o texto é escrito na etiqueta (a partir de uma foto, se não houver câmera).",
+      "Painel de status da impressora: papel, fita, tampa, pausa e temperatura em um relance.",
+      "Listas CSV agora também leem arquivos Windows-1254 salvos pelo Excel turco."
     ]
   },
   "1.0.13": {
@@ -77,6 +106,10 @@
     "en": [
       "Security: only the app's own window can talk to it (other programs on the computer cannot print); updates are installed only after their digital signature is verified.",
       "Desktop updates now verify the release signature."
+    ],
+    "pt": [
+      "Segurança: somente a própria janela do aplicativo pode se comunicar com ele (outros programas no computador não podem imprimir); as atualizações só são instaladas depois de verificada a assinatura digital.",
+      "As atualizações do desktop agora verificam a assinatura da versão."
     ]
   }
 }
