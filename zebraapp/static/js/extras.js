@@ -95,6 +95,8 @@
     busy: ["Bir güncelleme zaten sürüyor.", "An update is already running."],
     unsupported: ["Bu kurulumda otomatik güncelleme yok.", "Automatic update is not available for this install."],
     source: ["İndirme adresi güvenilir değil, durduruldu.", "The download address is not trusted; stopped."],
+    nosig: ["Sürümün imza dosyası yok ya da okunamadı, kurulmadı.", "The release has no readable signature; not installed."],
+    badsig: ["Sürümün imzası geçersiz, kurulmadı. Güvenliğin için bu sürümü elle indirme.", "The release signature is invalid; not installed. Do not download this release by hand either."],
     nosum: ["Sürümün doğrulama dosyası bulunamadı, kurulmadı.", "The release has no checksum for this file; not installed."],
     sha: ["İndirilen dosya doğrulanamadı (SHA-256), kurulmadı.", "The downloaded file failed its SHA-256 check; not installed."],
     net: ["İndirme sırasında bağlantı koptu.", "The connection dropped while downloading."],

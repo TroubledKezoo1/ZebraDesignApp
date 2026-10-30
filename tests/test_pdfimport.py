@@ -116,10 +116,11 @@ class PDFHTTPTest(unittest.TestCase):
         from zebraapp import server
         from zebraapp.storage import Store
         cls.server = server
-        cls.old_store, cls.old_port = server.store, server.PORT
+        cls.old_store, cls.old_port, cls.old_key = server.store, server.PORT, server.KEY
         cls.tmp = tempfile.TemporaryDirectory()
         server.store = Store(Path(cls.tmp.name))
         server.store.save_config({"language": "en", "printers": []})
+        server.KEY = server.load_key(Path(cls.tmp.name))
         cls.http = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
         server.PORT = cls.http.server_port
         cls.url = "http://127.0.0.1:%d" % server.PORT
@@ -129,12 +130,12 @@ class PDFHTTPTest(unittest.TestCase):
     def tearDownClass(cls):
         cls.http.shutdown()
         cls.http.server_close()
-        cls.server.store, cls.server.PORT = cls.old_store, cls.old_port
+        cls.server.store, cls.server.PORT, cls.server.KEY = cls.old_store, cls.old_port, cls.old_key
         cls.tmp.cleanup()
 
     def request(self, path, body, headers=None):
         request = urllib.request.Request(self.url + path, json.dumps(body).encode(),
-                                        {"Content-Type": "application/json", "X-ZebraApp": "1", **(headers or {})})
+                                        {"Content-Type": "application/json", "X-ZebraApp": "1", "Cookie": "zebra_key=" + self.server.KEY, **(headers or {})})
         with urllib.request.urlopen(request, timeout=10) as response:
             return json.loads(response.read())
 

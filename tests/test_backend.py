@@ -89,6 +89,8 @@ class ServerTest(unittest.TestCase):
         from zebraapp import server
         cls.tmp = tempfile.TemporaryDirectory()
         server.store = Store(Path(cls.tmp.name))
+        server.KEY = server.load_key(Path(cls.tmp.name))
+        cls.key = server.KEY
         cls.srv = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
         server.PORT = cls.srv.server_address[1]
         cls.port = server.PORT
@@ -100,7 +102,7 @@ class ServerTest(unittest.TestCase):
         cls.tmp.cleanup()
 
     def req(self, path, body=None, headers=None):
-        h = {"Content-Type": "application/json"}
+        h = {"Content-Type": "application/json", "Cookie": "zebra_key=" + self.key}
         if body is not None:
             h["X-ZebraApp"] = "1"
         h.update(headers or {})
@@ -128,6 +130,47 @@ class ServerTest(unittest.TestCase):
         with self.assertRaises(urllib.error.HTTPError) as cm:
             self.req("/static/../server.py")
         self.assertIn(cm.exception.code, (403, 404))
+
+    def test_session_cookie_is_required(self):
+        import http.client
+
+        def call(method, path, headers=None, body=None):
+            c = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
+            c.request(method, path, body=body, headers=dict({"Host": "localhost:%d" % self.port}, **(headers or {})))
+            r = c.getresponse()
+            data = r.read()
+            out = (r.status, dict(r.getheaders()), data)
+            c.close()
+            return out
+        self.assertEqual(call("GET", "/api/ping")[0], 200)                       # open, says nothing
+        self.assertEqual(call("GET", "/api/settings")[0], 403)
+        self.assertEqual(call("GET", "/static/js/zpl.js")[0], 403)
+        self.assertEqual(call("GET", "/api/settings", {"Cookie": "zebra_key=wrong"})[0], 403)
+        self.assertEqual(call("GET", "/")[0], 403)                               # explains how to open it
+        post = {"X-ZebraApp": "1", "Content-Type": "application/json"}
+        self.assertEqual(call("POST", "/api/print_raw", post, b'{"data":"^XA^XZ"}')[0], 403)
+        self.assertEqual(call("POST", "/api/launch", post, b"{}")[0], 403)       # needs the key
+        self.assertEqual(call("POST", "/api/launch", dict(post, **{"X-ZebraApp-Key": "nope"}), b"{}")[0], 403)
+        # the launch code is exchanged once for the cookie
+        st, _, data = call("POST", "/api/launch", dict(post, **{"X-ZebraApp-Key": self.key}), b"{}")
+        self.assertEqual(st, 200)
+        code = json.loads(data)["code"]
+        st, hdr, _ = call("GET", "/?k=" + code)
+        self.assertEqual(st, 302)
+        self.assertIn("zebra_key=" + self.key, hdr["Set-Cookie"])
+        self.assertIn("HttpOnly", hdr["Set-Cookie"])
+        self.assertIn("SameSite=Strict", hdr["Set-Cookie"])
+        self.assertEqual(call("GET", "/?k=" + code)[0], 403)                     # used up
+        self.assertEqual(call("GET", "/", {"Cookie": hdr["Set-Cookie"].split(";")[0]})[0], 200)
+
+    def test_key_file_is_private_and_stable(self):
+        from zebraapp import server
+        with tempfile.TemporaryDirectory() as d:
+            k1 = server.load_key(Path(d))
+            self.assertEqual(server.load_key(Path(d)), k1)
+            self.assertGreaterEqual(len(k1), 64)
+            if os.name == "posix":
+                self.assertEqual((Path(d) / "session.key").stat().st_mode & 0o077, 0)
 
     def test_print_through_device_printer(self):
         out = os.path.join(self.tmp.name, "printed.zpl")

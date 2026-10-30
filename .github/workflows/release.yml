@@ -79,8 +79,10 @@ jobs:
           "$BIN" --no-browser --port 8799 --data-dir "$RUNNER_TEMP/zd" &
           PID=$!
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8799/api/ping && break; sleep 1; done
-          curl -sf http://127.0.0.1:8799/ > page.html && grep -q ZebraApp page.html
-          curl -sf -o /dev/null http://127.0.0.1:8799/api/fonts
+          KEY=$(cat "$RUNNER_TEMP/zd/session.key")
+          curl -sf -H "Cookie: zebra_key=$KEY" http://127.0.0.1:8799/ > page.html && grep -q ZebraApp page.html
+          curl -sf -o /dev/null -H "Cookie: zebra_key=$KEY" http://127.0.0.1:8799/api/fonts
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8799/api/settings)" = 403   # no cookie, no access
           kill $PID
 
       - name: Smoke test (Windows)
@@ -93,9 +95,12 @@ jobs:
             try { Invoke-RestMethod http://127.0.0.1:8799/api/ping | Out-Null; $ok = $true; break } catch { Start-Sleep 1 }
           }
           if (-not $ok) { Write-Host "::error title=smoke test::ZebraApp.exe did not start"; exit 1 }
-          $page = (Invoke-WebRequest http://127.0.0.1:8799/ -UseBasicParsing).Content
+          $key = (Get-Content "$env:RUNNER_TEMP\zd\session.key" -Raw).Trim()
+          $h = @{ Cookie = "zebra_key=$key" }
+          $page = (Invoke-WebRequest http://127.0.0.1:8799/ -Headers $h -UseBasicParsing).Content
           if ($page -notmatch "ZebraApp") { Write-Host "::error title=smoke test::page is wrong"; exit 1 }
-          Invoke-RestMethod http://127.0.0.1:8799/api/fonts | Out-Null
+          Invoke-RestMethod http://127.0.0.1:8799/api/fonts -Headers $h | Out-Null
+          try { Invoke-WebRequest http://127.0.0.1:8799/api/settings -UseBasicParsing | Out-Null; Write-Host "::error title=smoke test::open without a cookie"; exit 1 } catch { }
           Stop-Process -Id $p.Id
 
       - name: Check the AppImage starts (Linux)
@@ -180,6 +185,29 @@ jobs:
           cat packaging/RELEASE-DOWNLOAD.md >> notes.md
           (cd out && sha256sum * > SHA256SUMS.txt)
           ls -la out
+      - name: Sign the checksums (the app only installs updates signed with this key)
+        env:
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+        run: |
+          if [ -z "$RELEASE_SIGNING_KEY" ]; then
+            echo "::warning title=Release is not signed::RELEASE_SIGNING_KEY is not set, so desktop self-update will only offer the download link."
+            exit 0
+          fi
+          umask 077
+          printf '%s\n' "$RELEASE_SIGNING_KEY" > "$RUNNER_TEMP/release.pem"
+          openssl pkeyutl -sign -inkey "$RUNNER_TEMP/release.pem" -rawin -in out/SHA256SUMS.txt -out "$RUNNER_TEMP/sums.sig"
+          rm -f "$RUNNER_TEMP/release.pem"
+          base64 -w0 "$RUNNER_TEMP/sums.sig" > out/SHA256SUMS.txt.sig
+          # the signature must verify with the public key built into the app, or the release stops here
+          python3 - <<'PY'
+          import base64, sys
+          sys.path.insert(0, ".")
+          from zebraapp import ed25519, updates
+          sig = base64.b64decode(open("out/SHA256SUMS.txt.sig").read())
+          ok = ed25519.verify(updates.SIGNING_PUBKEY, open("out/SHA256SUMS.txt", "rb").read(), sig)
+          print("signature matches the key in the app:", ok)
+          sys.exit(0 if ok else 1)
+          PY
       - uses: softprops/action-gh-release@v2
         with:
           files: out/*

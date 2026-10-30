@@ -49,3 +49,9 @@ scoop install zebraapp
 **winget.** The job also leaves the three manifest files as the `winget-manifests` build artifact. The first version has to be submitted by hand as a pull request to `microsoft/winget-pkgs` (for example `wingetcreate submit` or `komac`, with a token of your own); Microsoft's bot validates it and a moderator approves it, usually within a few days. Later versions: `wingetcreate update TroubledKezoo1.ZebraApp --version X --urls <x64 url> <arm64 url> --submit`. Users then run `winget install TroubledKezoo1.ZebraApp`.
 
 Both are untested against real Scoop and winget (no Windows machine in the build environment): check the first install yourself.
+
+## Release signing (desktop self-update)
+
+The app installs an update only when `SHA256SUMS.txt` is signed with the project's Ed25519 key. The public key is `SIGNING_PUBKEY` in `zebraapp/updates.py`; the private key is the repository secret `RELEASE_SIGNING_KEY` (PEM text). The release workflow signs the checksums, writes `SHA256SUMS.txt.sig` (base64) and stops if the signature does not match the key built into the app.
+
+Create a key once: `openssl genpkey -algorithm ED25519 -out release-signing.pem`, add it with `gh secret set RELEASE_SIGNING_KEY < release-signing.pem`, and put the public half (`openssl pkey -in release-signing.pem -pubout -outform DER | tail -c 32 | xxd -p`) into `SIGNING_PUBKEY`. Keep a backup of the PEM: with a new key, installed apps cannot self-update across the change (they fall back to the download link).

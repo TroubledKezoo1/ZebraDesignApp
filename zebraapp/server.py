@@ -7,9 +7,11 @@ from __future__ import annotations
 
 import argparse
 import base64
+import hmac
 import json
 import mimetypes
 import os
+import secrets
 import shutil
 import subprocess
 import sys
@@ -18,7 +20,9 @@ import time
 import urllib.error
 import urllib.request
 import webbrowser
+from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import parse_qs, urlsplit
 from pathlib import Path
 
 from . import __version__, fonts, transports
@@ -27,6 +31,50 @@ from .storage import Store
 
 STATIC = Path(__file__).resolve().parent / "static"
 store: Store = None  # type: ignore[assignment]
+
+# ---- who may talk to this server
+# Every request needs the session cookie. The cookie is handed out only in exchange for a one-time launch code,
+# and the codes are given only to whoever can read `session.key` in the data folder (the person who runs the app).
+# So other programs and other users on the same computer cannot print, change printers or run the "command" printer.
+COOKIE = "zebra_key"
+KEY = ""
+_codes = {}
+_codes_lock = threading.Lock()
+
+
+def load_key(base: Path) -> str:
+    """The secret in <data folder>/session.key (created once, readable by the owner only)."""
+    path = Path(base) / "session.key"
+    try:
+        k = path.read_text(encoding="ascii").strip()
+        if len(k) >= 32:
+            return k
+    except OSError:
+        pass
+    k = secrets.token_hex(32)
+    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="ascii") as f:
+        f.write(k)
+    return k
+
+
+def new_code() -> str:
+    code = secrets.token_urlsafe(24)
+    with _codes_lock:
+        now = time.time()
+        for c in [c for c, t in _codes.items() if t < now]:
+            del _codes[c]
+        _codes[code] = now + 600
+    return code
+
+
+def take_code(code: str) -> bool:
+    with _codes_lock:
+        return _codes.pop(code, 0) > time.time()
+
+
+def _same(a: str, b: str) -> bool:
+    return bool(a) and bool(b) and hmac.compare_digest(a.encode("utf-8"), b.encode("utf-8"))
 last_ping = 0.0
 PORT = 8765
 FIXED_TYPES = {".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml",
@@ -147,12 +195,44 @@ class Handler(BaseHTTPRequestHandler):
             return False
         return True
 
+    def _authed(self):
+        jar = SimpleCookie()
+        try:
+            jar.load(self.headers.get("Cookie") or "")
+        except Exception:  # noqa: BLE001
+            return False
+        m = jar.get(COOKIE)
+        return bool(m) and _same(m.value, KEY)
+
+    def _need_launch(self):
+        page = ("<!doctype html><meta charset=utf-8><title>ZebraApp</title><body style='font:16px system-ui;max-width:34em;margin:12vh auto;padding:0 1em'>"
+                "<h1>ZebraApp</h1><p>This page can only be opened by the app itself. "
+                "Start ZebraApp again (or run <code>zebraapp</code>) and it opens a window for you.</p>"
+                "<p>Bu sayfa yalnızca uygulamanın kendisiyle açılır. ZebraApp'i yeniden başlat; pencereyi senin için açar.</p>").encode("utf-8")
+        self._send(403, page, "text/html; charset=utf-8")
+
     # ---- GET
     def do_GET(self):
         if not self._allowed():
             self.send_error(403)
             return
-        path = self.path.split("?", 1)[0]
+        parts = urlsplit(self.path)
+        path = parts.path
+        if path == "/api/ping":                     # needs no cookie (a second start asks whether we are running); says nothing
+            global last_ping
+            last_ping = time.time()
+            self._json({"ok": True})
+            return
+        if path in ("/", "/index.html") and "k" in parse_qs(parts.query):
+            if take_code(parse_qs(parts.query)["k"][0]):
+                self._send(302, b"", "text/plain", {"Location": "/", "Set-Cookie": "%s=%s; Path=/; HttpOnly; SameSite=Strict" % (COOKIE, KEY)})
+                return
+        if not self._authed():
+            if path in ("/", "/index.html"):
+                self._need_launch()
+            else:
+                self.send_error(403)
+            return
         if path in ("/", "/index.html"):
             self._file(STATIC / "index.html")
         elif path in ("/icon.svg", "/favicon.ico"):
@@ -181,16 +261,21 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/update/progress":
             from . import updates
             self._json(dict(updates.progress))
-        elif path == "/api/ping":
-            global last_ping
-            last_ping = time.time()
-            self._json({"ok": True})
         else:
             self.send_error(404)
 
     # ---- POST
     def do_POST(self):
         if not self._allowed() or self.headers.get("X-ZebraApp") != "1":
+            self.send_error(403)
+            return
+        if self.path == "/api/launch":              # a second start of the app asks for a window code; it must know session.key
+            if _same(self.headers.get("X-ZebraApp-Key") or "", KEY):
+                self._json({"ok": True, "code": new_code()})
+            else:
+                self.send_error(403)
+            return
+        if not self._authed():
             self.send_error(403)
             return
         try:
@@ -302,6 +387,19 @@ def open_window(url):
     webbrowser.open(url)
 
 
+def launch_url(port, key=None):
+    """Window address with a one-time code, asked from the copy that is already running."""
+    base = "http://localhost:%d" % port
+    key = key or load_key(store.base)
+    try:
+        req = urllib.request.Request(base + "/api/launch", data=b"{}", method="POST",
+                                     headers={"X-ZebraApp": "1", "X-ZebraApp-Key": key, "Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=3) as r:
+            return base + "/?k=" + json.loads(r.read().decode("utf-8"))["code"]
+    except Exception:  # noqa: BLE001
+        return base
+
+
 def watchdog():
     """Quit a little after the last window closes (no more pings)."""
     while True:
@@ -323,7 +421,7 @@ def _already_running(port):
 
 
 def main(argv=None):
-    global store, PORT, last_ping
+    global store, PORT, last_ping, KEY
     ap = argparse.ArgumentParser(prog="zebraapp", description="ZPL label designer for Zebra printers")
     ap.add_argument("--port", type=int, default=int(os.environ.get("ZEBRAAPP_PORT", "8765")))
     ap.add_argument("--data-dir", help="folder for settings and saved labels")
@@ -334,6 +432,7 @@ def main(argv=None):
     if args.data_dir:
         os.environ["ZEBRAAPP_HOME"] = args.data_dir
     store = Store()
+    KEY = load_key(store.base)
     PORT = args.port
     url = "http://localhost:%d" % PORT
     if args.reuse_window:                       # the old copy is still shutting down: wait for its port
@@ -344,7 +443,9 @@ def main(argv=None):
     if _already_running(PORT):
         print("ZebraApp is already running:", url)
         if not args.no_browser:
-            open_window(url)
+            open_window(launch_url(PORT, KEY))
+        else:
+            print("Open:", launch_url(PORT, KEY))
         return
     srv = None
     for port in range(args.port, args.port + 10):
@@ -358,11 +459,14 @@ def main(argv=None):
     PORT = port
     url = "http://localhost:%d" % PORT
     print("ZebraApp %s  %s   (data: %s)" % (__version__, url, store.base))
-    if not args.no_browser:
+    if args.no_browser:
+        print("Open this address within 10 minutes (it works once):", url + "/?k=" + new_code(), flush=True)
+    else:
         if args.reuse_window:                   # the window from before the update reloads itself; no second one
             last_ping = time.time()
         else:
-            threading.Timer(0.5, lambda: open_window(url)).start()
+            first = url + "/?k=" + new_code()
+            threading.Timer(0.5, lambda: open_window(first)).start()
         threading.Thread(target=watchdog, daemon=True).start()
     try:
         srv.serve_forever()

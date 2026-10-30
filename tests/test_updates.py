@@ -1,9 +1,30 @@
+import base64
 import hashlib
 import os
 import tempfile
 import unittest
 
-from zebraapp import updates
+from zebraapp import ed25519, updates
+
+
+def _compress(pt):
+    zi = pow(pt[2], ed25519._P - 2, ed25519._P)
+    x, y = pt[0] * zi % ed25519._P, pt[1] * zi % ed25519._P
+    return (y | ((x & 1) << 255)).to_bytes(32, "little")
+
+
+def make_keypair(seed):
+    h = hashlib.sha512(seed).digest()
+    a = (int.from_bytes(h[:32], "little") & ((1 << 254) - 8)) | (1 << 254)
+    return a, h[32:], _compress(ed25519._mul(a, ed25519._B))
+
+
+def sign(seed, message):
+    a, prefix, pub = make_keypair(seed)
+    r = int.from_bytes(hashlib.sha512(prefix + message).digest(), "little") % ed25519._Q
+    R = _compress(ed25519._mul(r, ed25519._B))
+    k = int.from_bytes(hashlib.sha512(R + pub + message).digest(), "little") % ed25519._Q
+    return R + ((r + k * a) % ed25519._Q).to_bytes(32, "little")
 
 
 ASSETS = [{"name": "ZebraApp-1.0.11-windows-x64.exe", "browser_download_url": "https://x/win64"},
@@ -65,23 +86,37 @@ class UpdateTests(unittest.TestCase):
 class InstallTests(unittest.TestCase):
     URL = updates.ALLOWED + "v9.9.9/ZebraApp-9.9.9-x86_64.AppImage"
     SUMS = updates.ALLOWED + "v9.9.9/SHA256SUMS.txt"
+    SIG = updates.ALLOWED + "v9.9.9/SHA256SUMS.txt.sig"
+    SEED = b"\x07" * 32
 
     def setUp(self):
         self.dir = tempfile.TemporaryDirectory()
         self.target = os.path.join(self.dir.name, "ZebraApp.AppImage")
         with open(self.target, "wb") as f:
             f.write(b"old-version")
-        self.saved = (updates._get_text, updates._download, updates._relaunch)
+        self.saved = (updates._get_bytes, updates._download, updates._relaunch)
         self.relaunched = []
         updates._relaunch = lambda t: self.relaunched.append(t)
+        self.pub = make_keypair(self.SEED)[2]
 
     def tearDown(self):
-        updates._get_text, updates._download, updates._relaunch = self.saved
+        updates._get_bytes, updates._download, updates._relaunch = self.saved
         self.dir.cleanup()
 
-    def fake(self, payload, digest=None):
+    def fake(self, payload, digest=None, seed=None, sig=True):
         digest = digest or hashlib.sha256(payload).hexdigest()
-        updates._get_text = lambda url: "%s  other.dmg\n%s  ZebraApp-9.9.9-x86_64.AppImage\n" % ("0" * 64, digest)
+        sums = ("%s  other.dmg\n%s  ZebraApp-9.9.9-x86_64.AppImage\n" % ("0" * 64, digest)).encode()
+        sigb = base64.b64encode(sign(seed or self.SEED, sums))
+
+        def get(url):
+            if url == self.SUMS:
+                return sums
+            if url == self.SIG:
+                if not sig:
+                    raise ConnectionError("404")
+                return sigb + b"\n"
+            raise AssertionError(url)
+        updates._get_bytes = get
 
         def dl(url, dest, report):
             with open(dest, "wb") as f:
@@ -89,13 +124,12 @@ class InstallTests(unittest.TestCase):
             report(len(payload), len(payload))
         updates._download = dl
 
-    def read(self, p):
-        with open(p, "rb") as f:
-            return f.read()
+    def run_it(self, url=None, sums=None, sig=None):
+        updates.run_install(self.target, url or self.URL, sums or self.SUMS, sig or self.SIG, pubkey=self.pub)
 
     def test_good_download_replaces_the_file_keeps_a_backup_and_restarts(self):
         self.fake(b"new-version")
-        updates.run_install(self.target, self.URL, self.SUMS)
+        self.run_it()
         self.assertEqual(updates.progress["state"], "restarting")
         self.assertEqual(self.read(self.target), b"new-version")
         self.assertEqual(self.read(self.target + ".old"), b"old-version")
@@ -106,24 +140,61 @@ class InstallTests(unittest.TestCase):
 
     def test_wrong_checksum_changes_nothing(self):
         self.fake(b"tampered", digest="1" * 64)
-        updates.run_install(self.target, self.URL, self.SUMS)
+        self.run_it()
         self.assertEqual((updates.progress["state"], updates.progress["code"]), ("error", "sha"))
         self.assertEqual(self.read(self.target), b"old-version")
         self.assertFalse(os.path.exists(self.target + ".new"))
         self.assertEqual(self.relaunched, [])
 
+    def test_signed_by_someone_else_is_refused_before_downloading(self):
+        self.fake(b"evil", seed=b"\x09" * 32)
+        downloaded = []
+        updates._download = lambda *a: downloaded.append(a)
+        self.run_it()
+        self.assertEqual(updates.progress["code"], "badsig")
+        self.assertEqual(downloaded, [])
+        self.assertEqual(self.read(self.target), b"old-version")
+
+    def test_missing_signature_is_refused(self):
+        self.fake(b"x", sig=False)
+        self.run_it()
+        self.assertEqual(updates.progress["code"], "net")      # no signature file: the request fails, nothing is installed
+        self.assertEqual(self.read(self.target), b"old-version")
+        updates._get_bytes = lambda url: b"not base64!!" if url == self.SIG else b"abc"
+        self.run_it()
+        self.assertEqual(updates.progress["code"], "nosig")
+
+    def test_the_shipped_key_is_a_valid_public_key(self):
+        self.assertEqual(len(updates.SIGNING_PUBKEY), 32)
+        self.assertIsNotNone(ed25519._decode(updates.SIGNING_PUBKEY))
+
+    def test_rfc8032_vector(self):
+        pk = bytes.fromhex("d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a")
+        sg = bytes.fromhex("e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b")
+        self.assertTrue(ed25519.verify(pk, b"", sg))
+        self.assertFalse(ed25519.verify(pk, b"x", sg))
+        self.assertFalse(ed25519.verify(pk, b"", sg[:-1] + bytes([sg[-1] ^ 1])))
+        self.assertFalse(ed25519.verify(pk, b"", sg[:63]))
+
+    def read(self, p):
+        with open(p, "rb") as f:
+            return f.read()
+
     def test_missing_checksum_line_is_refused(self):
         self.fake(b"x")
-        updates._get_text = lambda url: "%s  somethingelse\n" % ("2" * 64)
-        updates.run_install(self.target, self.URL, self.SUMS)
+        sums = ("%s  somethingelse\n" % ("2" * 64)).encode()
+        updates._get_bytes = lambda url: sums if url == self.SUMS else base64.b64encode(sign(self.SEED, sums))
+        self.run_it()
         self.assertEqual(updates.progress["code"], "nosum")
         self.assertEqual(self.read(self.target), b"old-version")
 
     def test_only_github_release_downloads_are_accepted(self):
         self.fake(b"x")
-        updates.run_install(self.target, "https://evil.example/ZebraApp.AppImage", self.SUMS)
+        self.run_it(url="https://evil.example/ZebraApp.AppImage")
         self.assertEqual(updates.progress["code"], "source")
-        updates.run_install(self.target, self.URL, "https://github.com/someone/else/releases/download/v1/SHA256SUMS.txt")
+        self.run_it(sig="https://evil.example/SHA256SUMS.txt.sig")
+        self.assertEqual(updates.progress["code"], "source")
+        self.run_it(sums="https://github.com/someone/else/releases/download/v1/SHA256SUMS.txt")
         self.assertEqual(updates.progress["code"], "source")
         self.assertEqual(self.read(self.target), b"old-version")
 
@@ -132,7 +203,7 @@ class InstallTests(unittest.TestCase):
             raise ConnectionError("down")
         self.fake(b"x")
         updates._download = boom
-        updates.run_install(self.target, self.URL, self.SUMS)
+        self.run_it()
         self.assertEqual(updates.progress["code"], "net")
 
     def test_parse_sums_and_not_packaged(self):

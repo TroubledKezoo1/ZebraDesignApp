@@ -5,6 +5,7 @@ Only one anonymous GET to the public GitHub API is made; nothing about the user 
 """
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -16,7 +17,7 @@ import time
 import urllib.error
 import urllib.request
 
-from . import __version__
+from . import __version__, ed25519
 
 REPO = "TroubledKezoo1/ZebraDesignApp"
 API = "https://api.github.com/repos/%s/releases/latest" % REPO
@@ -25,6 +26,9 @@ _lock = threading.Lock()
 ALLOWED = "https://github.com/%s/releases/download/" % REPO     # the only place an update is downloaded from
 progress = {"state": "idle", "done": 0, "total": 0, "code": ""}
 _plock = threading.Lock()
+# Release key: every release signs SHA256SUMS.txt (file SHA256SUMS.txt.sig, base64). The private half is a GitHub secret
+# (RELEASE_SIGNING_KEY) and a copy on the maintainer's computer. An update is installed only if this key signed its checksums.
+SIGNING_PUBKEY = bytes.fromhex("31b5c5ef324a16f6fd2f872bbca62b5efc729174f92a2b681c2beeec991be064")
 
 
 def parse(v):
@@ -93,7 +97,8 @@ def check(force=False, fetch=None, now=None):
     out["url"] = pick_asset(rel.get("assets")) if getattr(sys, "frozen", False) else None
     out["frozen"] = bool(getattr(sys, "frozen", False))
     out["sums"] = _asset_url(rel.get("assets"), "SHA256SUMS.txt")
-    out["self_update"] = bool(out["url"] and out["sums"] and self_update_target())
+    out["sig"] = _asset_url(rel.get("assets"), "SHA256SUMS.txt.sig")
+    out["self_update"] = bool(out["url"] and out["sums"] and out["sig"] and self_update_target())
     return out
 
 
@@ -144,10 +149,10 @@ def _sha256(path):
     return h.hexdigest()
 
 
-def _get_text(url):
+def _get_bytes(url):
     req = urllib.request.Request(url, headers={"User-Agent": "ZebraApp/" + __version__})
     with urllib.request.urlopen(req, timeout=20) as r:
-        return r.read(1 << 20).decode("utf-8", "replace")
+        return r.read(1 << 20)
 
 
 def _download(url, dest, report):
@@ -207,13 +212,20 @@ def _relaunch(target):
     threading.Timer(1.5, _quit).start()
 
 
-def run_install(target, url, sums_url, restart=True):
+def run_install(target, url, sums_url, sig_url, restart=True, pubkey=None):
     new = target + ".new"
     try:
-        if not (url.startswith(ALLOWED) and sums_url.startswith(ALLOWED)):
+        if not (url.startswith(ALLOWED) and sums_url.startswith(ALLOWED) and sig_url.startswith(ALLOWED)):
             raise UpdateError("source")
         _set(state="downloading", done=0, total=0, code="")
-        want = parse_sums(_get_text(sums_url)).get(url.rsplit("/", 1)[-1])
+        sums = _get_bytes(sums_url)
+        try:
+            sig = base64.b64decode(_get_bytes(sig_url).strip(), validate=True)
+        except ValueError:
+            raise UpdateError("nosig")
+        if not ed25519.verify(pubkey or SIGNING_PUBKEY, sums, sig):
+            raise UpdateError("badsig")
+        want = parse_sums(sums.decode("utf-8", "replace")).get(url.rsplit("/", 1)[-1])
         if not want:
             raise UpdateError("nosum")
         _download(url, new, lambda d, t: _set(done=d, total=t))
@@ -251,5 +263,5 @@ def start_install():
     if r.get("state") != "available" or not r.get("self_update") or not target:
         return {"ok": False, "code": "unsupported"}
     _set(state="downloading", done=0, total=0, code="")
-    threading.Thread(target=run_install, args=(target, r["url"], r["sums"]), daemon=True).start()
+    threading.Thread(target=run_install, args=(target, r["url"], r["sums"], r["sig"]), daemon=True).start()
     return {"ok": True, "latest": r["latest"]}

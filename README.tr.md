@@ -169,11 +169,11 @@ Başka bir yerde (örneğin USB bellekte) tutmak için `--data-dir` ya da `ZEBRA
 zebraapp [--port 8765] [--data-dir KLASÖR] [--no-browser]
 ```
 
-`--no-browser` sunucuyu Ctrl+C'ye basana kadar açık tutar; `http://localhost:8765` adresini kendin açarsın.
+`--no-browser` sunucuyu Ctrl+C'ye basana kadar açık tutar ve tek kullanımlık kodlu bir adres yazar (10 dakika geçerli); o adresi tarayıcında aç. Düz `http://localhost:8765` reddedilir; böylece aynı bilgisayardaki başka program ve kullanıcılar uygulamayı kullanamaz.
 
 ## Güvenlik
 
-Sunucu yalnızca `127.0.0.1` adresini dinler. `Host` ve `Origin` başlıklarını kontrol eder ve değişiklik yapan her istekte özel bir başlık ister; böylece girdiğin bir web sitesi yazıcına baskı gönderemez. İnternete veri gönderen tek özellik Labelary önizlemesidir, o da yalnızca düğmesine bastığında.
+Sunucu yalnızca `127.0.0.1` adresini dinler. `Host` ve `Origin` başlıklarını kontrol eder ve değişiklik yapan her istekte özel bir başlık ister; böylece girdiğin bir web sitesi yazıcına baskı gönderemez. Her istek ayrıca yalnızca uygulamanın kendi penceresine verilen bir oturum çerezi ister (çerez, tek kullanımlık bir kodla alınır; ikinci başlatma bu kodu veri klasöründeki özel `session.key` dosyasını okuyabildiğini göstererek alır), böylece aynı bilgisayardaki başka programlar ve kullanıcılar baskı alamaz, yazıcı ayarlarını değiştiremez ve "komut" yazıcısını çalıştıramaz. Kendi kendine güncelleme yalnızca sürümün `SHA256SUMS.txt` dosyası projenin Ed25519 sürüm anahtarıyla imzalıysa (anahtar uygulamanın içinde) ve indirilen dosya SHA-256'ya uyuyorsa kurulur; eski dosya `.old` olarak kalır. Android uygulaması Android'in kendi imza denetimine dayanır. İnternete veri gönderen tek özellik Labelary önizlemesidir, o da yalnızca düğmesine bastığında.
 
 ## Uygulamaları kendin derle
 

@@ -169,11 +169,11 @@ Use `--data-dir` or the `ZEBRAAPP_HOME` environment variable to keep them somewh
 zebraapp [--port 8765] [--data-dir PATH] [--no-browser]
 ```
 
-`--no-browser` keeps the server running until you press Ctrl+C. Open `http://localhost:8765` yourself.
+`--no-browser` keeps the server running until you press Ctrl+C and prints an address with a one-time code (valid for 10 minutes); open that address in your browser. A plain `http://localhost:8765` is refused, so other programs and users on the same computer cannot use the app.
 
 ## Security
 
-The server only listens on `127.0.0.1`. It checks the `Host` and `Origin` headers and requires a custom header on every request that changes something, so a website you visit cannot make your printer print. The Labelary preview is the only feature that sends data to the internet, and only when you press its button.
+The server only listens on `127.0.0.1`. It checks the `Host` and `Origin` headers and requires a custom header on every request that changes something, so a website you visit cannot make your printer print. Every request also needs a session cookie that the app hands only to its own window (in exchange for a one-time code, which a second start gets by proving it can read the private `session.key` file in your data folder), so other programs and other users on the same computer cannot print, change printers or run the "command" printer. Self-updates are installed only if the release's `SHA256SUMS.txt` is signed with the project's Ed25519 release key (built into the app) and the download matches its SHA-256; the old file is kept as `.old`. The Android app relies on Android's own signature check. The Labelary preview is the only feature that sends data to the internet, and only when you press its button.
 
 ## How it works
 
