@@ -2637,6 +2637,29 @@
     addElement(el); startEdit(el, false);
   }
   qsa("[data-token]").forEach(function (b) { b.addEventListener("click", function () { insertToken(b.dataset.token); }); });
+  
+  /* ---------- Son Kullanma (bugün + N gün) ---------- */
+  var DATE_TOKENS = [
+    { n: 7, tip: "Son kullanma: bugün + 7 gün (1 hafta) — {TARIH+7}" },
+    { n: 10, tip: "Son kullanma: bugün + 10 gün — {TARIH+10}" },
+    { n: 14, tip: "Son kullanma: bugün + 14 gün (2 hafta) — {TARIH+14}" },
+    { n: 28, tip: "Son kullanma: bugün + 28 gün (3 hafta) — {TARIH+28}" },
+    { n: 30, tip: "Son kullanma: bugün + 30 gün (~1 ay) — {TARIH+30}" },
+    { n: 60, tip: "Son kullanma: bugün + 60 gün (~2 ay) — {TARIH+60}" },
+    { n: 90, tip: "Son kullanma: bugün + 90 gün (~3 ay) — {TARIH+90}" },
+    { n: 180, tip: "Son kullanma: bugün + 180 gün (~6 ay) — {TARIH+180}" },
+    { n: 365, tip: "Son kullanma: bugün + 365 gün (1 yıl) — {TARIH+365}" }
+  ];
+  $("rDateAdd").addEventListener("click", function () {
+    var items = DATE_TOKENS.map(function (d) {
+      return {
+        label: __(d.n + " gün"),
+        title: __(d.tip),
+        run: function () { insertToken(__("{TARIH+" + d.n + "}")); }
+      };
+    });
+    popMenu(this, items);
+  });
 
   /* paneller */
   function setPane(cls, btn, on) {
