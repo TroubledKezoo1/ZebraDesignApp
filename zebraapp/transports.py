@@ -98,10 +98,17 @@ class BleLink:
                 if (d.name or "").upper().startswith(prefix):
                     dev = d
                     break
+        if dev is None and addr:
+            dev = addr      # paired/connected devices stop advertising; BlueZ still knows them by address
         if dev is None:
             raise TransportError("Printer not found over Bluetooth. It must be on, in range and not connected to another device (e.g. a phone).")
         client = BleakClient(dev, disconnected_callback=lambda c: setattr(self, "client", None))
-        await client.connect()
+        try:
+            await client.connect()
+        except Exception as e:  # noqa: BLE001
+            if isinstance(dev, str):
+                raise TransportError("Printer not found over Bluetooth. It must be on, in range and not connected to another device (e.g. a phone).") from e
+            raise
         want = (p.get("write_uuid") or ZEBRA_BLE_WRITE).lower()
         wchar = rchar = fallback = None
         for svc in client.services:
@@ -124,7 +131,8 @@ class BleLink:
         except Exception:  # noqa: BLE001
             pass
         self.client, self.wchar, self.rchar = client, wchar, rchar
-        self.address, self.name = dev.address, (dev.name or dev.address)
+        self.address = getattr(dev, "address", None) or str(dev)
+        self.name = getattr(dev, "name", None) or self.address
 
     async def _disconnect(self):
         if self.client:
