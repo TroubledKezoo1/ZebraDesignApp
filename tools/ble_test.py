@@ -38,6 +38,20 @@ def main():
     for f in found:
         print("       ", f)
     step("connect", lambda: ble.connect(p))
+    time.sleep(1.5)
+    print("still connected after 1.5 s:", ble.client is not None and ble.client.is_connected)
+    if ble.client is None or not ble.client.is_connected:
+        print("-> the printer drops the link right after connecting (usually: it wants to be PAIRED first)")
+        step("reconnect", lambda: ble.connect(p))
+    def pair():
+        async def go():
+            return await ble.client.pair()
+        return ble._run(go(), timeout=40)
+    try:
+        step("pair (may fail harmlessly)", pair)
+    except SystemExit:
+        pass
+    print("connected now:", ble.client is not None and ble.client.is_connected)
     step("packet size / characteristics", lambda: "mtu=%s write=%s props=%s read=%s" % (
         getattr(ble.client, "mtu_size", "?"), ble.wchar.uuid, ble.wchar.properties, ble.rchar.uuid if ble.rchar else None))
     try:
@@ -59,7 +73,14 @@ def main():
             step("speed test, packet %d" % size, lambda: bench(size))
         except SystemExit:
             print("        (this packet size does not work)")
-            ble._run(ble._disconnect(), timeout=15); ble.connect(p)
+            try:
+                ble._run(ble._disconnect(), timeout=15)
+            except Exception:  # noqa: BLE001
+                ble.client = None
+            try:
+                ble.connect(p)
+            except Exception as e:  # noqa: BLE001
+                print("        cannot reconnect:", e); break
     step("send test label", lambda: ble.send(p, ZPL))
     big = b"^XA^FO0,0^GFA,60000,60000,100," + b"0" * 60000 + b"^FS^XZ"
     step("send 60 KB (blank) graphic", lambda: ble.send(p, big))
