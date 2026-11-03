@@ -43,8 +43,8 @@ def main():
     st = step("status (~HS)", lambda: ble.query(p, b"~HS", 1.5))
     print("        raw:", st[:120])
     step("send test label", lambda: ble.send(p, ZPL))
-    big = b"^XA^FO0,0^GFA,60000,60000,100," + b"F" * 60000 + b"^FS^XZ"
-    step("send 60 KB graphic", lambda: ble.send(p, big))
+    big = b"^XA^FO0,0^GFA,60000,60000,100," + b"0" * 60000 + b"^FS^XZ"
+    step("send 60 KB (blank) graphic", lambda: ble.send(p, big))
     print("done")
 
 
