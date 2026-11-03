@@ -40,8 +40,26 @@ def main():
     step("connect", lambda: ble.connect(p))
     step("packet size / characteristics", lambda: "mtu=%s write=%s props=%s read=%s" % (
         getattr(ble.client, "mtu_size", "?"), ble.wchar.uuid, ble.wchar.properties, ble.rchar.uuid if ble.rchar else None))
-    st = step("status (~HS)", lambda: ble.query(p, b"~HS", 1.5))
-    print("        raw:", st[:120])
+    try:
+        print("status:", ble.query(p, b"~HS", 1.5)[:120])
+    except Exception as e:  # noqa: BLE001
+        print("status not available:", e)
+
+    def bench(size, total=3000):
+        payload = b"^XA^FX" + b"x" * total + b"^FS^XZ"      # a comment only: prints nothing
+        async def go():
+            t = time.time(); n = 0
+            for i in range(0, len(payload), size):
+                await asyncio.wait_for(ble.client.write_gatt_char(ble.wchar, payload[i:i + size], response=True), 8)
+                n += 1
+            return "%d packets of %d bytes, %.1fs, %.0f bytes/s" % (n, size, time.time() - t, len(payload) / (time.time() - t))
+        return ble._run(go(), timeout=60)
+    for size in (20, 100, 180, 240):
+        try:
+            step("speed test, packet %d" % size, lambda: bench(size))
+        except SystemExit:
+            print("        (this packet size does not work)")
+            ble._run(ble._disconnect(), timeout=15); ble.connect(p)
     step("send test label", lambda: ble.send(p, ZPL))
     big = b"^XA^FO0,0^GFA,60000,60000,100," + b"0" * 60000 + b"^FS^XZ"
     step("send 60 KB (blank) graphic", lambda: ble.send(p, big))
