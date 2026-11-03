@@ -9,6 +9,7 @@ Optional dependencies are imported lazily so the app runs without them:
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import glob
 import os
 import shlex
@@ -71,7 +72,12 @@ class BleLink:
         self._rx = bytearray()
 
     def _run(self, coro, timeout=45):
-        return asyncio.run_coroutine_threadsafe(coro, self.loop).result(timeout)
+        fut = asyncio.run_coroutine_threadsafe(coro, self.loop)
+        try:
+            return fut.result(timeout)
+        except concurrent.futures.TimeoutError:
+            fut.cancel()      # do not leave a stuck write running on the BLE loop
+            raise TransportError("Bluetooth did not answer in time. Turn the printer off and on, then try again.") from None
 
     def connected_to(self, address=None):
         ok = bool(self.client and self.client.is_connected)
@@ -111,6 +117,12 @@ class BleLink:
         if wchar is None:
             await client.disconnect()
             raise TransportError("No writable Bluetooth characteristic found on this device.")
+        try:   # BlueZ: ask for the real MTU, otherwise bleak assumes 23 bytes and large labels crawl
+            backend = getattr(client, "_backend", None)
+            if backend is not None and hasattr(backend, "_acquire_mtu"):
+                await backend._acquire_mtu()
+        except Exception:  # noqa: BLE001
+            pass
         self.client, self.wchar, self.rchar = client, wchar, rchar
         self.address, self.name = dev.address, (dev.name or dev.address)
 
@@ -125,9 +137,9 @@ class BleLink:
         ch = self.wchar
         no_resp = "write-without-response" in ch.properties and "write" not in ch.properties
         mtu = getattr(self.client, "mtu_size", 23) or 23
-        size = max(20, min(mtu - 3, 180))
+        size = max(20, min(mtu - 3, 240))
         for i in range(0, len(data), size):
-            await self.client.write_gatt_char(ch, data[i:i + size], response=not no_resp)
+            await asyncio.wait_for(self.client.write_gatt_char(ch, data[i:i + size], response=not no_resp), 15)
             await asyncio.sleep(0.02)
         await asyncio.sleep(0.3)
 
@@ -164,14 +176,16 @@ class BleLink:
     def send(self, p, data):
         with self.lock:
             self._ensure(p)
+            limit = 60 + len(data) / 1000.0     # big graphics need more time; the stuck case still ends
             try:
-                self._run(self._write(data), timeout=120)
-            except TransportError:
-                raise
-            except Exception:  # noqa: BLE001  one reconnect attempt
-                self._run(self._disconnect())
+                self._run(self._write(data), timeout=limit)
+            except Exception:  # noqa: BLE001  one reconnect attempt (also after a timeout)
+                try:
+                    self._run(self._disconnect(), timeout=15)
+                except Exception:  # noqa: BLE001
+                    self.client = None
                 self._ensure(p)
-                self._run(self._write(data), timeout=120)
+                self._run(self._write(data), timeout=limit)
             return self.name
 
     def query(self, p, data, wait=1.5):

@@ -13,6 +13,7 @@ TR = {
     "BLE needs the 'bleak' package:  pip install bleak": "Bluetooth LE için 'bleak' paketi gerekli:  pip install bleak",
     "Printer not found over Bluetooth. It must be on, in range and not connected to another device (e.g. a phone).":
         "Yazıcı Bluetooth ile bulunamadı. Açık, yakında ve başka bir cihaza (ör. telefona) bağlı olmamalı.",
+    "Bluetooth did not answer in time. Turn the printer off and on, then try again.": "Bluetooth zamanında yanıt vermedi. Yazıcıyı kapatıp açın, sonra tekrar deneyin.",
     "No writable Bluetooth characteristic found on this device.": "Bu cihazda yazılabilir bir Bluetooth özelliği bulunamadı.",
     "This printer does not report status over Bluetooth.": "Bu yazıcı Bluetooth üzerinden durum bildirmiyor.",
     "Enter the printer's IP address.": "Yazıcının IP adresini gir.",
