@@ -100,7 +100,22 @@ def err_text(e):
         return localize(e.template, e.params, lang())
     if isinstance(e, ValueError) and str(e):
         return str(e)          # dogrulama mesajlari (orn. NLBL aktarimi) oldugu gibi gosterilir
-    return msg("Unexpected error: %s", e)
+    log_error(e)
+    return msg("Unexpected error: %s: %s", type(e).__name__, e)
+
+
+def log_error(e):
+    """Unexpected errors leave a traceback in <data dir>/error.log (kept small) so they can be diagnosed."""
+    try:
+        import traceback, time
+        path = store.base / "error.log" if store else None
+        if not path:
+            return
+        old = path.read_text(encoding="utf-8", errors="replace")[-40000:] if path.exists() else ""
+        text = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+        path.write_text(old + "\n[%s] ZebraApp %s\n%s" % (time.strftime("%Y-%m-%d %H:%M:%S"), __import__("zebraapp").__version__, text), encoding="utf-8")
+    except Exception:
+        pass
 
 
 def active_printer(pid=None):

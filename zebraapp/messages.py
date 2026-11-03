@@ -46,6 +46,7 @@ TR = {
     "Printer is ready.": "Yazıcı hazır.",
     "Labelary error %d: %s": "Labelary hatası %d: %s",
     "Could not reach Labelary (is the internet on?): %s": "Labelary'ye ulaşılamadı (internet var mı?): %s",
+    "Unexpected error: %s: %s": "Beklenmeyen hata: %s: %s",
     "Unexpected error: %s": "Beklenmeyen hata: %s",
 }
 
