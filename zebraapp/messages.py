@@ -57,6 +57,9 @@ TR = {
 # Brazilian Portuguese. The front-end sends the language as "pt" (see i18n.js),
 # but a settings file may also carry "pt-BR" / "pt_BR"; localize() normalizes.
 PT = {
+    'The file link has expired. Open the file again.': 'O link do arquivo expirou. Abra o arquivo novamente.',
+    'The file is empty (0 bytes): %s': 'O arquivo está vazio (0 bytes): %s',
+    'Label files can be at most 20 MB.': 'Arquivos de etiqueta podem ter no máximo 20 MB.',
     'PDF files must be non-empty and no larger than 20 MB.':
         'Arquivos PDF não podem estar vazios e devem ter no máximo 20 MB.',
     'PDF import needs pypdfium2 and Pillow: pip install "zebraapp[pdf]"':
@@ -137,6 +140,6 @@ def localize(template, params, lang):
     if code == "tr" and params and template in REORDER:
         params = tuple(params[i] for i in REORDER[template])
     try:
-        return t % params if params else template
+        return t % params if params else t
     except (TypeError, ValueError):
         return template % params if params else template

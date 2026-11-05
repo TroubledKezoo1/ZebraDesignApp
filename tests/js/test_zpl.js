@@ -164,4 +164,15 @@ test("sideways images keep their box when rotated freely", () => {
   assert.ok(Math.abs(L85.box.w - L90.box.w) < 25 && Math.abs(L85.box.h - L90.box.h) < 25, JSON.stringify([L85.box, L90.box]));
 });
 
+test("valid-until dates and Portuguese token names", () => {
+  const rec = { __date: "31.01.2026", __counter: 7, __time: "10:30" };
+  assert.strictEqual(Z.subst("{TARIH+30}", rec), "02.03.2026");          // month rollover
+  assert.strictEqual(Z.subst("{DATA+1}", rec), "01.02.2026");
+  assert.strictEqual(Z.subst("{tarih-31}", rec), "31.12.2025");          // year rollover, any case
+  assert.strictEqual(Z.subst("{TARIH+999999}", rec), "{TARIH+999999}");  // too many days: left as written
+  assert.strictEqual(Z.subst("{CONTADOR} {DATA} {HORA}", rec), "7 31.01.2026 10:30");
+  // a CSV column with a Portuguese name keeps its value; the Turkish names stay the print variables
+  assert.strictEqual(Z.subst("{DATA}/{HORA}/{TARIH}", Object.assign({ DATA: "csv-data", HORA: "csv-hora", TARIH: "csv" }, rec)), "csv-data/csv-hora/31.01.2026");
+});
+
 console.log("\n" + n + " tests passed");

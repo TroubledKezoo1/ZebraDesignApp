@@ -670,7 +670,7 @@
     els.forEach(function (el) { var c = clone(el); c.id = uid(); c.x = r2(c.x + o); c.y = r2(c.y + o); doc.elements.push(c); ids.push(c.id); });
     sel = ids; selectionChanged(); changed({ layers: true });
   }
-  function copySel() { var els = selEls(); if (els.length) { clipboard = clone(els); status(els.length + " " + (els.length === 1 ? __("öğe kopyalandı.") : __(" öğe kopyalandı."))); } }
+  function copySel() { var els = selEls(); if (els.length) { clipboard = clone(els); status(els.length === 1 ? "1 " + __("öğe kopyalandı.") : els.length + __(" öğe kopyalandı.")); } }
   function paste() {
     if (!clipboard) return;
     checkpoint(true);

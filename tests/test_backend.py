@@ -234,6 +234,17 @@ class TemplatesTest(unittest.TestCase):
                     st.save_templates(bad)
 
 
+class MessagesTest(unittest.TestCase):
+    def test_server_messages_follow_the_language(self):
+        from zebraapp.messages import localize
+        no_printer = "No printer selected. Add one under Printers."
+        self.assertNotEqual(localize(no_printer, (), "tr"), no_printer)              # Turkish, no parameters
+        self.assertEqual(localize(no_printer, (), "en"), no_printer)
+        self.assertNotEqual(localize("Choose a valid PDF page number.", (), "pt"), "Choose a valid PDF page number.")
+        self.assertEqual(localize("Choose a valid PDF page number.", (), "pt-BR"), localize("Choose a valid PDF page number.", (), "pt"))
+        self.assertIn("ZD421", localize("Sent %d bytes to %s.", (12, "ZD421"), "tr"))
+
+
 class FileTypesTest(unittest.TestCase):
     """The downloaded Linux app registers .zebra/.nlbl for the user once per path and version."""
 

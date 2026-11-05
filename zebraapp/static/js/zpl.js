@@ -35,12 +35,16 @@
     return str.replace(/\{([^{}]+)\}/g, function (m, key) {
       var k = key.trim();
       var up = k.toLocaleUpperCase("tr");
-      var md = /^(TARIH|TARİH|DATA)\s*([+-])\s*(\d+)$/.exec(up);
+      var md = /^(TARIH|TARİH|DATA)\s*([+-])\s*(\d{1,5})$/.exec(up);       /* at most 99999 days */
       if (md) return shiftDate(rec.__date, (md[2] === "-" ? -1 : 1) * (+md[3]));
-      if (up === "SAYAC" || up === "SAYAÇ" || up === "CONTADOR") return rec.__counter != null ? rec.__counter : m;
-      if (up === "TARIH" || up === "TARİH" || up === "DATA") return rec.__date || m;
-      if (up === "SAAT" || up === "HORA") return rec.__time || m;
+      if (up === "SAYAC" || up === "SAYAÇ") return rec.__counter != null ? rec.__counter : m;
+      if (up === "TARIH" || up === "TARİH") return rec.__date || m;
+      if (up === "SAAT") return rec.__time || m;
       if (Object.prototype.hasOwnProperty.call(rec, k)) return rec[k];
+      /* Portuguese names, after the CSV columns: a column called "DATA" keeps its own value */
+      if (up === "CONTADOR") return rec.__counter != null ? rec.__counter : m;
+      if (up === "DATA") return rec.__date || m;
+      if (up === "HORA") return rec.__time || m;
       return m;
     });
   }
