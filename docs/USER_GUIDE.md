@@ -60,6 +60,7 @@ Choose **Text**, **QR code**, **Barcode**, **Line**, **Box**, **Ellipse** or **I
 
 - A new text box is ready for typing right away.
 - **Fields** puts `{SAYAC}` (counter), `{TARIH}` (date) or `{SAAT}` (time) where you are typing, or into the selected QR code or barcode.
+- **Valid Until** opens a menu of day presets (7, 10, 14, 28, 30, 60, 90, 180, 365). Each one inserts `{TARIH+N}` — a date N days from today, for example `{TARIH+30}` for a 30-day use-by. The token works anywhere `{TARIH}` does: type it into a text, a QR code or a barcode, and every label gets the calculated date.
 - An image is converted to black and white for the printer; set **threshold**, **dither** and **invert** in Properties.
 
 ## 6. Type and format text (Home tab)
@@ -112,6 +113,10 @@ With the mouse: drag to move, drag the eight handles to resize, **Shift**-click 
 ## 8. Numbered labels and lists (Data tab)
 
 **Counter**: write `{SAYAC}` in any text, QR or barcode. Set **Start**, **Step** and **Digits** (3 digits from 1 gives 001, 002 …). The print screen's *Number of different labels* sets how many are printed.
+
+**Date**: `{TARIH}` prints today as `dd.mm.yyyy`. `{TARIH+N}` (or `{TARIH-N}`) prints today plus (or minus) N days; the Insert tab's **Valid Until** menu offers 7, 10, 14, 28, 30, 60, 90, 180 and 365 day presets.
+
+**Time**: `{SAAT}` prints the time as `HH:mm`.
 
 **List (CSV)**: press **Load list** to pick a CSV file, or **Edit list…** to paste one. The first line holds the column names, separated by `;`, `,` or tabs. The columns appear under **Insert field**; click one to put `{column}` into the selected text. One label is printed per row.
 

@@ -35,6 +35,7 @@ ZebraDesigner only runs on Windows, and most open-source label tools do not spea
 
 **Printing**
 - Variables `{SAYAC}` (counter), `{TARIH}` (date) and `{SAAT}` (time) for numbered labels
+- Valid Until dates: `{TARIH+N}`, a date N days from today (for example `{TARIH+30}` for a 30-day expiry)
 - Batch printing from CSV: put `{column}` in any field and get one label per row
 - Printer settings per label: media type (gap, continuous, black mark), darkness, speed, 180° rotation, offsets
 - Several printers with models and resolutions; warnings when the label does not match the printer

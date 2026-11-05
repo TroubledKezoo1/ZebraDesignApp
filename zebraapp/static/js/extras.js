@@ -4,22 +4,34 @@
   "use strict";
   var KEY = "zebraapp.theme", SEEN = "zebraapp.seenVersion";
   var THEMES = {
-    green:  { tr: "Yeşil", en: "Green", dot: "#0f6b5c" },
-    blue:   { tr: "Mavi", en: "Blue", dot: "#1f5fbf",
-      l: "--accent:#1f5fbf;--accent-fg:#fff;--accent-soft:#dbe7f8;--accent-dk:#174a96", d: "--accent:#6aa7ff;--accent-fg:#071a33;--accent-soft:#1b2d4a;--accent-dk:#4a85d6" },
-    orange: { tr: "Turuncu", en: "Orange", dot: "#b4540a",
-      l: "--accent:#b4540a;--accent-fg:#fff;--accent-soft:#f8e3d2;--accent-dk:#8f4208", d: "--accent:#ffa24d;--accent-fg:#331a02;--accent-soft:#43301a;--accent-dk:#d9822b" },
-    purple: { tr: "Mor", en: "Purple", dot: "#6b3fb0",
-      l: "--accent:#6b3fb0;--accent-fg:#fff;--accent-soft:#e8def6;--accent-dk:#54308c", d: "--accent:#b995f0;--accent-fg:#1c0b36;--accent-soft:#35294f;--accent-dk:#946ad6" },
-    slate:  { tr: "Gri", en: "Slate", dot: "#455a64",
-      l: "--accent:#455a64;--accent-fg:#fff;--accent-soft:#dde3e6;--accent-dk:#34454c", d: "--accent:#90a4ae;--accent-fg:#10181c;--accent-soft:#2a353a;--accent-dk:#7a919c" },
-    red:    { tr: "Kırmızı", en: "Red", dot: "#b3261e",
-      l: "--accent:#b3261e;--accent-fg:#fff;--accent-soft:#f8dcd9;--accent-dk:#8c1d17", d: "--accent:#ff8a80;--accent-fg:#3a0a07;--accent-soft:#4a2523;--accent-dk:#e0655a" }
+    green:  { tr: "Yeşil",   en: "Green",  pt: "Verde",    dot: "#0f6b5c" },
+    blue:   { tr: "Mavi",    en: "Blue",   pt: "Azul",     dot: "#1f5fbf",
+      l: "--accent:#1f5fbf;--accent-fg:#fff;--accent-soft:#dbe7f8;--accent-dk:#174a96",
+      d: "--accent:#6aa7ff;--accent-fg:#071a33;--accent-soft:#1b2d4a;--accent-dk:#4a85d6" },
+    orange: { tr: "Turuncu", en: "Orange", pt: "Laranja",  dot: "#b4540a",
+      l: "--accent:#b4540a;--accent-fg:#fff;--accent-soft:#f8e3d2;--accent-dk:#8f4208",
+      d: "--accent:#ffa24d;--accent-fg:#331a02;--accent-soft:#43301a;--accent-dk:#d9822b" },
+    purple: { tr: "Mor",     en: "Purple", pt: "Roxo",     dot: "#6b3fb0",
+      l: "--accent:#6b3fb0;--accent-fg:#fff;--accent-soft:#e8def6;--accent-dk:#54308c",
+      d: "--accent:#b995f0;--accent-fg:#1c0b36;--accent-soft:#35294f;--accent-dk:#946ad6" },
+    slate:  { tr: "Gri",     en: "Slate",  pt: "Cinza",    dot: "#455a64",
+      l: "--accent:#455a64;--accent-fg:#fff;--accent-soft:#dde3e6;--accent-dk:#34454c",
+      d: "--accent:#90a4ae;--accent-fg:#10181c;--accent-soft:#2a353a;--accent-dk:#7a919c" },
+    red:    { tr: "Kırmızı", en: "Red",    pt: "Vermelho", dot: "#b3261e",
+      l: "--accent:#b3261e;--accent-fg:#fff;--accent-soft:#f8dcd9;--accent-dk:#8c1d17",
+      d: "--accent:#ff8a80;--accent-fg:#3a0a07;--accent-soft:#4a2523;--accent-dk:#e0655a" }
   };
   function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } }
   function lang() { return (window.I18N && window.I18N.lang) || get("zebraapp.lang") || "tr"; }
-  function L(tr, en) { return lang() === "en" ? en : tr; }
+  /* Third argument: Portuguese. Falls back to EN if a caller has no PT string yet
+     (so a new L("…", "…") call in the future reads English in PT, not Turkish). */
+  function L(tr, en, pt) {
+    var l = lang();
+    if (l === "en") return en;
+    if (l === "pt") return pt != null ? pt : en;
+    return tr;
+  }
 
   function applyTheme(name) {
     var t = THEMES[name], el = document.getElementById("zTheme");
@@ -47,10 +59,10 @@
     wrap.style.cssText = "position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.5);display:grid;place-items:center;padding:16px";
     var box = document.createElement("div");
     box.style.cssText = "background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:12px;max-width:440px;width:100%;max-height:85vh;overflow:auto;padding:18px 20px;box-shadow:0 12px 40px rgba(0,0,0,.4);font:14px/1.45 var(--ui)";
-    var h = document.createElement("h2"); h.textContent = L("Yenilikler", "What's new") + " · " + version; h.style.cssText = "margin:0 0 10px;font-size:20px";
+    var h = document.createElement("h2"); h.textContent = L("Yenilikler", "What's new", "Novidades") + " · " + version; h.style.cssText = "margin:0 0 10px;font-size:20px";
     var ul = document.createElement("ul"); ul.style.cssText = "margin:0 0 14px;padding-left:20px;display:grid;gap:6px";
     (notes[lang()] || notes.tr || []).forEach(function (n) { var li = document.createElement("li"); li.textContent = n; ul.appendChild(li); });
-    var ok = document.createElement("button"); ok.type = "button"; ok.className = "tb primary"; ok.textContent = L("Tamam", "Got it");
+    var ok = document.createElement("button"); ok.type = "button"; ok.className = "tb primary"; ok.textContent = L("Tamam", "Got it", "Entendi");
     ok.style.cssText = "height:38px;padding:0 18px"; ok.onclick = function () { wrap.remove(); };
     wrap.addEventListener("click", function (e) { if (e.target === wrap) wrap.remove(); });
     box.append(h, ul, ok); wrap.appendChild(box); document.body.appendChild(wrap);
@@ -75,43 +87,68 @@
     var bar = document.createElement("div"); bar.id = "zUpdate"; bar.setAttribute("role", "status");
     bar.style.cssText = "position:fixed;left:12px;bottom:36px;z-index:99990;max-width:min(560px,calc(100vw - 24px));background:var(--accent);color:var(--accent-fg);padding:10px 12px;border-radius:10px;font:13px/1.35 var(--ui);display:flex;gap:8px;align-items:center;flex-wrap:wrap;box-shadow:0 6px 24px rgba(0,0,0,.3)";
     var t = document.createElement("span"); t.style.flex = "1 1 200px";
-    t.textContent = L("Yeni sürüm " + r.latest + " yayınlandı (sizde " + r.current + ").", "Version " + r.latest + " is available (you have " + r.current + ").");
+    t.textContent = L(
+      "Yeni sürüm " + r.latest + " yayınlandı (sizde " + r.current + ").",
+      "Version " + r.latest + " is available (you have " + r.current + ").",
+      "Versão " + r.latest + " disponível (você tem " + r.current + ")."
+    );
     function btn(label, fn, primary) {
       var b = document.createElement("button"); b.type = "button"; b.textContent = label; b.onclick = fn;
       b.style.cssText = "border:0;border-radius:7px;padding:6px 11px;font:inherit;cursor:pointer;" + (primary ? "background:var(--accent-fg);color:var(--accent);font-weight:700" : "background:rgba(255,255,255,.2);color:inherit");
       return b;
     }
     var go = r.url || r.page;
-    if (r.self_update) bar.append(t, btn(L("Şimdi güncelle", "Update now"), function () { installUpdate(bar, t, r); }, true));
+    if (r.self_update) bar.append(t, btn(L("Şimdi güncelle", "Update now", "Atualizar agora"), function () { installUpdate(bar, t, r); }, true));
     else bar.append(t);
     bar.append(
-      btn(r.url ? L("İndir", "Download") : L("Sürüm sayfası", "Release page"), function () { window.open(go, "_blank", "noopener"); }, !r.self_update),
-      btn(L("Sonra", "Later"), function () { bar.remove(); }),
-      btn(L("Atla", "Skip"), function () { set(SKIP, r.latest); bar.remove(); }));
-    if (!r.frozen) { var hint = document.createElement("small"); hint.style.cssText = "flex:1 0 100%;opacity:.9"; hint.textContent = L("Kaynaktan ya da pip ile kurduysan: pip install -U zebraapp", "Installed from source or pip? Run: pip install -U zebraapp"); bar.appendChild(hint); }
+      btn(r.url ? L("İndir", "Download", "Baixar") : L("Sürüm sayfası", "Release page", "Página da versão"), function () { window.open(go, "_blank", "noopener"); }, !r.self_update),
+      btn(L("Sonra", "Later", "Depois"), function () { bar.remove(); }),
+      btn(L("Atla", "Skip", "Ignorar"), function () { set(SKIP, r.latest); bar.remove(); }));
+    if (!r.frozen) {
+      var hint = document.createElement("small"); hint.style.cssText = "flex:1 0 100%;opacity:.9";
+      hint.textContent = L(
+        "Kaynaktan ya da pip ile kurduysan: pip install -U zebraapp",
+        "Installed from source or pip? Run: pip install -U zebraapp",
+        "Instalado a partir do código-fonte ou pip? Execute: pip install -U zebraapp"
+      );
+      bar.appendChild(hint);
+    }
     document.body.appendChild(bar);
   }
   var UPD_ERR = {
-    busy: ["Bir güncelleme zaten sürüyor.", "An update is already running."],
-    unsupported: ["Bu kurulumda otomatik güncelleme yok.", "Automatic update is not available for this install."],
-    source: ["İndirme adresi güvenilir değil, durduruldu.", "The download address is not trusted; stopped."],
-    nosig: ["Sürümün imza dosyası yok ya da okunamadı, kurulmadı.", "The release has no readable signature; not installed."],
-    badsig: ["Sürümün imzası geçersiz, kurulmadı. Güvenliğin için bu sürümü elle indirme.", "The release signature is invalid; not installed. Do not download this release by hand either."],
-    nosum: ["Sürümün doğrulama dosyası bulunamadı, kurulmadı.", "The release has no checksum for this file; not installed."],
-    sha: ["İndirilen dosya doğrulanamadı (SHA-256), kurulmadı.", "The downloaded file failed its SHA-256 check; not installed."],
-    net: ["İndirme sırasında bağlantı koptu.", "The connection dropped while downloading."],
-    write: ["Dosya yazılamadı (klasör izni?).", "Could not write the file (folder permission?)."],
-    restart: ["Yeni sürüm kendiliğinden açılmadı; uygulamayı elle başlat.", "The new version did not open by itself; start the app again."]
+    busy: ["Bir güncelleme zaten sürüyor.", "An update is already running.",
+      "Uma atualização já está em andamento."],
+    unsupported: ["Bu kurulumda otomatik güncelleme yok.", "Automatic update is not available for this install.",
+      "A atualização automática não está disponível nesta instalação."],
+    source: ["İndirme adresi güvenilir değil, durduruldu.", "The download address is not trusted; stopped.",
+      "O endereço de download não é confiável; interrompido."],
+    nosig: ["Sürümün imza dosyası yok ya da okunamadı, kurulmadı.", "The release has no readable signature; not installed.",
+      "A versão não tem assinatura legível; não instalada."],
+    badsig: ["Sürümün imzası geçersiz, kurulmadı. Güvenliğin için bu sürümü elle indirme.",
+      "The release signature is invalid; not installed. Do not download this release by hand either.",
+      "A assinatura da versão é inválida; não instalada. Por segurança, não baixe esta versão manualmente."],
+    nosum: ["Sürümün doğrulama dosyası bulunamadı, kurulmadı.", "The release has no checksum for this file; not installed.",
+      "A versão não tem soma de verificação para este arquivo; não instalada."],
+    sha: ["İndirilen dosya doğrulanamadı (SHA-256), kurulmadı.", "The downloaded file failed its SHA-256 check; not installed.",
+      "O arquivo baixado falhou na verificação SHA-256; não instalado."],
+    net: ["İndirme sırasında bağlantı koptu.", "The connection dropped while downloading.",
+      "A conexão caiu durante o download."],
+    write: ["Dosya yazılamadı (klasör izni?).", "Could not write the file (folder permission?).",
+      "Não foi possível gravar o arquivo (permissão da pasta?)."],
+    restart: ["Yeni sürüm kendiliğinden açılmadı; uygulamayı elle başlat.", "The new version did not open by itself; start the app again.",
+      "A nova versão não abriu sozinha; inicie o aplicativo novamente."]
   };
   function installUpdate(bar, t, r) {
     var btns = bar.querySelectorAll("button");
     function lock(on) { for (var i = 0; i < btns.length; i++) btns[i].disabled = on; }
     function fail(code) {
-      lock(false); var m = UPD_ERR[code] || ["Güncellenemedi.", "The update failed."];
-      t.textContent = L(m[0], m[1]) + " " + L("İndirme düğmesini kullanabilirsin.", "You can use the download button instead.");
+      lock(false);
+      var m = UPD_ERR[code] || ["Güncellenemedi.", "The update failed.", "A atualização falhou."];
+      t.textContent = L(m[0], m[1], m[2]) + " " +
+        L("İndirme düğmesini kullanabilirsin.", "You can use the download button instead.", "Você pode usar o botão de download.");
     }
     function waitForNew() {
-      t.textContent = L("Yeniden başlatılıyor…", "Restarting…");
+      t.textContent = L("Yeniden başlatılıyor…", "Restarting…", "Reiniciando…");
       var n = 0;
       (function tick() {
         fetch("/api/settings").then(function (x) { return x.json(); }).then(function (s) { if (s.version === r.latest) location.reload(); else again(); }).catch(again);
@@ -122,13 +159,13 @@
       fetch("/api/update/progress").then(function (x) { return x.json(); }).then(function (p) {
         if (p.state === "error") return fail(p.code);
         if (p.state === "restarting") return waitForNew();
-        if (p.state === "downloading") t.textContent = L("İndiriliyor… ", "Downloading… ") + (p.total ? Math.round(p.done * 100 / p.total) + " %" : Math.round(p.done / 1048576) + " MB");
-        else if (p.state === "verifying") t.textContent = L("Doğrulanıyor (SHA-256)…", "Verifying (SHA-256)…");
-        else if (p.state === "installing") t.textContent = L("Kuruluyor…", "Installing…");
+        if (p.state === "downloading") t.textContent = L("İndiriliyor… ", "Downloading… ", "Baixando… ") + (p.total ? Math.round(p.done * 100 / p.total) + " %" : Math.round(p.done / 1048576) + " MB");
+        else if (p.state === "verifying") t.textContent = L("Doğrulanıyor (SHA-256)…", "Verifying (SHA-256)…", "Verificando (SHA-256)…");
+        else if (p.state === "installing") t.textContent = L("Kuruluyor…", "Installing…", "Instalando…");
         setTimeout(poll, 500);
       }).catch(waitForNew);
     }
-    lock(true); t.textContent = L("Güncelleme başlıyor…", "Starting the update…");
+    lock(true); t.textContent = L("Güncelleme başlıyor…", "Starting the update…", "Iniciando a atualização…");
     jpost("/api/update/install", {}).then(function (j) { if (j && j.ok) poll(); else fail(j && j.code); }).catch(function () { fail("net"); });
   }
   function autoCheckUpdate() {
@@ -136,24 +173,28 @@
     checkUpdate(false).then(function (r) { if (r.state === "available" && get(SKIP) !== r.latest) updateBar(r); });
   }
   function updateSection(box) {
-    var h = document.createElement("h2"); h.textContent = L("Güncellemeler", "Updates");
+    var h = document.createElement("h2"); h.textContent = L("Güncellemeler", "Updates", "Atualizações");
     var ver = document.createElement("p"); ver.className = "note"; ver.style.margin = "0";
-    currentVersion().then(function (v) { ver.textContent = L("Kurulu sürüm: ", "Installed version: ") + (v || "?"); });
+    currentVersion().then(function (v) { ver.textContent = L("Kurulu sürüm: ", "Installed version: ", "Versão instalada: ") + (v || "?"); });
     var msg = document.createElement("p"); msg.className = "note"; msg.style.margin = "0";
-    var b = document.createElement("button"); b.type = "button"; b.className = "tb"; b.textContent = L("Güncellemeleri denetle", "Check for updates");
+    var b = document.createElement("button"); b.type = "button"; b.className = "tb"; b.textContent = L("Güncellemeleri denetle", "Check for updates", "Verificar atualizações");
     b.onclick = function () {
-      b.disabled = true; msg.textContent = L("Denetleniyor…", "Checking…");
+      b.disabled = true; msg.textContent = L("Denetleniyor…", "Checking…", "Verificando…");
       checkUpdate(true).then(function (r) {
         b.disabled = false;
-        if (r.state === "error") msg.textContent = L("GitHub'a ulaşılamadı (internet açık mı?).", "Could not reach GitHub (is the internet on?).");
-        else if (r.state === "current") msg.textContent = L("En son sürümü kullanıyorsunuz.", "You have the latest version.");
-        else { msg.textContent = L("Sürüm " + r.latest + " var.", "Version " + r.latest + " is available."); updateBar(r); }
+        if (r.state === "error") msg.textContent = L("GitHub'a ulaşılamadı (internet açık mı?).", "Could not reach GitHub (is the internet on?).", "Não foi possível acessar o GitHub (a internet está ligada?).");
+        else if (r.state === "current") msg.textContent = L("En son sürümü kullanıyorsunuz.", "You have the latest version.", "Você está na versão mais recente.");
+        else { msg.textContent = L("Sürüm " + r.latest + " var.", "Version " + r.latest + " is available.", "Versão " + r.latest + " disponível."); updateBar(r); }
       });
     };
     var lab = document.createElement("label"); lab.style.cssText = "display:flex;gap:8px;align-items:center;font-weight:400";
     var cb = document.createElement("input"); cb.type = "checkbox"; cb.style.width = "auto"; cb.checked = get(AUTO) !== "0";
     cb.onchange = function () { set(AUTO, cb.checked ? "1" : "0"); };
-    lab.append(cb, document.createTextNode(L("Açılışta yeni sürüm var mı diye bak (yalnızca GitHub'a tek bir istek gider)", "Look for a new version on start (one request to GitHub, nothing else is sent)")));
+    lab.append(cb, document.createTextNode(L(
+      "Açılışta yeni sürüm var mı diye bak (yalnızca GitHub'a tek bir istek gider)",
+      "Look for a new version on start (one request to GitHub, nothing else is sent)",
+      "Verificar nova versão ao iniciar (apenas uma requisição ao GitHub, nada mais é enviado)"
+    )));
     box.append(h, ver, b, msg, lab);
   }
 
@@ -169,16 +210,17 @@
       var link = document.createElement("a"), url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: "application/json" }));
       link.href = url; link.download = name; document.body.appendChild(link); link.click(); link.remove();
       setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
-      msg.textContent = L("Yedek hazır: ", "Backup ready: ") + name + " (" + a[0].length + " " + L("etiket", "labels") + ", " + a[1].length + " " + L("şablon", "templates") + ")";
+      msg.textContent = L("Yedek hazır: ", "Backup ready: ", "Backup pronto: ") + name + " (" + a[0].length + " " +
+        L("etiket", "labels", "etiquetas") + ", " + a[1].length + " " + L("şablon", "templates", "modelos") + ")";
     }).catch(function (e) { msg.textContent = String(e); });
   }
   function restore(file, msg) {
     var rd = new FileReader();
     rd.onload = function () {
       var data;
-      try { data = JSON.parse(String(rd.result)); } catch (e) { msg.textContent = L("Dosya okunamadı.", "Could not read the file."); return; }
+      try { data = JSON.parse(String(rd.result)); } catch (e) { msg.textContent = L("Dosya okunamadı.", "Could not read the file.", "Não foi possível ler o arquivo."); return; }
       if (!data || data.format !== "ZebraApp-backup" || !Array.isArray(data.labels) || !Array.isArray(data.templates)) {
-        msg.textContent = L("Bu bir ZebraApp yedeği değil.", "This is not a ZebraApp backup."); return;
+        msg.textContent = L("Bu bir ZebraApp yedeği değil.", "This is not a ZebraApp backup.", "Este não é um backup do ZebraApp."); return;
       }
       Promise.all([jget("/api/labels"), jget("/api/templates")]).then(function (cur) {
         var ids = {}; data.labels.forEach(function (l) { if (l && l.id) ids[l.id] = 1; });
@@ -187,10 +229,10 @@
         var templates = cur[1].concat(data.templates.filter(function (t) { return !seen[JSON.stringify(t)]; }));
         return jpost("/api/labels", labels).then(function () { return jpost("/api/templates", templates); }).then(function (r) {
           if (r && r.ok === false) throw new Error(r.message);
-          msg.textContent = L("Yedek yüklendi, yenileniyor…", "Backup restored, reloading…");
+          msg.textContent = L("Yedek yüklendi, yenileniyor…", "Backup restored, reloading…", "Backup restaurado, recarregando…");
           setTimeout(function () { location.reload(); }, 900);
         });
-      }).catch(function (e) { msg.textContent = L("Yüklenemedi: ", "Could not restore: ") + (e && e.message || e); });
+      }).catch(function (e) { msg.textContent = L("Yüklenemedi: ", "Could not restore: ", "Não foi possível restaurar: ") + (e && e.message || e); });
     };
     rd.readAsText(file, "utf-8");
   }
@@ -202,40 +244,47 @@
     var box = document.createElement("div"); box.id = "zExtras"; box.style.cssText = "display:grid;gap:10px;margin-top:6px;justify-items:start";
     var cur = get(KEY) || "green";
 
-    var h1 = document.createElement("h2"); h1.textContent = L("Renk teması", "Colour theme");
+    var h1 = document.createElement("h2"); h1.textContent = L("Renk teması", "Colour theme", "Tema de cores");
     var chips = document.createElement("div"); chips.style.cssText = "display:flex;gap:10px;flex-wrap:wrap";
     Object.keys(THEMES).forEach(function (k) {
-      var b = document.createElement("button"); b.type = "button"; b.title = THEMES[k][lang()] || THEMES[k].tr;
+      var b = document.createElement("button"); b.type = "button";
+      b.title = THEMES[k][lang()] || THEMES[k].en;
       b.setAttribute("aria-label", b.title); b.setAttribute("aria-pressed", String(k === cur));
       b.style.cssText = "width:40px;height:40px;border-radius:50%;cursor:pointer;background:" + THEMES[k].dot + ";border:3px solid " + (k === cur ? "var(--fg)" : "var(--line)");
       b.onclick = function () { set(KEY, k); applyTheme(k); build(); };
       chips.appendChild(b);
     });
 
-    var hm = document.createElement("h2"); hm.textContent = L("Görünüm", "Appearance");
+    var hm = document.createElement("h2"); hm.textContent = L("Görünüm", "Appearance", "Aparência");
     var modes = document.createElement("div"); modes.style.cssText = "display:flex;gap:8px;flex-wrap:wrap";
     var curMode = get(MODE) === "light" || get(MODE) === "dark" ? get(MODE) : "auto";
-    [["auto", "Otomatik (sistem)", "Automatic (system)"], ["light", "Açık", "Light"], ["dark", "Koyu", "Dark"]].forEach(function (m) {
+    [["auto", "Otomatik (sistem)", "Automatic (system)", "Automático (sistema)"],
+     ["light", "Açık", "Light", "Claro"],
+     ["dark", "Koyu", "Dark", "Escuro"]].forEach(function (m) {
       var b = document.createElement("button"); b.type = "button"; b.className = "tb" + (m[0] === curMode ? " primary" : "");
-      b.textContent = L(m[1], m[2]); b.setAttribute("aria-pressed", String(m[0] === curMode));
+      b.textContent = L(m[1], m[2], m[3]); b.setAttribute("aria-pressed", String(m[0] === curMode));
       b.onclick = function () { set(MODE, m[0]); applyMode(m[0]); build(); };
       modes.appendChild(b);
     });
 
-    var h2 = document.createElement("h2"); h2.textContent = L("Yedek", "Backup");
+    var h2 = document.createElement("h2"); h2.textContent = L("Yedek", "Backup", "Backup");
     var note = document.createElement("p"); note.className = "note"; note.style.margin = "0";
-    note.textContent = L("Kayıtlı etiketlerini ve şablonlarını tek dosyaya yedekle; başka bir telefona ya da bilgisayara yükle.", "Save your stored labels and templates in one file; restore it on another phone or computer.");
+    note.textContent = L(
+      "Kayıtlı etiketlerini ve şablonlarını tek dosyaya yedekle; başka bir telefona ya da bilgisayara yükle.",
+      "Save your stored labels and templates in one file; restore it on another phone or computer.",
+      "Salve suas etiquetas e modelos armazenados em um único arquivo; restaure em outro telefone ou computador."
+    );
     var msg = document.createElement("p"); msg.className = "note"; msg.style.margin = "0";
     var row = document.createElement("div"); row.style.cssText = "display:flex;gap:8px;flex-wrap:wrap";
-    var b1 = document.createElement("button"); b1.type = "button"; b1.className = "tb"; b1.textContent = L("Yedekle", "Back up"); b1.onclick = function () { backup(msg); };
-    var b2 = document.createElement("button"); b2.type = "button"; b2.className = "tb"; b2.textContent = L("Yedeği yükle", "Restore backup");
+    var b1 = document.createElement("button"); b1.type = "button"; b1.className = "tb"; b1.textContent = L("Yedekle", "Back up", "Fazer backup"); b1.onclick = function () { backup(msg); };
+    var b2 = document.createElement("button"); b2.type = "button"; b2.className = "tb"; b2.textContent = L("Yedeği yükle", "Restore backup", "Restaurar backup");
     var inp = document.createElement("input"); inp.type = "file"; inp.accept = ".json,application/json"; inp.hidden = true;
     inp.onchange = function () { if (inp.files[0]) restore(inp.files[0], msg); inp.value = ""; };
     b2.onclick = function () { inp.click(); };
     row.append(b1, b2, inp);
 
-    var h3 = document.createElement("h2"); h3.textContent = L("Yenilikler", "What's new");
-    var b3 = document.createElement("button"); b3.type = "button"; b3.className = "tb"; b3.textContent = L("Bu sürümde neler var?", "What's in this version?");
+    var h3 = document.createElement("h2"); h3.textContent = L("Yenilikler", "What's new", "Novidades");
+    var b3 = document.createElement("button"); b3.type = "button"; b3.className = "tb"; b3.textContent = L("Bu sürümde neler var?", "What's in this version?", "O que há de novo nesta versão?");
     b3.onclick = function () { currentVersion().then(function (v) { notesFor(v).then(function (n) { if (n) showNews(v, n); }); }); };
 
     box.append(hm, modes, h1, chips, h2, note, row, msg, h3, b3);

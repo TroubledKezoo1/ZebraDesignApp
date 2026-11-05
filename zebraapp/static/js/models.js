@@ -7,6 +7,7 @@ window.MODELS = [
   { id: "zd410", name: "ZD410", dpis: [203, 300], width: 56 },
   { id: "zd220", name: "ZD220 / ZD230", dpis: [203], width: 104 },
   { id: "zd888", name: "ZD888", dpis: [203], width: 104 },
+  { id: "gc420", name: "GC420t", dpis: [203], width: 104 },
   { id: "gk420", name: "GK420d / GK420t", dpis: [203], width: 104 },
   { id: "gx420", name: "GX420d / GX420t", dpis: [203], width: 104 },
   { id: "gx430", name: "GX430t", dpis: [300], width: 104 },

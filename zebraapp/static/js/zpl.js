@@ -10,16 +10,36 @@
   function clean(s) { return String(s == null ? "" : s).replace(/[\^~]/g, ""); }
   function pad(n, w) { var s = String(n); while (s.length < w) s = "0" + s; return s; }
 
-  /* Degiskenler: {SAYAC} {TARIH} {SAAT} {kolon} */
+  /* Tarih yardimcilari: {TARIH+N} / {DATA+N} icin */
+  function parseDate(s) {
+    s = String(s == null ? "" : s).trim();
+    var m = /^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/.exec(s);      /* gg.aa.yyyy */
+    if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+    m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s);                     /* yyyy-aa-gg */
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+    return null;
+  }
+  function fmtDate(d) { return pad(d.getDate(), 2) + "." + pad(d.getMonth() + 1, 2) + "." + d.getFullYear(); }
+  /* Temel tarihe (rec.__date) gun ekler/cikarir; okunamazsa bugunu kullanir */
+  function shiftDate(base, days) {
+    var d = parseDate(base);
+    if (!d || isNaN(d.getTime())) d = new Date();
+    d.setDate(d.getDate() + (Math.round(+days) || 0));
+    return fmtDate(d);
+  }
+
+  /* Degiskenler: {SAYAC} {TARIH} {TARIH+N} {TARIH-N} {DATA+N} {SAAT} {kolon} */
   function subst(str, rec) {
     str = String(str == null ? "" : str);
     if (!rec) return str;
     return str.replace(/\{([^{}]+)\}/g, function (m, key) {
       var k = key.trim();
       var up = k.toLocaleUpperCase("tr");
-      if (up === "SAYAC" || up === "SAYAÇ") return rec.__counter != null ? rec.__counter : m;
-      if (up === "TARIH" || up === "TARİH") return rec.__date || m;
-      if (up === "SAAT") return rec.__time || m;
+      var md = /^(TARIH|TARİH|DATA)\s*([+-])\s*(\d+)$/.exec(up);
+      if (md) return shiftDate(rec.__date, (md[2] === "-" ? -1 : 1) * (+md[3]));
+      if (up === "SAYAC" || up === "SAYAÇ" || up === "CONTADOR") return rec.__counter != null ? rec.__counter : m;
+      if (up === "TARIH" || up === "TARİH" || up === "DATA") return rec.__date || m;
+      if (up === "SAAT" || up === "HORA") return rec.__time || m;
       if (Object.prototype.hasOwnProperty.call(rec, k)) return rec[k];
       return m;
     });
@@ -33,8 +53,10 @@
   }
 
   /* Hangi acilari yazici kendi komutlariyla basabiliyor; digerleri bitmap */
-  var NATIVE = { text: [0, 90, 180, 270], barcode: [0, 90, 180, 270], image: [0, 90, 180, 270], qr: [0],
-    line: [0, 90, 180, 270], box: [0, 90, 180, 270], ellipse: [0, 90, 180, 270] };
+  var NATIVE = {
+    text: [0, 90, 180, 270], barcode: [0, 90, 180, 270], image: [0, 90, 180, 270], qr: [0],
+    line: [0, 90, 180, 270], box: [0, 90, 180, 270], ellipse: [0, 90, 180, 270]
+  };
   function normRot(r) { r = Math.round(+r || 0) % 360; return r < 0 ? r + 360 : r; }
   function sideways(r) { return Math.round(normRot(r) / 90) % 2 === 1; }
   /* Yazicinin kendi yazi tipiyle basilamayan metin ayarlari: bunlar varsa metin bitmap olarak gider */
@@ -200,8 +222,10 @@
     var base = { b: !!el.bold, i: !!el.italic, u: !!el.underline, s: !!el.strike, sz: +el.size || 4, f: el.font || "" };
     var src = el.rich && el.rich.length ? el.rich : [{ t: el.text }];
     var runs = src.map(function (r) {
-      return { t: caseT(clean(subst(r.t, rec)), el.caseMode), b: r.b != null ? !!r.b : base.b, i: r.i != null ? !!r.i : base.i,
-        u: r.u != null ? !!r.u : base.u, s: r.s != null ? !!r.s : base.s, sz: +r.sz || base.sz, f: r.f != null ? r.f : base.f };
+      return {
+        t: caseT(clean(subst(r.t, rec)), el.caseMode), b: r.b != null ? !!r.b : base.b, i: r.i != null ? !!r.i : base.i,
+        u: r.u != null ? !!r.u : base.u, s: r.s != null ? !!r.s : base.s, sz: +r.sz || base.sz, f: r.f != null ? r.f : base.f
+      };
     });
     function style(r, k) {
       var h = Math.max(4, r.sz * dpi / 25.4 * k), css = r.f ? fontCSS(r.f) : FONT, weight = r.f ? (r.b ? 700 : 400) : 700;
@@ -273,8 +297,10 @@
     var LL = layout(lel, doc, rec, true), lw = LL.box.w, lh = LL.box.h;
     var a = ang * Math.PI / 180, c = Math.abs(Math.cos(a)), sn = Math.abs(Math.sin(a));
     var bw = Math.max(1, Math.ceil(lw * c + lh * sn)), bh = Math.max(1, Math.ceil(lw * sn + lh * c));
-    return { kind: "raster", raster: true, angle: ang, x: x, y: y, rot: ang, local: { el: lel, L: LL }, lw: lw, lh: lh,
-      box: { x: x, y: y, w: bw, h: bh }, mat: LL.mat, W: LL.W, H: LL.H, module: LL.module, hr: LL.hr, shrunk: LL.shrunk };
+    return {
+      kind: "raster", raster: true, angle: ang, x: x, y: y, rot: ang, local: { el: lel, L: LL }, lw: lw, lh: lh,
+      box: { x: x, y: y, w: bw, h: bh }, mat: LL.mat, W: LL.W, H: LL.H, module: LL.module, hr: LL.hr, shrunk: LL.shrunk
+    };
   }
   /* Donmus ogenin dort kosesi (nokta), secim cercevesi icin */
   function corners(L) {
@@ -520,6 +546,7 @@
   G.Z = {
     dots: dots, layout: layout, elementZPL: elementZPL, docZPL: docZPL, labelZPL: labelZPL, records: records,
     subst: subst, measure: measure, mapRect: mapRect, normRot: normRot, sideways: sideways, textRaster: textRaster, caseT: caseT, isNative: isNative, corners: corners, fontCSS: fontCSS, NATIVE: NATIVE, loadImage: loadImage, imageReady: imageReady,
-    bitmap: bitmap, gfa: gfa, compressRow: compressRow, parseCSV: parseCSV, FONT: FONT, ORI: ORI
+    bitmap: bitmap, gfa: gfa, compressRow: compressRow, parseCSV: parseCSV, FONT: FONT, ORI: ORI,
+    shiftDate: shiftDate, parseDate: parseDate
   };
 })(window);
