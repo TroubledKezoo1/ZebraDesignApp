@@ -4,6 +4,7 @@ import json
 import os
 import socket
 import sys
+import time
 import tempfile
 import threading
 import unittest
@@ -198,6 +199,31 @@ class ServerTest(unittest.TestCase):
             out = json.loads(self.req("/api/opened?t=" + server.register_open(str(Path(d) / "bos.nlbl")))[1])
             self.assertFalse(out["ok"])
             self.assertIn("0", out["message"])
+
+    def test_quits_when_the_last_window_closes(self):
+        from zebraapp import server
+        server._windows.clear()
+        server._bye_at = 0.0
+        try:
+            self.req("/api/ping?w=winA")
+            self.req("/api/ping?w=winB")
+            now = time.time()
+            self.assertFalse(server.should_quit(now))
+            self.req("/api/bye", {"w": "winA"})                                   # one of two windows closes
+            self.assertFalse(server.should_quit(time.time() + 10))
+            self.req("/api/bye", {"w": "winB"})                                   # the last one closes
+            self.assertFalse(server.should_quit(time.time() + 1))                 # a reload has time to check in
+            self.assertTrue(server.should_quit(time.time() + 6))
+            self.req("/api/ping?w=winC")                                          # ...and a reload that did
+            self.assertFalse(server.should_quit(time.time() + 6))
+            # a hidden window pings once a minute: still open; silent for long: gone
+            server._bye_at = 0.0
+            self.assertFalse(server.should_quit(time.time() + 70))
+            self.assertTrue(server.should_quit(time.time() + server.QUIET + 5))
+        finally:
+            server._windows.clear()
+            server._bye_at = 0.0
+            server.last_ping = 0.0
 
     def test_key_file_is_private_and_stable(self):
         from zebraapp import server

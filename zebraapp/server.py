@@ -107,6 +107,12 @@ def take_open(token):
 def _same(a: str, b: str) -> bool:
     return bool(a) and bool(b) and hmac.compare_digest(a.encode("utf-8"), b.encode("utf-8"))
 last_ping = 0.0
+# Quitting when the last window closes. Each window pings with its own id and says goodbye when it closes.
+_windows = {}           # window id -> time of its last ping
+_bye_at = 0.0           # when a window last said goodbye
+QUIET = 150             # no ping at all for this long: the window is gone. Browsers slow the timers of hidden
+                        # windows to once a minute, so this must stay well above 60 s.
+GRACE = 5               # after a goodbye: time for a reload, or another open window, to check in
 PORT = 8765
 FIXED_TYPES = {".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml",
                ".png": "image/png", ".woff2": "font/woff2", ".xml": "application/xml", ".json": "application/json", ".txt": "text/plain"}
@@ -267,6 +273,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/ping":                     # needs no cookie (a second start asks whether we are running); says nothing
             global last_ping
             last_ping = time.time()
+            w = (parse_qs(parts.query).get("w") or [""])[0]
+            if re.fullmatch(r"[A-Za-z0-9]{1,40}", w) and (w in _windows or len(_windows) < 50):
+                _windows[w] = last_ping
             self._json({"ok": True})
             return
         if path in ("/", "/index.html") and "k" in parse_qs(parts.query):
@@ -379,6 +388,11 @@ class Handler(BaseHTTPRequestHandler):
                 from .nlbl import export_label
                 raw, warnings = export_label(data.get("label") or {})
                 self._json({"ok": True, "data": base64.b64encode(raw).decode("ascii"), "warnings": warnings})
+            elif path == "/api/bye":                # a window is closing
+                global _bye_at
+                _windows.pop(str(data.get("w") or ""), None)
+                _bye_at = time.time()
+                self._json({"ok": True})
             elif path == "/api/update/install":
                 from . import updates
                 self._json(updates.start_install())
@@ -474,11 +488,23 @@ def launch_url(port, key=None, open_path=None):
         return base
 
 
+def should_quit(now):
+    """True when no window is left: the last one said goodbye, or nothing has pinged for QUIET seconds."""
+    for w, t in list(_windows.items()):
+        if now - t > QUIET:
+            _windows.pop(w, None)
+    if _windows:
+        return False
+    if _bye_at and now - _bye_at > GRACE:
+        return True
+    return bool(last_ping) and now - last_ping > QUIET
+
+
 def watchdog():
-    """Quit a little after the last window closes (no more pings)."""
+    """Quit a few seconds after the last window closes."""
     while True:
-        time.sleep(5)
-        if last_ping and time.time() - last_ping > 25:
+        time.sleep(1)
+        if should_quit(time.time()):
             try:
                 transports.ble.disconnect()
             except Exception:  # noqa: BLE001
