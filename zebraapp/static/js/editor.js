@@ -1892,7 +1892,16 @@
   });
   $("disc").addEventListener("click", function () { api("/api/disconnect", {}).then(function (j) { status(j.message, !j.ok); }).then(refreshState); });
   setInterval(refreshState, 4000);
-  setInterval(function () { fetch("/api/ping").catch(function () {}); }, 5000);
+  /* "this window is open": the desktop app quits a few seconds after its last window closes */
+  var WINDOW_ID = uid() + uid();
+  function ping() { fetch("/api/ping?w=" + WINDOW_ID).catch(function () {}); }
+  ping(); setInterval(ping, 5000);
+  window.addEventListener("pagehide", function () {
+    try {
+      fetch("/api/bye", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json", "X-ZebraApp": "1" },
+        body: JSON.stringify({ w: WINDOW_ID }) }).catch(function () {});
+    } catch (e) { /* closing anyway */ }
+  });
 
   function printerWarnings() {
     var p = activePrinter(), out = [];
@@ -2903,7 +2912,6 @@
     refreshAll(); renderOpen(); preloadImages();
     requestAnimationFrame(fit);
     refreshState();
-    fetch("/api/ping").catch(function () {});
     loadTemplates().then(function () { if (curBs === "home") renderHome(); });
     openBackstage("home");
     openFromLaunch();
