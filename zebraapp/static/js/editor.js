@@ -1470,7 +1470,7 @@
     if (!haveFS) {
       var fn = safeName() + (nl ? ".nlbl" : EXT);
       return encodeFor(fn).then(function (data) {
-        var a = document.createElement("a"), url = URL.createObjectURL(new Blob([data], { type: nl ? "application/octet-stream" : "application/json" }));
+        var a = document.createElement("a"), url = URL.createObjectURL(new Blob([data], { type: nl ? "application/x-zebradesigner-label" : "application/json" }));
         a.href = url; a.download = fn; document.body.appendChild(a); a.click(); a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
         if (!nl) { dirty = false; updateTitle(); }
