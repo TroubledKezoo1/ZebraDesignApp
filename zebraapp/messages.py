@@ -1,6 +1,9 @@
 """Turkish translations for server-side messages (English is the source)."""
 
 TR = {
+    'The file link has expired. Open the file again.': 'Dosya bağlantısının süresi doldu. Dosyayı yeniden aç.',
+    'The file is empty (0 bytes): %s': 'Dosya boş (0 bayt): %s',
+    'Label files can be at most 20 MB.': 'Etiket dosyası en fazla 20 MB olabilir.',
     'PDF files must be non-empty and no larger than 20 MB.': 'PDF dosyası boş olamaz ve en fazla 20 MB olabilir.',
     'PDF import needs pypdfium2 and Pillow: pip install "zebraapp[pdf]"': 'PDF açmak için pypdfium2 ve Pillow gerekli: pip install "zebraapp[pdf]"',
     'The PDF could not be opened. Check that it is valid and not password-protected.': 'PDF açılamadı. Dosyanın geçerli ve parolasız olduğundan emin ol.',

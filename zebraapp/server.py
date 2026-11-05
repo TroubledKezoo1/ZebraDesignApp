@@ -10,6 +10,7 @@ import base64
 import hmac
 import json
 import mimetypes
+import re
 import os
 import secrets
 import shutil
@@ -71,6 +72,36 @@ def new_code() -> str:
 def take_code(code: str) -> bool:
     with _codes_lock:
         return _codes.pop(code, 0) > time.time()
+
+
+# "Open with ZebraApp" from the file manager: the path given on the command line is kept behind a
+# one-time token, and the window fetches that file once through /api/opened.
+OPEN_EXT = (".zebra", ".json", ".zpl", ".prn", ".txt", ".nlbl", ".pdf")
+OPEN_LIMIT = 20 * 1024 * 1024
+_opens = {}
+
+
+def register_open(path):
+    """A token for a label file the window should open, or "" if the path is not a label file."""
+    try:
+        p = Path(path).expanduser().resolve()
+        if p.suffix.lower() not in OPEN_EXT or not p.is_file():
+            return ""
+    except (OSError, ValueError):
+        return ""
+    token = secrets.token_urlsafe(16)
+    with _codes_lock:
+        now = time.time()
+        for t in [t for t, (_, exp) in _opens.items() if exp < now]:
+            del _opens[t]
+        _opens[token] = (str(p), now + 600)
+    return token
+
+
+def take_open(token):
+    with _codes_lock:
+        path, exp = _opens.pop(token, ("", 0))
+    return path if exp > time.time() else ""
 
 
 def _same(a: str, b: str) -> bool:
@@ -240,7 +271,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path in ("/", "/index.html") and "k" in parse_qs(parts.query):
             if take_code(parse_qs(parts.query)["k"][0]):
-                self._send(302, b"", "text/plain", {"Location": "/", "Set-Cookie": "%s=%s; Path=/; HttpOnly; SameSite=Strict" % (COOKIE, KEY)})
+                token = (parse_qs(parts.query).get("open") or [""])[0]
+                where = "/?open=" + token if re.fullmatch(r"[A-Za-z0-9_-]{8,64}", token) else "/"
+                self._send(302, b"", "text/plain", {"Location": where, "Set-Cookie": "%s=%s; Path=/; HttpOnly; SameSite=Strict" % (COOKIE, KEY)})
                 return
         if not self._authed():
             if path in ("/", "/index.html"):
@@ -273,11 +306,29 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/update":
             from . import updates
             self._json(updates.check(force="force=1" in self.path))
+        elif path == "/api/opened":
+            self._json(self._opened((parse_qs(parts.query).get("t") or [""])[0]))
         elif path == "/api/update/progress":
             from . import updates
             self._json(dict(updates.progress))
         else:
             self.send_error(404)
+
+    def _opened(self, token):
+        path = take_open(token)
+        if not path:
+            return {"ok": False, "message": msg("The file link has expired. Open the file again.")}
+        try:
+            p = Path(path)
+            size = p.stat().st_size
+            if size == 0:
+                return {"ok": False, "message": msg("The file is empty (0 bytes): %s", p.name)}
+            if size > OPEN_LIMIT:
+                return {"ok": False, "message": msg("Label files can be at most 20 MB.")}
+            raw = p.read_bytes()
+        except OSError as e:
+            return {"ok": False, "message": msg("Could not open %s (%s)", Path(path).name, e.strerror or e)}
+        return {"ok": True, "name": p.name, "data": base64.b64encode(raw).decode("ascii")}
 
     # ---- POST
     def do_POST(self):
@@ -286,7 +337,13 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self.path == "/api/launch":              # a second start of the app asks for a window code; it must know session.key
             if _same(self.headers.get("X-ZebraApp-Key") or "", KEY):
-                self._json({"ok": True, "code": new_code()})
+                try:
+                    n = int(self.headers.get("Content-Length") or 0)
+                    body = json.loads(self.rfile.read(n) or b"{}") if 0 < n < 65536 else {}
+                except (ValueError, UnicodeDecodeError):
+                    body = {}
+                path = body.get("open") if isinstance(body, dict) else None
+                self._json({"ok": True, "code": new_code(), "open": register_open(path) if isinstance(path, str) else ""})
             else:
                 self.send_error(403)
             return
@@ -402,15 +459,17 @@ def open_window(url):
     webbrowser.open(url)
 
 
-def launch_url(port, key=None):
+def launch_url(port, key=None, open_path=None):
     """Window address with a one-time code, asked from the copy that is already running."""
     base = "http://localhost:%d" % port
     key = key or load_key(store.base)
+    body = json.dumps({"open": os.path.abspath(open_path)} if open_path else {}).encode("utf-8")
     try:
-        req = urllib.request.Request(base + "/api/launch", data=b"{}", method="POST",
+        req = urllib.request.Request(base + "/api/launch", data=body, method="POST",
                                      headers={"X-ZebraApp": "1", "X-ZebraApp-Key": key, "Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=3) as r:
-            return base + "/?k=" + json.loads(r.read().decode("utf-8"))["code"]
+            j = json.loads(r.read().decode("utf-8"))
+            return base + "/?k=" + j["code"] + ("&open=" + j["open"] if j.get("open") else "")
     except Exception:  # noqa: BLE001
         return base
 
@@ -443,7 +502,9 @@ def main(argv=None):
     ap.add_argument("--no-browser", action="store_true", help="do not open a window; keep running until Ctrl+C")
     ap.add_argument("--reuse-window", action="store_true", help=argparse.SUPPRESS)   # restart after an update
     ap.add_argument("--version", action="version", version="%(prog)s " + __version__)
+    ap.add_argument("files", nargs="*", help="label file to open (.zebra, .nlbl, .zpl, .pdf)")
     args = ap.parse_args(argv)
+    open_path = args.files[0] if args.files else None
     if args.data_dir:
         os.environ["ZEBRAAPP_HOME"] = args.data_dir
     store = Store()
@@ -458,9 +519,9 @@ def main(argv=None):
     if _already_running(PORT):
         print("ZebraApp is already running:", url)
         if not args.no_browser:
-            open_window(launch_url(PORT, KEY))
+            open_window(launch_url(PORT, KEY, open_path))
         else:
-            print("Open:", launch_url(PORT, KEY))
+            print("Open:", launch_url(PORT, KEY, open_path))
         return
     srv = None
     for port in range(args.port, args.port + 10):
@@ -474,13 +535,16 @@ def main(argv=None):
     PORT = port
     url = "http://localhost:%d" % PORT
     print("ZebraApp %s  %s   (data: %s)" % (__version__, url, store.base))
+    token = register_open(open_path) if open_path else ""
+    if open_path and not token:
+        print("Not a label file, ignored:", open_path)
+    first = url + "/?k=" + new_code() + ("&open=" + token if token else "")
     if args.no_browser:
-        print("Open this address within 10 minutes (it works once):", url + "/?k=" + new_code(), flush=True)
+        print("Open this address within 10 minutes (it works once):", first, flush=True)
     else:
         if args.reuse_window:                   # the window from before the update reloads itself; no second one
             last_ping = time.time()
         else:
-            first = url + "/?k=" + new_code()
             threading.Timer(0.5, lambda: open_window(first)).start()
         threading.Thread(target=watchdog, daemon=True).start()
     try:

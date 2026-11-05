@@ -1344,10 +1344,11 @@
     for (var i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
     return btoa(bin);
   }
+  var nlblNote = "";
   function readNlbl(file) {
     if (file.size > MAX_FILE) return Promise.reject(new Error(__("Etiket dosyası en fazla 20 MB olabilir.")));
     return file.arrayBuffer().then(function (buf) { return nlblApi("import", { data: toB64(buf) }); })
-      .then(function (j) { nlblWarn(j.warnings); return j.label; });
+      .then(function (j) { nlblNote = (j.warnings || []).join(" "); return j.label; });   /* açarken sorma, Word gibi doğrudan aç */
   }
   /* ---------- PDF: one selected page, original dimensions, no PDF overwrite ---------- */
   var pdfOpenId = 0;
@@ -1576,7 +1577,8 @@
     var dd = migrate(label); dd.id = dd.id || uid();
     loadDoc(dd, hd);
     if (hd) Recent.add(hd);
-    status(__("ZebraDesigner dosyası açıldı. Kaydet aynı .nlbl dosyasını günceller; .zebra kopyası için Farklı kaydet."));
+    status(__("ZebraDesigner dosyası açıldı. Kaydet aynı .nlbl dosyasını günceller; .zebra kopyası için Farklı kaydet.") + (nlblNote ? " " + nlblNote : ""));
+    nlblNote = "";
   }
   function pickAndOpen() {
     if (!haveFS) { $("fileImport").click(); return; }
@@ -1595,6 +1597,19 @@
     var rd = new FileReader();
     rd.onload = function () { loadFromText(String(rd.result), null, f.name); };
     rd.readAsText(f, "utf-8");
+  }
+
+  /* "ZebraApp ile aç": dosya yöneticisinden gelen dosya (sunucu pencereyi ?open=<jeton> ile açar) */
+  function openFromLaunch() {
+    var t = new URLSearchParams(location.search).get("open");
+    if (!t) return;
+    history.replaceState(null, "", location.pathname);
+    api("/api/opened?t=" + encodeURIComponent(t)).then(function (j) {
+      if (!j.ok) throw new Error(j.message);
+      var bin = atob(j.data), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      openPlainFile(new File([bytes], j.name));
+    }).catch(function (e) { status(__("Açılamadı: ") + ((e && e.message) || e), true); });
   }
 
   /* ================= masaustunden surukle-birak ================= */
@@ -2891,6 +2906,7 @@
     fetch("/api/ping").catch(function () {});
     loadTemplates().then(function () { if (curBs === "home") renderHome(); });
     openBackstage("home");
+    openFromLaunch();
     loadFonts();
     if (window.I18N && window.I18N.lang === "en") $("fUnder").innerHTML = "<u>U</u>";
     if (!settings.printers.length) setTimeout(function () { status(__("Başlamak için sağ üstten bir yazıcı ekle.")); }, 300);

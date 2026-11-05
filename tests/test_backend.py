@@ -1,4 +1,5 @@
 """Backend tests: storage, transports and the HTTP server (no printer needed)."""
+import base64
 import json
 import os
 import socket
@@ -162,6 +163,41 @@ class ServerTest(unittest.TestCase):
         self.assertIn("SameSite=Strict", hdr["Set-Cookie"])
         self.assertEqual(call("GET", "/?k=" + code)[0], 403)                     # used up
         self.assertEqual(call("GET", "/", {"Cookie": hdr["Set-Cookie"].split(";")[0]})[0], 200)
+
+    def test_open_with_file(self):
+        """A file given on the command line reaches the window once, through a token."""
+        import http.client
+        from zebraapp import server
+
+        def call(method, path, headers=None, body=None):
+            c = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
+            c.request(method, path, body=body, headers=dict({"Host": "localhost:%d" % self.port}, **(headers or {})))
+            r = c.getresponse()
+            out = (r.status, dict(r.getheaders()), r.read())
+            c.close()
+            return out
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d) / "Deneme etiketi.zebra"
+            f.write_text('{"format":"ZebraApp","w":50,"h":30,"elements":[]}', encoding="utf-8")
+            (Path(d) / "bos.nlbl").write_bytes(b"")
+            (Path(d) / "notes.exe").write_bytes(b"x")
+            self.assertEqual(server.register_open(str(Path(d) / "notes.exe")), "")      # not a label file
+            self.assertEqual(server.register_open(str(Path(d) / "missing.zebra")), "")
+            # a second start asks the running copy for a window code and a file token
+            post = {"X-ZebraApp": "1", "Content-Type": "application/json", "X-ZebraApp-Key": self.key}
+            st, _, data = call("POST", "/api/launch", post, json.dumps({"open": str(f)}).encode())
+            j = json.loads(data)
+            self.assertTrue(j["open"])
+            st, hdr, _ = call("GET", "/?k=%s&open=%s" % (j["code"], j["open"]))
+            self.assertEqual((st, hdr["Location"]), (302, "/?open=" + j["open"]))
+            self.assertEqual(call("GET", "/api/opened?t=" + j["open"])[0], 403)       # needs the cookie
+            out = json.loads(self.req("/api/opened?t=" + j["open"])[1])
+            self.assertEqual(out["name"], "Deneme etiketi.zebra")
+            self.assertEqual(base64.b64decode(out["data"]), f.read_bytes())
+            self.assertFalse(json.loads(self.req("/api/opened?t=" + j["open"])[1])["ok"])   # used up
+            out = json.loads(self.req("/api/opened?t=" + server.register_open(str(Path(d) / "bos.nlbl")))[1])
+            self.assertFalse(out["ok"])
+            self.assertIn("0", out["message"])
 
     def test_key_file_is_private_and_stable(self):
         from zebraapp import server

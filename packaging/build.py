@@ -79,7 +79,11 @@ def deb():
     apps.mkdir(parents=True)
     (apps / "zebraapp.desktop").write_text(
         "[Desktop Entry]\nType=Application\nName=ZebraApp\nComment=Label designer for Zebra / ZPL printers\n"
-        "Exec=zebraapp\nIcon=zebraapp\nTerminal=false\nCategories=Office;Graphics;\nStartupWMClass=localhost\n", encoding="utf-8")
+        "Exec=zebraapp %F\nIcon=zebraapp\nTerminal=false\nCategories=Office;Graphics;\nStartupWMClass=localhost\n"
+        "MimeType=application/x-zebraapp-label;application/x-zebradesigner-label;\n", encoding="utf-8")
+    mime = root / "usr" / "share" / "mime" / "packages"
+    mime.mkdir(parents=True)
+    shutil.copy2(ROOT / "packaging" / "zebraapp-mime.xml", mime / "zebraapp.xml")
     icons = root / "usr" / "share" / "icons" / "hicolor" / "512x512" / "apps"
     icons.mkdir(parents=True)
     shutil.copy2(ROOT / "packaging" / "zebraapp.png", icons / "zebraapp.png")
