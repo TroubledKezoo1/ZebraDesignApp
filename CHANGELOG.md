@@ -1,9 +1,19 @@
 # Changelog
 
+## 1.0.15
+
+- New: double-click a `.zebra` or `.nlbl` file and it opens straight in the editor, like a word processor. The downloaded AppImage and Windows `.exe` register the two file types for your user on first start (no administrator rights; on Windows `.nlbl` stays with ZebraDesigner if it is installed and ZebraApp is added under "Open with"). The `.deb` and the macOS app declare them at install. `zebraapp label.nlbl` on the command line does the same, also when the app is already open.
+- ZebraDesigner (`.nlbl`) files open and save in every install with no extra packages: the encrypted zip inside is now handled by ZebraApp itself, so pip, npm and source installs no longer need `pyzipper`. Pillow is only needed for embedded images that are not PNG.
+- Opening a `.nlbl` no longer stops on a "continue?" question; the note about experimental import shows in the status bar. An empty (0 byte) file now says so.
+- Fix: saving a `.nlbl` without the file picker (Firefox, Safari) no longer lets the browser rename it to `.nlbl.zip`.
+- Bluetooth: asks the printer for its real packet size, gives each packet its own timeout, cancels a stuck write, reconnects once, and connects by address when a paired ZD421 has stopped advertising. Clearer message when the printer does not answer.
+- `tools/ble_test.py`: a step-by-step Bluetooth check (scan, connect, packet size, status, a tiny test label), timing every step.
+- Unexpected errors are written to `error.log` in the data folder and the message names the error type.
+- Linux: the AppImage needs nothing installed, not even FUSE 2 (`libfuse2`); the download notes no longer ask for it.
+
 ## 1.0.14
 
 - New: drag a file from the desktop onto the window. `.zebra`, `.zpl`, `.nlbl` and `.pdf` open (asking first if there are unsaved changes), images (PNG, JPG, GIF, BMP, WebP, SVG, AVIF) are added to the label where you drop them, `.csv`/`.tsv` becomes the batch list.
-- Fix: saving a ZebraDesigner (`.nlbl`) file without the file picker (Firefox, Safari) no longer lets the browser rename it to `.nlbl.zip`.
 - PDF import works everywhere: the app now carries its own PDF reader (pdf.js). It is used on Android, and on the desktop whenever the built-in PDF engine is missing.
 
 ## 1.0.13

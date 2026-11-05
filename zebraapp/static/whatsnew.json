@@ -88,5 +88,19 @@
       "Drag a file from your desktop onto the window: .zebra, .zpl, .nlbl and .pdf open; images are added to the label; .csv becomes the batch list.",
       "Opening PDFs now works everywhere: a PDF reader is built into the app (Android included)."
     ]
+  },
+  "1.0.15": {
+    "tr": [
+      ".zebra ve .nlbl dosyalarına çift tıkla, doğrudan düzenleyicide açılsın. İndirilen uygulama ilk açılışta bu dosya türlerini kendine bağlar (yönetici izni gerekmez).",
+      "ZebraDesigner (.nlbl) dosyaları artık hiçbir ek paket kurmadan açılıp kaydedilir.",
+      ".nlbl açarken artık \"devam edilsin mi?\" diye sormaz; boş dosyada açıkça uyarır.",
+      "Bluetooth daha sağlam: gerçek paket boyutu, takılan yazmayı iptal, bir kez yeniden bağlanma, yayını kesilen eşleşmiş yazıcıya adresle bağlanma."
+    ],
+    "en": [
+      "Double-click a .zebra or .nlbl file and it opens straight in the editor. The downloaded app registers these file types on first start (no administrator rights).",
+      "ZebraDesigner (.nlbl) files now open and save with no extra packages installed.",
+      "Opening a .nlbl no longer asks \"continue?\"; an empty file is reported clearly.",
+      "Sturdier Bluetooth: real packet size, stuck writes cancelled, one automatic reconnect, connecting by address when a paired printer stops advertising."
+    ]
   }
 }
