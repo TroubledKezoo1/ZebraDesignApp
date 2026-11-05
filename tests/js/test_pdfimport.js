@@ -59,9 +59,15 @@ function setup() {
   finish({ok: true, label: {w: 80}}); await settle();
   assert.equal(t.opened.length, 0, "Closing the dialog must cancel a late result");
 
-  t = setup(); t.context.inApp = true;
-  await assert.rejects(t.context.importPdf(t.file), /Android/);
+  // Android (inApp) reads PDFs with the bundled pdf.js and never calls the desktop server.
+  t = setup(); t.context.inApp = true; t.context.window = {};
+  await assert.rejects(t.context.importPdf(t.file), /PDF okuyucu/);
   assert.equal(t.calls.length, 0);
+  t = setup(); t.context.inApp = true; let rendered = 0;
+  t.context.window = {ZebraPdf: {open: async () => ({pages: [{page: 1, w: 80, h: 40}], render: async () => { rendered++; return {}; }})}};
+  t.context.localPdfLabel = () => ({w: 80, name: "Phone"});
+  await t.context.importPdf(t.file); t.button().attrs.onclick(); await settle(); await settle();
+  assert.equal(t.calls.length, 0, "Android must not call the server"); assert.equal(rendered, 1); assert.equal(t.opened.length, 1);
   t = setup(); t.file.size = t.context.MAX_FILE + 1;
   await assert.rejects(t.context.importPdf(t.file), /20 MB/);
   assert.equal(t.calls.length, 0);
