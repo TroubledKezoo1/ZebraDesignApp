@@ -13,7 +13,8 @@ ZebraApp is a label designer for Zebra printers (ZPL). It targets the ZD421 at 3
 ## Run and test
 - Run from source: `python3 -m zebraapp` (or `make run`). Headless: `python3 -m zebraapp --no-browser`, which prints a one-time address.
 - Test: `python3 -m unittest discover tests && node tests/js/test_zpl.js && node tests/js/test_pdfimport.js`.
-- The UI is plain JavaScript with no build step. Turkish is the source language: UI strings are Turkish, English lives in `static/js/i18n.js` (and `messages.py` for server errors). Add both when adding text.
+- The UI is plain JavaScript with no build step. Turkish is the source language: UI strings are Turkish; English and Brazilian Portuguese live in `static/js/i18n.js` (`EN`, `PT`), `messages.py` for server messages, `extras.js` `L(tr, en, pt)` and `whatsnew.json` (`tr`, `en`, `pt`). Add all three when adding text.
+- Versions: a bug-fix release bumps the last number (1.1.1), a release with new features bumps the middle one (1.2.0).
 
 ## Things that are easy to get wrong
 - The local server needs a session cookie (`zebra_key`), given only to the app window through a single-use `?k=` code. Tests must send the cookie; POSTs also need the header `X-ZebraApp: 1`.

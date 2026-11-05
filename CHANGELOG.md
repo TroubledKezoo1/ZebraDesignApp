@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0
+
+- New language: Brazilian Portuguese (Português do Brasil), next to Turkish and English, in the interface, server messages and "What's new". Thanks to @annafratus (#2).
+- New: "Valid until" dates. `{TARIH+30}` prints the date 30 days from the print date (`{TARIH-7}` goes back); month and year roll over correctly. The Insert tab has a menu for 7, 10, 14, 28, 30, 60, 90, 180 and 365 days. In Portuguese the same fields are called `{DATA+N}`, `{CONTADOR}` and `{HORA}`; every name works in every language, and a CSV column called `DATA`, `HORA` or `CONTADOR` keeps its own value.
+- New printer model: GC420t.
+- Fix: unit names ("dots"), "1 item" and a few other texts are now translated instead of showing Turkish.
+- Fix: Turkish users could see server messages in English after the language work; they are Turkish again.
+
 ## 1.0.15
 
 - New: double-click a `.zebra` or `.nlbl` file and it opens straight in the editor, like a word processor. The downloaded AppImage and Windows `.exe` register the two file types for your user on first start (no administrator rights; on Windows `.nlbl` stays with ZebraDesigner if it is installed and ZebraApp is added under "Open with"). The `.deb` and the macOS app declare them at install. `zebraapp label.nlbl` on the command line does the same, also when the app is already open.

@@ -112,7 +112,7 @@
       "As atualizações do desktop agora verificam a assinatura da versão."
     ]
   },
-    "1.0.14": {
+  "1.0.14": {
     "tr": [
       "Masaüstünden dosya sürükleyip pencereye bırakabilirsin: .zebra, .zpl, .nlbl, .pdf açılır; resimler etikete eklenir; .csv toplu liste olur.",
       "PDF açma her yerde çalışır: uygulama içine PDF okuyucu eklendi (Android dahil)."
@@ -138,6 +138,29 @@
       "ZebraDesigner (.nlbl) files now open and save with no extra packages installed.",
       "Opening a .nlbl no longer asks \"continue?\"; an empty file is reported clearly.",
       "Sturdier Bluetooth: real packet size, stuck writes cancelled, one automatic reconnect, connecting by address when a paired printer stops advertising."
+    ],
+    "pt": [
+      "Dê um duplo clique em um arquivo .zebra ou .nlbl e ele abre direto no editor. O aplicativo baixado associa esses tipos de arquivo na primeira execução (sem permissão de administrador).",
+      "Arquivos do ZebraDesigner (.nlbl) agora abrem e salvam sem instalar pacotes extras.",
+      "Abrir um .nlbl não pergunta mais \"continuar?\"; um arquivo vazio é avisado com clareza.",
+      "Bluetooth mais estável: tamanho real de pacote, gravações travadas canceladas, uma reconexão automática e conexão pelo endereço quando uma impressora pareada para de anunciar."
+    ]
+  },
+  "1.1.0": {
+    "tr": [
+      "Yeni dil: Portekizce (Brezilya). Teşekkürler @annafratus!",
+      "Son kullanma tarihi: {TARIH+30} baskı gününden 30 gün sonrasını basar. Ekle sekmesindeki menüden 7 günden 1 yıla kadar seç.",
+      "Yeni yazıcı modeli: GC420t."
+    ],
+    "en": [
+      "New language: Brazilian Portuguese. Thanks @annafratus!",
+      "Valid-until dates: {TARIH+30} prints the date 30 days after printing. Pick 7 days to 1 year from the menu on the Insert tab.",
+      "New printer model: GC420t."
+    ],
+    "pt": [
+      "Novo idioma: português do Brasil. Obrigado, @annafratus!",
+      "Datas de validade: {DATA+30} imprime a data 30 dias após a impressão. Escolha de 7 dias a 1 ano no menu da guia Inserir.",
+      "Novo modelo de impressora: GC420t."
     ]
   }
 }
