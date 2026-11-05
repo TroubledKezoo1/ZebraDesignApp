@@ -83,7 +83,8 @@ def deb():
         "MimeType=application/x-zebraapp-label;application/x-zebradesigner-label;\n", encoding="utf-8")
     mime = root / "usr" / "share" / "mime" / "packages"
     mime.mkdir(parents=True)
-    shutil.copy2(ROOT / "packaging" / "zebraapp-mime.xml", mime / "zebraapp.xml")
+    from zebraapp.integrate import MIME_XML
+    (mime / "zebraapp.xml").write_text(MIME_XML, encoding="utf-8")
     icons = root / "usr" / "share" / "icons" / "hicolor" / "512x512" / "apps"
     icons.mkdir(parents=True)
     shutil.copy2(ROOT / "packaging" / "zebraapp.png", icons / "zebraapp.png")

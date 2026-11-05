@@ -8,7 +8,7 @@ ROOT = Path(SPECPATH).parent
 sys.path.insert(0, str(ROOT))
 from zebraapp import __version__  # noqa: E402
 
-hidden = ["zebraapp.nlbl", "zebraapp.aeszip", "zebraapp.fonts", "zebraapp.pdfimport"]
+hidden = ["zebraapp.nlbl", "zebraapp.aeszip", "zebraapp.integrate", "zebraapp.fonts", "zebraapp.pdfimport"]
 for mod in ("bleak", "serial", "PIL", "pypdfium2", "pypdfium2_raw"):
     try:
         hidden += collect_submodules(mod)
@@ -41,7 +41,8 @@ if sys.platform == "win32":
     exe = EXE(pyz, a.scripts, a.binaries, a.datas, name="ZebraApp", console=False,
               icon=str(ROOT / "packaging" / "zebraapp.ico"), upx=False)
 elif sys.platform == "darwin":
-    exe = EXE(pyz, a.scripts, exclude_binaries=True, name="ZebraApp", console=False, upx=False)
+    # argv_emulation turns Finder's "open this file" event into a command-line argument
+    exe = EXE(pyz, a.scripts, exclude_binaries=True, name="ZebraApp", console=False, upx=False, argv_emulation=True)
     coll = COLLECT(exe, a.binaries, a.datas, name="ZebraApp", upx=False)
     app = BUNDLE(
         coll,
@@ -56,6 +57,23 @@ elif sys.platform == "darwin":
             "LSUIElement": True,
             "NSBluetoothAlwaysUsageDescription": "ZebraApp connects to Zebra label printers over Bluetooth.",
             "NSHighResolutionCapable": True,
+            # double-click .zebra / .nlbl in Finder
+            "CFBundleDocumentTypes": [
+                {"CFBundleTypeName": "ZebraApp label", "CFBundleTypeRole": "Editor", "LSHandlerRank": "Owner",
+                 "LSItemContentTypes": ["io.github.troubledkezoo1.zebraapp.label"]},
+                {"CFBundleTypeName": "ZebraDesigner label", "CFBundleTypeRole": "Editor", "LSHandlerRank": "Default",
+                 "LSItemContentTypes": ["com.zebra.zebradesigner.nlbl"]},
+            ],
+            "UTExportedTypeDeclarations": [
+                {"UTTypeIdentifier": "io.github.troubledkezoo1.zebraapp.label", "UTTypeDescription": "ZebraApp label",
+                 "UTTypeConformsTo": ["public.json", "public.data"],
+                 "UTTypeTagSpecification": {"public.filename-extension": ["zebra"]}},
+            ],
+            "UTImportedTypeDeclarations": [
+                {"UTTypeIdentifier": "com.zebra.zebradesigner.nlbl", "UTTypeDescription": "ZebraDesigner label",
+                 "UTTypeConformsTo": ["public.data"],
+                 "UTTypeTagSpecification": {"public.filename-extension": ["nlbl"]}},
+            ],
         },
     )
 else:

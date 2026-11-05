@@ -83,7 +83,7 @@ Get the app for your system from the [latest release](https://github.com/Trouble
 Nothing else needs to be installed. The apps are not signed, so the first start asks once:
 - **Windows:** "Windows protected your PC" → *More info* → *Run anyway*.
 - **macOS:** drag ZebraApp to Applications, then right-click → *Open* the first time (or System Settings → Privacy & Security → *Open Anyway*).
-- **Linux:** allow executing (`chmod +x ZebraApp-*.AppImage`) and double-click. If it does not start: `sudo apt install libfuse2` (`libfuse2t64` on Ubuntu 24.04).
+- **Linux:** allow executing (`chmod +x ZebraApp-*.AppImage`) and double-click. Nothing else to install. On the rare system without FUSE (some minimal installs, WSL): `./ZebraApp-*.AppImage --appimage-extract-and-run`.
 
 The editor opens as a window in Chrome or Edge, or in your default browser. The Linux AppImage and the Windows `.exe` can update themselves: when a new release is out, the bar says **Update now**, downloads it, checks the SHA-256 and restarts (the old file stays next to it as `.old`). macOS and the `.deb`/pip installs show a download link instead.
 

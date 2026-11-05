@@ -234,6 +234,62 @@ class TemplatesTest(unittest.TestCase):
                     st.save_templates(bad)
 
 
+class FileTypesTest(unittest.TestCase):
+    """The downloaded Linux app registers .zebra/.nlbl for the user once per path and version."""
+
+    def test_linux_registration(self):
+        from unittest import mock
+        from zebraapp import integrate
+        ran = []
+        with tempfile.TemporaryDirectory() as d, \
+                mock.patch.object(integrate, "_run", ran.append), \
+                mock.patch.object(integrate, "SYSTEM_DESKTOP", Path(d) / "none.desktop"), \
+                mock.patch.object(integrate.sys, "platform", "linux"), \
+                mock.patch.dict(os.environ, {"XDG_DATA_HOME": ""}):
+            home, data = Path(d) / "home", Path(d) / "data"
+            data.mkdir()
+            app = "/home/kullanici/İndirilenler/Zebra App $1.AppImage"
+            self.assertEqual(integrate.register(data, app, home), "linux")
+            entry = (home / ".local/share/applications/zebraapp.desktop").read_text(encoding="utf-8")
+            self.assertIn('Exec="/home/kullanici/İndirilenler/Zebra App \\$1.AppImage" %F', entry)
+            self.assertIn("MimeType=application/x-zebraapp-label;application/x-zebradesigner-label;", entry)
+            self.assertIn('pattern="*.nlbl"', (home / ".local/share/mime/packages/zebraapp.xml").read_text(encoding="utf-8"))
+            self.assertTrue((home / ".local/share/icons/hicolor/scalable/apps/zebraapp.svg").exists())
+            self.assertIn(["xdg-mime", "default", "zebraapp.desktop", integrate.MIME_ZEBRA, integrate.MIME_NLBL], ran)
+            self.assertEqual(integrate.register(data, app, home), "")               # done already
+            self.assertEqual(integrate.register(data, "/opt/ZebraApp.AppImage", home), "linux")   # moved
+            (Path(d) / "none.desktop").write_text("")                               # the .deb is installed
+            self.assertEqual(integrate.register(data, "/elsewhere.AppImage", home), "deb")
+
+    @unittest.skipUnless(sys.platform == "win32" and os.environ.get("CI"), "writes to the registry: only on CI Windows runners")
+    def test_windows_registration(self):
+        import winreg
+        from zebraapp import integrate
+        exe = r"C:\Programlar\Zebra App\ZebraApp.exe"
+        try:
+            self.assertEqual(integrate._windows(exe), "windows")
+            def value(path, name=""):
+                with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Software\\Classes\\" + path) as k:
+                    return winreg.QueryValueEx(k, name)[0]
+            self.assertEqual(value(r"ZebraApp.Label\shell\open\command"), '"%s" "%%1"' % exe)
+            self.assertEqual(value(".zebra"), "ZebraApp.Label")
+            value(r".nlbl\OpenWithProgids", "ZebraApp.Label")                       # listed under "Open with"
+        finally:
+            for path in (r"ZebraApp.Label\shell\open\command", r"ZebraApp.Label\shell\open", r"ZebraApp.Label\shell",
+                         r"ZebraApp.Label\DefaultIcon", "ZebraApp.Label", r".zebra\OpenWithProgids", ".zebra",
+                         r".nlbl\OpenWithProgids", ".nlbl"):
+                try:
+                    winreg.DeleteKey(winreg.HKEY_CURRENT_USER, "Software\\Classes\\" + path)
+                except OSError:
+                    pass
+
+    def test_only_downloaded_apps_register(self):
+        from zebraapp import integrate
+        self.assertIsNone(integrate.app_path())                                     # running from source
+        with tempfile.TemporaryDirectory() as d:
+            self.assertEqual(integrate.register(Path(d)), "")
+
+
 class AesZipTest(unittest.TestCase):
     """.nlbl files are WinZip AES zips; read and written without extra packages."""
     PW = b"deneme-parola"

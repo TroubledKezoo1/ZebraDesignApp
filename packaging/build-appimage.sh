@@ -24,7 +24,7 @@ StartupWMClass=localhost
 MimeType=application/x-zebraapp-label;application/x-zebradesigner-label;
 DESK
 mkdir -p "$APPDIR/usr/share/mime/packages"
-cp packaging/zebraapp-mime.xml "$APPDIR/usr/share/mime/packages/zebraapp.xml"
+$PY -c "from zebraapp.integrate import MIME_XML; print(MIME_XML, end='')" > "$APPDIR/usr/share/mime/packages/zebraapp.xml"
 cp "$APPDIR/zebraapp.desktop" "$APPDIR/usr/share/applications/"
 cat > "$APPDIR/AppRun" <<'RUN'
 #!/bin/sh

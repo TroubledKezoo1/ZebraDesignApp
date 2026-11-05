@@ -83,7 +83,7 @@ Sistemine uygun dosyayı [son sürüm](https://github.com/TroubledKezoo1/ZebraDe
 Başka bir şey kurman gerekmez. Uygulamalar imzasız olduğu için ilk açılışta sistem bir kez sorar:
 - **Windows:** "Windows bilgisayarınızı korudu" → *Ek bilgi* → *Yine de çalıştır*.
 - **macOS:** ZebraApp'i Uygulamalar'a sürükle, ilk açılışta sağ tık → *Aç* (ya da Sistem Ayarları → Gizlilik ve Güvenlik → *Yine de Aç*).
-- **Linux:** çalıştırma izni ver (`chmod +x ZebraApp-*.AppImage`) ve çift tıkla. Açılmazsa: `sudo apt install libfuse2` (Ubuntu 24.04'te `libfuse2t64`).
+- **Linux:** çalıştırma izni ver (`chmod +x ZebraApp-*.AppImage`) ve çift tıkla; başka bir şey kurman gerekmez. FUSE olmayan nadir sistemlerde (bazı minimal kurulumlar, WSL): `./ZebraApp-*.AppImage --appimage-extract-and-run`.
 
 Editör Chrome ya da Edge'de pencere olarak, yoksa varsayılan tarayıcıda açılır. Linux AppImage ve Windows `.exe` kendini güncelleyebilir: yeni sürüm çıkınca çubukta **Şimdi güncelle** yazar, indirir, SHA-256'yı doğrular ve yeniden başlatır (eski dosya yanında `.old` olarak kalır). macOS ve `.deb`/pip kurulumlarında indirme bağlantısı gösterilir.
 

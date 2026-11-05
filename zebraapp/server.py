@@ -509,6 +509,8 @@ def main(argv=None):
         os.environ["ZEBRAAPP_HOME"] = args.data_dir
     store = Store()
     KEY = load_key(store.base)
+    from . import integrate                     # downloaded app: .zebra/.nlbl open with a double-click
+    threading.Thread(target=integrate.register, args=(store.base,), daemon=True).start()
     PORT = args.port
     url = "http://localhost:%d" % PORT
     if args.reuse_window:                       # the old copy is still shutting down: wait for its port
