@@ -8,21 +8,18 @@ import copy
 import io
 import math
 import re
+import struct
 import uuid
 import xml.etree.ElementTree as ET
+import zipfile
+import zlib
 from pathlib import Path
+
+from . import aeszip
 
 PASSWORD = b",^_A5Fus&!?j='Epiq*e"
 SEED = Path(__file__).parent / "static" / "nlbl"
 LIMIT = 20 * 1024 * 1024
-
-
-def _zip():
-    try:
-        import pyzipper
-        return pyzipper
-    except ImportError as e:
-        raise ValueError("NLBL desteği için pyzipper paketi gerekli.") from e
 
 
 def _xml(data):
@@ -53,10 +50,26 @@ def _set(node, key, value):
     return target
 
 
+def _png_size(raw):
+    """(width, height) of a PNG, or None if raw is not a PNG."""
+    if len(raw) < 24 or raw[:8] != b"\x89PNG\r\n\x1a\n" or raw[12:16] != b"IHDR":
+        return None
+    return struct.unpack(">II", raw[16:24])
+
+
 def _image_png(raw):
-    from PIL import Image, UnidentifiedImageError
     if len(raw) > 8 * 1024 * 1024:
         raise ValueError("Görsel en fazla 8 MB olabilir.")
+    try:
+        from PIL import Image, UnidentifiedImageError
+    except ImportError:
+        # Pillow is optional: a PNG passes as it is, other formats need converting
+        size = _png_size(raw)
+        if size is None:
+            raise ValueError("Bu görsel PNG değil. Görseli PNG olarak ekle ya da Pillow kur: pip install Pillow")
+        if size[0] * size[1] > 4_000_000:
+            raise ValueError("Görsel en fazla 4 milyon piksel olabilir.")
+        return raw
     try:
         with Image.open(io.BytesIO(raw)) as image:
             if image.width * image.height > 4_000_000:
@@ -80,19 +93,20 @@ def _fixed_value(item):
 def import_label(raw):
     if len(raw) > LIMIT:
         raise ValueError("NLBL dosyası en fazla 20 MB olabilir.")
-    pz = _zip()
+    if not raw:
+        raise ValueError("Dosya boş (0 bayt). Dosyayı yeniden kopyala.")
     try:
-        with pz.AESZipFile(io.BytesIO(raw)) as z:
-            infos = z.infolist()
-            if len(infos) > 100 or sum(i.file_size for i in infos) > LIMIT:
-                raise ValueError("NLBL içeriği çok büyük.")
-            formats = [i.filename for i in infos if i.filename.startswith("Formats/")]
-            if len(formats) != 1:
-                raise ValueError("Yalnızca tek etiket tasarımı içeren NLBL dosyaları destekleniyor.")
-            root = _xml(z.read(formats[0], pwd=PASSWORD))
-    except ValueError:
-        raise
-    except (pz.BadZipFile, RuntimeError, KeyError, OSError, ET.ParseError) as e:
+        files = aeszip.read_all(raw, PASSWORD, LIMIT)
+    except ValueError as e:
+        raise ValueError("NLBL içeriği çok büyük.") from e
+    except (zipfile.BadZipFile, RuntimeError, KeyError, OSError, struct.error, EOFError, NotImplementedError, zlib.error) as e:
+        raise ValueError("Bu dosya geçerli bir ZebraDesigner 3 (.nlbl) dosyası değil.") from e
+    formats = [n for n in files if n.startswith("Formats/")]
+    if len(formats) != 1:
+        raise ValueError("Yalnızca tek etiket tasarımı içeren NLBL dosyaları destekleniyor.")
+    try:
+        root = _xml(files[formats[0]])
+    except ET.ParseError as e:
         raise ValueError("Bu dosya geçerli bir ZebraDesigner 3 (.nlbl) dosyası değil.") from e
     designs = root.findall("DocumentDesigns/DocumentDesign")
     if len(designs) != 1:
@@ -191,7 +205,6 @@ def import_label(raw):
 
 
 def export_label(label):
-    pz = _zip()
     if label.get("dpi") != 300:
         raise ValueError("NLBL dışa aktarımı şu anda örnekle doğrulanan 300 dpi ile sınırlı.")
     for key in ("w","h"):
@@ -307,9 +320,6 @@ def export_label(label):
         if kind in ("text","barcode","qr"):
             _set(item,"Geometry/X",round(float(e.get("x",0))*1000));_set(item,"Geometry/Y",round(float(e.get("y",0))*1000))
         items.append(item)
-    output=io.BytesIO()
-    with pz.AESZipFile(output,"w",compression=pz.ZIP_DEFLATED,encryption=pz.WZ_AES) as z:
-        z.setpassword(PASSWORD)
-        z.writestr("Formats/"+file_name,ET.tostring(root,encoding="utf-8",xml_declaration=True))
-        z.writestr(file_name+".slnx",ET.tostring(solution,encoding="utf-8",xml_declaration=True))
-    return output.getvalue(),list(dict.fromkeys(warnings))
+    raw=aeszip.write([("Formats/"+file_name,ET.tostring(root,encoding="utf-8",xml_declaration=True)),
+                      (file_name+".slnx",ET.tostring(solution,encoding="utf-8",xml_declaration=True))],PASSWORD)
+    return raw,list(dict.fromkeys(warnings))

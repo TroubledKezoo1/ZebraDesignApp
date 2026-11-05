@@ -3,7 +3,7 @@
 ZebraApp is a label designer for Zebra printers (ZPL). It targets the ZD421 at 300 dpi, printing over Bluetooth LE, network, USB or serial. The repository is public: github.com/TroubledKezoo1/ZebraDesignApp. Answer the owner in Turkish unless they write English.
 
 ## Layout
-- `zebraapp/`: the desktop backend, Python stdlib only plus optional extras (bleak, pyserial, pyzipper, Pillow, pypdfium2).
+- `zebraapp/`: the desktop backend, Python stdlib only plus optional extras (bleak, pyserial, Pillow, pypdfium2). `aeszip.py` reads and writes the WinZip-AES zips inside `.nlbl` files with the standard library; do not bring back pyzipper.
   - `server.py`: local HTTP server on 127.0.0.1 and all `/api/*` routes. `transports.py`: BLE, TCP, USB, serial, CUPS and Windows printing. `updates.py` and `ed25519.py`: update check and signed self-update. `pdfimport.py`: PDF to label image. `nlbl.py`: ZebraDesigner file import/export. `storage.py`: data folder (`~/.config/zebraapp` on Linux). `messages.py`: Turkish translations of server messages.
 - `zebraapp/static/`: the web UI shared by desktop and Android (`index.html`, `app.css`, `mobile.css`, `js/editor.js` is the large main file, `js/zpl.js`, `js/extras.js`, `js/i18n.js`, `js/scan.js`, `js/pdfjs-import.js`, `vendor/` for bundled libraries, `whatsnew.json`).
 - `android/`: Capacitor 6 wrapper. `prepare.mjs` copies the web UI into `android/www`; `shim.js` replaces the backend inside the phone app.

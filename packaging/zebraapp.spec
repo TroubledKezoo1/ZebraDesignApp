@@ -8,8 +8,8 @@ ROOT = Path(SPECPATH).parent
 sys.path.insert(0, str(ROOT))
 from zebraapp import __version__  # noqa: E402
 
-hidden = ["zebraapp.nlbl", "zebraapp.fonts", "zebraapp.pdfimport"]
-for mod in ("bleak", "serial", "pyzipper", "PIL", "pypdfium2", "pypdfium2_raw"):
+hidden = ["zebraapp.nlbl", "zebraapp.aeszip", "zebraapp.fonts", "zebraapp.pdfimport"]
+for mod in ("bleak", "serial", "PIL", "pypdfium2", "pypdfium2_raw"):
     try:
         hidden += collect_submodules(mod)
     except Exception:

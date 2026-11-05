@@ -32,9 +32,9 @@ Changelog = "https://github.com/TroubledKezoo1/ZebraDesignApp/blob/main/CHANGELO
 ble = ["bleak>=0.20"]
 serial = ["pyserial>=3.5"]
 windows = ["pywin32>=300; sys_platform == 'win32'"]
-nlbl = ["pyzipper>=0.3.6", "Pillow>=10"]
+nlbl = ["Pillow>=10"]   # optional: non-PNG images inside .nlbl files; .nlbl itself needs nothing extra
 pdf = ["pypdfium2>=4.30", "Pillow>=10"]
-all = ["bleak>=0.20", "pyserial>=3.5", "pywin32>=300; sys_platform == 'win32'", "pyzipper>=0.3.6", "Pillow>=10", "pypdfium2>=4.30"]
+all = ["bleak>=0.20", "pyserial>=3.5", "pywin32>=300; sys_platform == 'win32'", "Pillow>=10", "pypdfium2>=4.30"]
 
 [project.scripts]
 zebraapp = "zebraapp.server:main"

@@ -234,13 +234,76 @@ class TemplatesTest(unittest.TestCase):
                     st.save_templates(bad)
 
 
-class NlblTest(unittest.TestCase):
-    def setUp(self):
+class AesZipTest(unittest.TestCase):
+    """.nlbl files are WinZip AES zips; read and written without extra packages."""
+    PW = b"deneme-parola"
+
+    def test_aes_known_answers(self):
+        from zebraapp import aeszip
+        plain = bytes.fromhex("00112233445566778899aabbccddeeff")          # FIPS-197 appendix C
+        for size, expected in ((16, "69c4e0d86a7b0430d8cdb78070b4c55a"), (24, "dda97ca4864cdfe06eaf70a0ec0d7191"),
+                               (32, "8ea2b7ca516745bfeafc49904b496089")):
+            w, rounds = aeszip._expand(bytes(range(size)))
+            self.assertEqual(aeszip._encrypt_block(w, rounds, plain).hex(), expected)
+
+    def test_roundtrip_password_and_tampering(self):
+        from zebraapp import aeszip
+        import zipfile
+        files = {"Formats/Öğe": b"<a>" + b"x" * 5000 + b"</a>", "b.slnx": b"", "c": b"kisa"}
+        raw = aeszip.write(list(files.items()), self.PW)
+        self.assertEqual(aeszip.read_all(raw, self.PW, 10 ** 6), files)
+        with self.assertRaises(RuntimeError):
+            aeszip.read_all(raw, b"yanlis", 10 ** 6)
+        broken = bytearray(raw)
+        broken[100] ^= 1                                                     # inside the encrypted body
+        with self.assertRaises(zipfile.BadZipFile):
+            aeszip.read_all(bytes(broken), self.PW, 10 ** 6)
+        with self.assertRaises(ValueError):
+            aeszip.read_all(raw, self.PW, 100)                                  # over the size limit
+
+    def test_same_format_as_pyzipper(self):
         try:
-            import pyzipper  # noqa: F401
-            import PIL  # noqa: F401
+            import pyzipper
         except ImportError:
-            self.skipTest("pyzipper/Pillow not installed")
+            self.skipTest("pyzipper not installed (only needed for this cross-check)")
+        import io
+        from zebraapp import aeszip
+        files = {"Formats/A": b"y" * 3000, "A.slnx": b"<s/>"}
+        with pyzipper.AESZipFile(io.BytesIO(aeszip.write(list(files.items()), self.PW))) as z:
+            z.setpassword(self.PW)
+            self.assertEqual({n: z.read(n) for n in z.namelist()}, files)
+        out = io.BytesIO()
+        with pyzipper.AESZipFile(out, "w", compression=pyzipper.ZIP_DEFLATED, encryption=pyzipper.WZ_AES) as z:
+            z.setpassword(self.PW)
+            for n, v in files.items():
+                z.writestr(n, v)
+        self.assertEqual(aeszip.read_all(out.getvalue(), self.PW, 10 ** 6), files)
+
+
+class NlblTest(unittest.TestCase):
+    def test_empty_and_foreign_files_are_explained(self):
+        from zebraapp.nlbl import import_label
+        with self.assertRaisesRegex(ValueError, "0 bayt"):
+            import_label(b"")
+        with self.assertRaisesRegex(ValueError, "geçerli bir ZebraDesigner"):
+            import_label(b"PK\x03\x04 bozuk")
+
+    def test_png_image_without_pillow(self):
+        import base64, struct, zlib
+        from unittest import mock
+        from zebraapp import nlbl
+        row = b"\x00" + b"\xff\xff\xff\xff"
+        def chunk(t, d):
+            return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d))
+        png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(row)) + chunk(b"IEND", b"")
+        with mock.patch.dict("sys.modules", {"PIL": None}):
+            self.assertEqual(nlbl._image_png(png), png)
+            with self.assertRaisesRegex(ValueError, "PNG değil"):
+                nlbl._image_png(b"\xff\xd8\xff jpeg")
+            label = {"name": "Görsel", "w": 30, "h": 20, "dpi": 300, "elements": [
+                {"type": "image", "x": 1, "y": 1, "w": 10, "h": 10, "src": "data:image/png;base64," + base64.b64encode(png).decode()}]}
+            back, _ = nlbl.import_label(nlbl.export_label(label)[0])
+        self.assertEqual(back["elements"][0]["type"], "image")
 
     def test_export_then_import(self):
         from zebraapp.nlbl import export_label, import_label

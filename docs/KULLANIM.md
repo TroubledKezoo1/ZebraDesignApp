@@ -157,7 +157,7 @@ Etiketler `.zebra` uzantılı sıradan dosyalardır (içi JSON). Nerede duracakl
 
 ![Doldurma formu](fill-tr.png)
 
-**ZebraDesigner 3 (`.nlbl`, deneysel).** `pip install ".[nlbl]"` gerekir. **Aç** `.nlbl` dosyalarını okur; ardından **Ctrl+S** aynı dosyaya yazar, **Farklı kaydet** `.zebra` kopyası çıkarır. **Dosya → Dışa aktar → ZebraDesigner için kaydet (.nlbl)…** yeni bir dosya yazar. Yalnızca sabit metin, Code 128, QR, görsel, çizgi, kutu ve elips aktarılır, 300 dpi'da. Gizli öğeler, kelime kelime biçim, italik, altı çizili, karakter aralığı, iki yana yaslama ve kutuya sığdır düşer (ZebraApp önce uyarır). Döndürülmüş görseller resmin kendisinde döndürülür; diğer döndürmeler ve ters baskı desteklenmez.
+**ZebraDesigner 3 (`.nlbl`, deneysel).** Ek paket gerekmez. Dosyaya gömülü görsel PNG değilse (ör. JPEG) Pillow gerekir: `pip install ".[nlbl]"`. Dosya yöneticisinde `.nlbl` veya `.zebra` dosyasına çift tıklamak (ya da "ZebraApp ile aç") onu doğrudan düzenleyicide açar. **Aç** `.nlbl` dosyalarını okur; ardından **Ctrl+S** aynı dosyaya yazar, **Farklı kaydet** `.zebra` kopyası çıkarır. **Dosya → Dışa aktar → ZebraDesigner için kaydet (.nlbl)…** yeni bir dosya yazar. Yalnızca sabit metin, Code 128, QR, görsel, çizgi, kutu ve elips aktarılır, 300 dpi'da. Gizli öğeler, kelime kelime biçim, italik, altı çizili, karakter aralığı, iki yana yaslama ve kutuya sığdır düşer (ZebraApp önce uyarır). Döndürülmüş görseller resmin kendisinde döndürülür; diğer döndürmeler ve ters baskı desteklenmez.
 
 **Dosya denetimi.** 20 MB'tan büyük, ZebraApp tasarımı olmayan, daha yeni bir sürümle yapılmış ya da görselleri gömülü değil bağlantılı olan dosyalar bir mesajla reddedilir.
 

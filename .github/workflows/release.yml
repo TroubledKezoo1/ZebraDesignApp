@@ -58,7 +58,7 @@ jobs:
           python - <<'PY'
           import importlib
           have, miss = [], []
-          for m in ("bleak", "serial", "pyzipper", "PIL", "win32print"):
+          for m in ("bleak", "serial", "PIL", "win32print"):
               try:
                   importlib.import_module(m); have.append(m)
               except Exception:

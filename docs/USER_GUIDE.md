@@ -159,7 +159,7 @@ Install `pip install ".[pdf]"` (included in `.[all]`). Limits: 20 MB, 500 pages,
 
 ![Fill-in form](fill-en.png)
 
-**ZebraDesigner 3 (`.nlbl`, experimental).** Needs `pip install ".[nlbl]"`. **Open** reads `.nlbl` files; **Ctrl+S** then writes back to the same file, **Save as** makes a `.zebra` copy. **File → Export → Save for ZebraDesigner (.nlbl)…** writes a new one. Only fixed text, Code 128, QR, image, line, box and ellipse carry over, at 300 dpi. Hidden items, word-by-word formatting, italic, underline, spacing, justify and shrink to fit are dropped (ZebraApp warns first). Rotated images are turned in the image itself; other rotations and reverse print are not supported.
+**ZebraDesigner 3 (`.nlbl`, experimental).** No extra packages needed. If an embedded image is not a PNG (e.g. JPEG), Pillow is required: `pip install ".[nlbl]"`. Double-clicking a `.nlbl` or `.zebra` file in the file manager (or "Open with ZebraApp") opens it straight in the editor. **Open** reads `.nlbl` files; **Ctrl+S** then writes back to the same file, **Save as** makes a `.zebra` copy. **File → Export → Save for ZebraDesigner (.nlbl)…** writes a new one. Only fixed text, Code 128, QR, image, line, box and ellipse carry over, at 300 dpi. Hidden items, word-by-word formatting, italic, underline, spacing, justify and shrink to fit are dropped (ZebraApp warns first). Rotated images are turned in the image itself; other rotations and reverse print are not supported.
 
 **File checks.** A file larger than 20 MB, a file that is not a ZebraApp design, one from a newer version or one with images linked instead of embedded is refused with a message.
 
