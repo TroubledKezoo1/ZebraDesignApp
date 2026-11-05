@@ -7,6 +7,7 @@
 - New printer model: GC420t.
 - Fix: unit names ("dots"), "1 item" and a few other texts are now translated instead of showing Turkish.
 - Fix: Turkish users could see server messages in English after the language work; they are Turkish again.
+- Fix (desktop): closing the window quits the app within a few seconds instead of about 30, and a window left minimized for a long time no longer makes the app quit underneath it.
 
 ## 1.0.15
 

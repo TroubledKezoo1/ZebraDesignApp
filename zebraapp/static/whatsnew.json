@@ -150,17 +150,20 @@
     "tr": [
       "Yeni dil: Portekizce (Brezilya). Teşekkürler @annafratus!",
       "Son kullanma tarihi: {TARIH+30} baskı gününden 30 gün sonrasını basar. Ekle sekmesindeki menüden 7 günden 1 yıla kadar seç.",
-      "Yeni yazıcı modeli: GC420t."
+      "Yeni yazıcı modeli: GC420t.",
+      "Pencereyi kapatınca uygulama birkaç saniyede tamamen kapanır; uzun süre küçültülmüş pencere artık uygulamayı kapatmaz."
     ],
     "en": [
       "New language: Brazilian Portuguese. Thanks @annafratus!",
       "Valid-until dates: {TARIH+30} prints the date 30 days after printing. Pick 7 days to 1 year from the menu on the Insert tab.",
-      "New printer model: GC420t."
+      "New printer model: GC420t.",
+      "Closing the window now quits the app within seconds; a window left minimized for long no longer closes the app."
     ],
     "pt": [
       "Novo idioma: português do Brasil. Obrigado, @annafratus!",
       "Datas de validade: {DATA+30} imprime a data 30 dias após a impressão. Escolha de 7 dias a 1 ano no menu da guia Inserir.",
-      "Novo modelo de impressora: GC420t."
+      "Novo modelo de impressora: GC420t.",
+      "Ao fechar a janela, o aplicativo encerra em poucos segundos; uma janela minimizada por muito tempo não fecha mais o aplicativo."
     ]
   }
 }
