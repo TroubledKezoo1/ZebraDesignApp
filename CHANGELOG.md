@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.1
+
+- Update bar: when "Update now" is missing it now says why and what to do instead: pip/npm/source installs, winget or Scoop (update there), the `.deb` (apt), macOS (new `.dmg`), a folder the app cannot write to (move it to Downloads or Desktop), or a release without a signed download for your system.
+- Fix (Windows): the app checked whether its folder was writable with a test that ignores Windows folder permissions, so in Program Files "Update now" appeared and then failed. It now really tries to write. winget and Scoop installs are left to their package manager.
+
 ## 1.1.0
 
 - New language: Brazilian Portuguese (Português do Brasil), next to Turkish and English, in the interface, server messages and "What's new". Thanks to @annafratus (#2).

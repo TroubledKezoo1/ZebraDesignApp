@@ -165,5 +165,19 @@
       "Novo modelo de impressora: GC420t.",
       "Ao fechar a janela, o aplicativo encerra em poucos segundos; uma janela minimizada por muito tempo não fecha mais o aplicativo."
     ]
+  },
+  "1.1.1": {
+    "tr": [
+      "Güncelleme çubuğu, \"Şimdi güncelle\" düğmesi yoksa nedenini ve ne yapman gerektiğini söyler (ör. uygulamayı yazılabilir bir klasöre taşı, winget/Scoop/apt ile güncelle).",
+      "Windows: Program Files gibi yazılamayan klasörlerde artık boşuna güncelleme düğmesi çıkmaz."
+    ],
+    "en": [
+      "The update bar now says why \"Update now\" is missing and what to do instead (e.g. move the app to a writable folder, update with winget/Scoop/apt).",
+      "Windows: no more update button that fails in folders like Program Files."
+    ],
+    "pt": [
+      "A barra de atualização agora explica por que \"Atualizar agora\" não aparece e o que fazer (ex.: mover o aplicativo para uma pasta com permissão de gravação, atualizar com winget/Scoop/apt).",
+      "Windows: o botão de atualização não aparece mais em pastas como Arquivos de Programas, onde falharia."
+    ]
   }
 }
