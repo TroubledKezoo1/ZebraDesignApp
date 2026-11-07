@@ -104,13 +104,30 @@
       btn(r.url ? L("İndir", "Download", "Baixar") : L("Sürüm sayfası", "Release page", "Página da versão"), function () { window.open(go, "_blank", "noopener"); }, !r.self_update),
       btn(L("Sonra", "Later", "Depois"), function () { bar.remove(); }),
       btn(L("Atla", "Skip", "Ignorar"), function () { set(SKIP, r.latest); bar.remove(); }));
-    if (!r.frozen) {
+    var WHY = {   /* why there is no "Update now" (updates.why_no_self_update) */
+      source: ["pip, npm ya da kaynaktan kurulmuş: pip install -U zebraapp (npm: npm update -g zebraapp)",
+        "Installed with pip, npm or from source: pip install -U zebraapp (npm: npm update -g zebraapp)",
+        "Instalado com pip, npm ou a partir do código-fonte: pip install -U zebraapp (npm: npm update -g zebraapp)"],
+      managed: ["winget ya da Scoop ile kurulmuş, onunla güncelle: winget upgrade TroubledKezoo1.ZebraApp / scoop update zebraapp",
+        "Installed with winget or Scoop, update it there: winget upgrade TroubledKezoo1.ZebraApp / scoop update zebraapp",
+        "Instalado com winget ou Scoop, atualize por lá: winget upgrade TroubledKezoo1.ZebraApp / scoop update zebraapp"],
+      deb: [".deb kurulumu: sudo apt update && sudo apt upgrade (ya da yeni .deb dosyasını indir)",
+        ".deb install: sudo apt update && sudo apt upgrade (or download the new .deb)",
+        "Instalação .deb: sudo apt update && sudo apt upgrade (ou baixe o novo .deb)"],
+      mac: ["macOS'ta yeni .dmg dosyasını indirip uygulamayı Uygulamalar klasörüne sürükle.",
+        "On macOS, download the new .dmg and drag the app to Applications.",
+        "No macOS, baixe o novo .dmg e arraste o aplicativo para Aplicativos."],
+      folder: ["Uygulamanın klasörüne yazılamıyor (ör. Program Files). Uygulamayı İndirilenler ya da Masaüstü gibi bir klasöre taşırsan bir sonraki sürüm tek tıkla güncellenir.",
+        "The app's folder is not writable (e.g. Program Files). Move the app to a folder like Downloads or Desktop and the next version updates with one click.",
+        "A pasta do aplicativo não permite gravação (ex.: Arquivos de Programas). Mova o aplicativo para uma pasta como Downloads ou Área de Trabalho e a próxima versão atualiza com um clique."],
+      release: ["Bu sürümde bu sistem için imzalı indirme yok; dosyayı elle indir.",
+        "This release has no signed download for this system; download it by hand.",
+        "Esta versão não tem download assinado para este sistema; baixe manualmente."]
+    };
+    var why = !r.self_update && (WHY[r.why] || (!r.frozen && WHY.source));
+    if (why) {
       var hint = document.createElement("small"); hint.style.cssText = "flex:1 0 100%;opacity:.9";
-      hint.textContent = L(
-        "Kaynaktan ya da pip ile kurduysan: pip install -U zebraapp",
-        "Installed from source or pip? Run: pip install -U zebraapp",
-        "Instalado a partir do código-fonte ou pip? Execute: pip install -U zebraapp"
-      );
+      hint.textContent = L(why[0], why[1], why[2]);
       bar.appendChild(hint);
     }
     document.body.appendChild(bar);

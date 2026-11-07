@@ -99,7 +99,33 @@ def check(force=False, fetch=None, now=None):
     out["sums"] = _asset_url(rel.get("assets"), "SHA256SUMS.txt")
     out["sig"] = _asset_url(rel.get("assets"), "SHA256SUMS.txt.sig")
     out["self_update"] = bool(out["url"] and out["sums"] and out["sig"] and self_update_target())
+    if not out["self_update"]:
+        out["why"] = why_no_self_update(out)
     return out
+
+
+def why_no_self_update(out):
+    """Why "Update now" is missing, so the update bar can say what to do instead.
+
+    source: pip, npm or source install; managed: winget/Scoop/Homebrew keep it updated; deb: the .deb
+    (apt updates it); mac: the .dmg is replaced by hand; folder: the app's folder is not writable;
+    release: this release has no download or signature for this system."""
+    if not getattr(sys, "frozen", False):
+        return "source"
+    if sys.platform == "darwin":
+        return "mac"
+    if sys.platform.startswith("linux") and not os.environ.get("APPIMAGE"):
+        return "deb"
+    if not (out.get("url") and out.get("sums") and out.get("sig")):
+        return "release"
+    if _managed(sys.executable):
+        return "managed"
+    return "folder"
+
+
+def _managed(path):
+    p = str(path or "").replace("\\", "/").lower()
+    return "/scoop/apps/" in p or "/winget/packages/" in p
 
 
 # ------------------------------------------------------------------ install the update in place
@@ -127,9 +153,19 @@ def self_update_target():
         path = sys.executable
     else:
         return None
-    if not path or not os.path.isfile(path) or not os.access(os.path.dirname(path) or ".", os.W_OK):
+    if not path or not os.path.isfile(path) or _managed(path) or not _can_write(os.path.dirname(path) or "."):
         return None
     return path
+
+
+def _can_write(folder):
+    """Try it: on Windows os.access ignores folder permissions (Program Files looks writable)."""
+    import tempfile
+    try:
+        with tempfile.NamedTemporaryFile(dir=folder, prefix=".zebraapp-", delete=True):
+            return True
+    except OSError:
+        return False
 
 
 def parse_sums(text):

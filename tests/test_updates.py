@@ -218,5 +218,46 @@ class InstallTests(unittest.TestCase):
             updates.check = real
 
 
+
+class WhyNoButtonTest(unittest.TestCase):
+    """When "Update now" is missing, the update bar says why."""
+    FULL = {"url": "u", "sums": "s", "sig": "g"}
+
+    def why(self, frozen, platform, out=None, env=None, exe="/x/ZebraApp"):
+        from unittest import mock
+        with mock.patch.object(updates.sys, "frozen", frozen, create=True), \
+                mock.patch.object(updates.sys, "platform", platform), \
+                mock.patch.object(updates.sys, "executable", exe), \
+                mock.patch.dict(updates.os.environ, env or {}, clear=False):
+            if not (env or {}).get("APPIMAGE"):
+                updates.os.environ.pop("APPIMAGE", None)
+            return updates.why_no_self_update(dict(self.FULL) if out is None else out)
+
+    def test_reasons(self):
+        self.assertEqual(self.why(False, "win32"), "source")
+        self.assertEqual(self.why(True, "darwin"), "mac")
+        self.assertEqual(self.why(True, "linux"), "deb")
+        self.assertEqual(self.why(True, "linux", env={"APPIMAGE": "/a.AppImage"}), "folder")
+        self.assertEqual(self.why(True, "win32", out={"url": "u", "sums": "s", "sig": None}), "release")
+        self.assertEqual(self.why(True, "win32", exe=r"C:\Users\a\scoop\apps\zebraapp\current\ZebraApp.exe"), "managed")
+        self.assertEqual(self.why(True, "win32", exe=r"C:\Users\a\AppData\Local\Microsoft\WinGet\Packages\TroubledKezoo1.ZebraApp\ZebraApp.exe"), "managed")
+        self.assertEqual(self.why(True, "win32", exe=r"C:\Program Files\ZebraApp\ZebraApp.exe"), "folder")
+
+    def test_check_reports_the_reason(self):
+        r = updates.check(force=True, fetch=lambda: {"tag_name": "v99.0.0", "assets": []})
+        self.assertFalse(r["self_update"])
+        self.assertEqual(r["why"], "source")                    # tests run from source
+
+    @unittest.skipIf(os.name == "nt" or (hasattr(os, "geteuid") and os.geteuid() == 0), "needs POSIX permissions, not root")
+    def test_write_check_really_tries(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertTrue(updates._can_write(d))
+            os.chmod(d, 0o555)
+            try:
+                self.assertFalse(updates._can_write(d))
+            finally:
+                os.chmod(d, 0o755)
+
+
 if __name__ == "__main__":
     unittest.main()
